@@ -184,6 +184,7 @@ import {
   listPublicReservationBooks,
   listPublicPickupSchedules,
   listStaffReservations,
+  reportReservationIssue,
 } from './reservations/service.ts';
 import { verifyTurnstileToken } from './reservations/captcha.ts';
 
@@ -296,7 +297,7 @@ export async function resolveActorFromRequest(
     try {
       const pool = getDatabasePool(env);
       const res = await pool.query(
-        'SELECT id, is_active, is_alumni, is_admin, token_version FROM members WHERE id = $1',
+        'SELECT id, username, is_active, is_alumni, is_admin, token_version FROM members WHERE id = $1',
         [claims.memberId]
       );
       if (res.rows.length > 0) {
@@ -3411,10 +3412,11 @@ export async function handleRequest(
       const search = url.searchParams.get('search') || undefined;
       const page = Number(url.searchParams.get('page') || 1);
       const limit = Number(url.searchParams.get('limit') || 20);
-      const result = await listPublicReservationBooks(db, { search, page, limit });
-      return new Response(JSON.stringify({ data: result.items, meta: { total: result.total, page: result.page, limit: result.limit } }), {
+      const result = await listPublicReservationBooks(db, { search, category: url.searchParams.get('category') || undefined, page, limit,
+        includeUnavailable: url.searchParams.get('includeUnavailable') === 'true', onlyAvailable: url.searchParams.get('onlyAvailable') === 'true' });
+      return new Response(JSON.stringify({ data: result.items, meta: { total: result.total, page: result.page, limit: result.limit, categories: result.categories } }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'public, max-age=60' },
+        headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
       });
     }
 
@@ -3424,7 +3426,7 @@ export async function handleRequest(
       const schedules = await listPublicPickupSchedules(db);
       return new Response(JSON.stringify({ data: schedules, meta: { total: schedules.length } }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'public, max-age=60' },
+        headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
       });
     }
 
@@ -3459,7 +3461,8 @@ export async function handleRequest(
           clientIp,
           env?.TURNSTILE_SECRET_KEY,
           injected?.turnstileFetch,
-          { expectedHostname: env?.TURNSTILE_EXPECTED_HOSTNAME, expectedAction: 'reservation' }
+          { expectedHostname: env?.TURNSTILE_EXPECTED_HOSTNAME, expectedAction: 'reservation',
+            allowTestKeys: env?.NODE_ENV === 'development' && env.LOCAL_TESTING === 'true' && ['localhost', '127.0.0.1'].includes(url.hostname) }
         );
         if (!captchaResult.success) {
           throw new BadRequestError('Xác minh CAPTCHA không hợp lệ hoặc đã hết hạn.', 'CAPTCHA_INVALID');
@@ -3540,7 +3543,7 @@ export async function handleRequest(
       const page = Number(url.searchParams.get('page') || 1);
       const limit = Number(url.searchParams.get('limit') || 50);
       const result = await listStaffReservations(db, { scheduleId, status, search, page, limit });
-      return new Response(JSON.stringify({ data: result.items, meta: { total: result.total, page: result.page, limit: result.limit } }), {
+      return new Response(JSON.stringify({ data: result.items, meta: { total: result.total, page: result.page, limit: result.limit, attentionCount: result.attentionCount } }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
       });
@@ -3585,6 +3588,14 @@ export async function handleRequest(
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
       });
+    }
+
+    const issueMatch = path.match(/^\/api\/v1\/reservations\/([a-zA-Z0-9_-]+)\/issue$/);
+    if (method === 'POST' && issueMatch) {
+      const member = requireInternalMember(await resolveActorFromRequest(request, env, injected));
+      const body = await parseJsonObject(request, requestId);
+      await withTransaction(getDb(injected, env), tx => reportReservationIssue(tx, issueMatch[1], member, body.reason));
+      return Response.json({ data: { id: issueMatch[1], reported: true } }, { headers: { 'Cache-Control': 'no-store', 'X-Request-Id': requestId } });
     }
 
     // 112. Staff: Cancel Reservation (Member nội bộ, Transaction) (PRF-04)

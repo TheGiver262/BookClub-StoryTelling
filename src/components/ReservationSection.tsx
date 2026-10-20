@@ -4,6 +4,7 @@ import {
   Copy, ShieldCheck, XCircle, Search, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { apiClient } from '../lib/api-client';
+import { startAvailabilityRefresh } from '../lib/availability-refresh';
 import { getReservationIntent, clearReservationIntent } from '../lib/reservation-intent';
 import type { PublicReservationBookDto, PublicPickupScheduleDto, PublicReservationDto } from '../server/reservations/types';
 import { formatVND } from '../data/mockData';
@@ -20,8 +21,10 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
   // Form State
   const [books, setBooks] = useState<PublicReservationBookDto[]>([]);
+  const [bookSearch, setBookSearch] = useState('');
+  const metadataRequestRef = useRef(0);
   const [schedules, setSchedules] = useState<PublicPickupScheduleDto[]>([]);
-  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || '');
@@ -65,8 +68,12 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
   // Load books & schedules on mount (PRF-07: không giả dữ liệu)
   useEffect(() => {
-    loadMetadata();
-  }, [initialBookId]);
+    if (activeSubTab !== 'create' || createdReservation) return;
+    setIsLoadingMetadata(true);
+    const task = window.setTimeout(() => void loadMetadata(), 250);
+    const stop = startAvailabilityRefresh(() => loadMetadata(true));
+    return () => { window.clearTimeout(task); stop(); metadataRequestRef.current++; };
+  }, [initialBookId, bookSearch, activeSubTab, createdReservation]);
 
   // Update selected book if prop changes
   useEffect(() => {
@@ -204,14 +211,16 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
     }
   };
 
-  const loadMetadata = async () => {
-    setIsLoadingMetadata(true);
-    setMetadataError(null);
+  const loadMetadata = async (background = false) => {
+    const requestId = ++metadataRequestRef.current;
+    if (!background) setIsLoadingMetadata(true);
     try {
       const [booksRes, schedulesRes] = await Promise.all([
-        apiClient.listPublicReservationBooks({ search: initialBookId || undefined, limit: 100 }),
+        apiClient.listPublicReservationBooks({ search: bookSearch || initialBookId || undefined, limit: 24 }),
         apiClient.listPublicPickupSchedules(),
       ]);
+      if (requestId !== metadataRequestRef.current) return;
+      setMetadataError(null);
 
       const availableBooks: PublicReservationBookDto[] = Array.isArray(booksRes?.items)
         ? booksRes.items.filter((b) => b.availableCopiesCount > 0)
@@ -223,18 +232,15 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
         : [];
       setSchedules(availableSchedules);
 
-      if (availableSchedules.length > 0 && !selectedScheduleId) {
-        setSelectedScheduleId(availableSchedules[0].id);
-      }
-      if (availableBooks.length > 0 && !selectedBookId) {
-        setSelectedBookId(availableBooks[0].titleId);
-      }
+      setSelectedScheduleId(current => current || availableSchedules[0]?.id || '');
+      setSelectedBookId(current => current || availableBooks[0]?.titleId || '');
     } catch (err: any) {
+      if (requestId !== metadataRequestRef.current) return;
       setMetadataError(err?.message || 'Không thể tải dữ liệu ca trực hoặc danh mục sách từ máy chủ.');
       setBooks([]);
       setSchedules([]);
     } finally {
-      setIsLoadingMetadata(false);
+      if (requestId === metadataRequestRef.current) setIsLoadingMetadata(false);
     }
   };
 
@@ -249,8 +255,8 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       setSubmitError('Vui lòng chọn sách cần giữ chỗ.');
       return;
     }
-    if (!selectedScheduleId) {
-      setSubmitError('Vui lòng chọn ca trực để đến nhận sách.');
+    if (!schedules.some(schedule => schedule.id === selectedScheduleId)) {
+      setSubmitError('Vui lòng chọn ca trực còn nhận đặt sách để đến lấy.');
       return;
     }
     if (!fullName.trim()) {
@@ -282,6 +288,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       };
       const key = await getReservationIntent(payload);
       const res = await apiClient.createPublicReservation({ ...payload, captchaToken }, key);
+      window.dispatchEvent(new Event('ysbk:availability-changed'));
 
       setCreatedReservation({
         code: res.reservation.code,
@@ -293,6 +300,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       setSubmitError(msg);
       // Reset CAPTCHA để khách có thể thử lại an toàn
       resetCaptchaWidget();
+      void loadMetadata(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -327,6 +335,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       );
       setLookupResult(res);
       setShowCancelModal(false);
+      window.dispatchEvent(new Event('ysbk:availability-changed'));
       setCancelReason('');
     } catch (err: any) {
       alert(err.message || 'Không thể hủy đơn đặt. Vui lòng kiểm tra lại trạng thái đơn.');
@@ -431,7 +440,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               </div>
 
               <p className="text-slate-600 mb-6 text-sm sm:text-base leading-relaxed">
-                Cuốn sách của bạn đã được giữ tại bàn trực. Vui lòng đến bàn trực đúng ca đã chọn và chuẩn bị tiền đặt cọc để nhận sách.
+                  Yêu cầu giữ chỗ của bạn đã được xác nhận. Vui lòng đến bàn trực đúng ca đã chọn và chuẩn bị tiền đặt cọc để nhận sách.
               </p>
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 space-y-3">
@@ -540,6 +549,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
                   Không cần đăng nhập tài khoản. Giữ sách đến hết ca trực để bạn đến nhận tại bàn trực.
                 </p>
+                {import.meta.env.PUBLIC_LOCAL_TESTING === 'true' && <p className="mt-2 text-xs text-amber-800">Bản local dùng CAPTCHA test của Cloudflare; chưa kiểm tra khả năng chống bot thật.</p>}
               </div>
 
               {metadataError && (
@@ -549,7 +559,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                     <div>{metadataError}</div>
                   </div>
                   <button
-                    onClick={loadMetadata}
+                    onClick={() => void loadMetadata()}
                     className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -571,6 +581,10 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
                     1. Chọn cuốn sách muốn mượn <span className="text-rose-500">*</span>
                   </label>
+                  <input aria-label="Tìm sách để đặt" value={bookSearch}
+                    onChange={e => { setBookSearch(e.target.value); setSelectedBookId(''); setBooks([]); }}
+                    placeholder="Tìm theo tên sách hoặc tác giả (hiện tối đa 24 kết quả)"
+                    className="w-full px-4 py-3 mb-2 border rounded-xl text-sm" />
                   {isLoadingMetadata ? (
                     <div className="text-sm text-slate-500 py-2 flex items-center gap-2">
                       <RefreshCw className="w-4 h-4 animate-spin text-brand-navy" />

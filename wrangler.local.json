@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ysbk-local",
+  "main": "src/server/index.ts",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "dev": { "ip": "127.0.0.1", "port": 4321, "inspector_port": 9231 },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api", "/api/*", "/v1/*", "/health", "/health/*"],
+    "not_found_handling": "404-page"
+  },
+  "vars": { "NODE_ENV": "development", "LOCAL_TESTING": "true" },
+  "triggers": { "crons": ["*/10 * * * *"] }
+}

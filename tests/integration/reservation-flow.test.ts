@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { DbHarness } from './db-harness.ts';
 import { withTransaction } from '../../src/server/db/client.ts';
-import { createReservation, fulfillReservation, listPublicReservationBooks, getReservationByToken } from '../../src/server/reservations/service.ts';
+import { createReservation, fulfillReservation, listPublicReservationBooks, getReservationByToken, listStaffReservations, reportReservationIssue, cancelReservation } from '../../src/server/reservations/service.ts';
 import { settleReturnReceipt } from '../../src/server/circulation/service.ts';
 import { openCashSession } from '../../src/server/finance/cash-sessions.ts';
 import { updateBorrower } from '../../src/server/borrowers/service.ts';
@@ -11,6 +11,7 @@ import { updateBookCopy, archiveBookCopy } from '../../src/server/catalog/servic
 import { BoundedAtomicTicketStore } from '../../src/modules/reporting/reporting-service.ts';
 import { handleRequest } from '../../src/server/router.ts';
 import { signSessionToken } from '../../src/server/auth/tokens.ts';
+import { prepareBetaSql } from '../../scripts/prepare-beta-db.mjs';
 
 const harness = new DbHarness();
 process.env.RESERVATION_IP_SECRET = 'synthetic-reservation-test-secret-2026';
@@ -25,7 +26,7 @@ beforeEach(async () => {
   const editionId = (await pool.query("INSERT INTO book_editions (title_id, publisher) VALUES ($1, 'Synthetic') RETURNING id", [titleId])).rows[0].id;
   const copies = await pool.query("INSERT INTO book_copies (edition_id, barcode, cover_price, location) SELECT $1, gen_random_uuid()::text, 230000, 'BAN_TRUC_TAM' FROM generate_series(1,6) RETURNING id", [editionId]);
   const scheduleId = randomUUID();
-  await pool.query("INSERT INTO duty_schedules (id, term_semester, schedule_date, day_of_week, shift_time, status) VALUES ($1, '2026.1', CURRENT_DATE, 'THU_BA', '00:00 - 23:59', 'PUBLISHED')", [scheduleId]);
+  await pool.query("INSERT INTO duty_schedules (id, term_semester, schedule_date, day_of_week, shift_time, status) VALUES ($1, '2026.1', (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, 'THU_BA', '00:00 - 23:59', 'PUBLISHED')", [scheduleId]);
   fixture = { titleId, scheduleId, copyId: copies.rows[0].id, actor: { userId: actorId, memberId: actorId, role: 'ADMIN', isActive: true, isAlumni: false, tokenVersion: 1 } };
 });
 
@@ -76,7 +77,55 @@ test('PG: an expired hold is immediately replaceable before the scheduler runs',
 test('PG: public deposit matches the actual copy policy for prices above 100k', async () => {
   const books = await listPublicReservationBooks(harness.getPool(), { search: (await harness.getPool().query('SELECT title FROM book_titles WHERE id = $1', [fixture.titleId])).rows[0].title });
   assert.equal(books.items.find(b => b.titleId === fixture.titleId)?.standardDeposit, 250000);
+  assert.equal(books.items.find(b => b.titleId === fixture.titleId)?.coverPrice, 230000);
   assert.equal((await reserve('0911000009', '192.0.2.51')).reservation.estimatedDeposit, 250000);
+});
+
+test('PG: held copies disappear from public availability and incidents alert staff without auto-cancelling', async () => {
+  const pool = harness.getPool();
+  const held = await reserve('0911000021', '192.0.2.101');
+  const inventory = await listPublicReservationBooks(pool, { search: fixture.titleId });
+  assert.equal(inventory.items[0].availableCopiesCount, 5);
+  const copyId = (await pool.query('SELECT copy_id FROM reservations WHERE id = $1', [held.reservation.id])).rows[0].copy_id;
+  await assert.rejects(() => withTransaction(pool, tx => reportReservationIssue(tx, held.reservation.id, { ...fixture.actor, role: 'GUEST' }, 'Sách bị hỏng')), /thành viên/);
+  await assert.rejects(() => withTransaction(pool, tx => reportReservationIssue(tx, held.reservation.id, fixture.actor, '')), /lý do/);
+  await assert.rejects(() => withTransaction(pool, tx => reportReservationIssue(tx, 'invalid-id', fixture.actor, 'Sách hỏng')), /định danh/);
+  await pool.query(prepareBetaSql().access);
+  const secret = 'synthetic-beta-incident-session-secret-2026';
+  const token = await signSessionToken(fixture.actor, secret);
+  await harness.withClient(async client => {
+    await client.query('SET ROLE ysbk_app');
+    const [, response] = await Promise.all([
+      withTransaction(pool, tx => reportReservationIssue(tx, held.reservation.id, fixture.actor, 'Không tìm thấy sách tại kho')),
+      handleRequest(new Request(`http://localhost/api/v1/reservations/${held.reservation.id}/issue`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'Không tìm thấy sách tại kho' }),
+      }), { JWT_SECRET: secret }, { queryable: client, membersDb: { [fixture.actor.memberId]: { id: fixture.actor.memberId, is_admin: true, is_active: true, is_alumni: false, token_version: 1 } } }),
+    ]);
+    assert.equal(response.status, 200, await response.clone().text());
+  });
+  assert.equal(Number((await pool.query("SELECT count(*) FROM system_audit_logs WHERE action = 'RESERVATION_FULFILLMENT_ISSUE' AND target_id = $1", [copyId])).rows[0].count), 1);
+  const staff = await listStaffReservations(pool, { scheduleId: fixture.scheduleId, status: 'HELD' });
+  assert.equal(staff.attentionCount, 1);
+  assert.equal(staff.items[0].fulfillmentIssue, 'COPY_UNAVAILABLE');
+  assert.equal(staff.items[0].status, 'HELD');
+  assert.equal(staff.items[0].phone, '0911000021');
+  assert.ok(!('phone' in await getReservationByToken(pool, held.lookupToken)));
+  await assert.rejects(() => withTransaction(pool, async tx => {
+    await openCashSession(tx, { sessionId: 'CS-' + randomUUID().slice(0, 20), sessionDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }), openedBy: fixture.actor.userId, openingCash: 0n, discrepancyReason: 'Synthetic incident test' });
+    return fulfillReservation(tx, held.reservation.id, { paymentMethod: 'CASH', depositPaymentConfirmed: true }, fixture.actor);
+  }), /không.*khả dụng|không.*sẵn sàng/i);
+  await withTransaction(pool, tx => cancelReservation(tx, { id: held.reservation.id }, fixture.actor, 'Đã gọi xác nhận hủy'));
+  assert.equal((await pool.query('SELECT status FROM book_copies WHERE id = $1', [copyId])).rows[0].status, 'MAINTENANCE');
+  await assert.rejects(() => withTransaction(pool, tx => reportReservationIssue(tx, held.reservation.id, fixture.actor, 'Sự cố sau hủy')), /giữ chỗ/);
+});
+
+test('PG: public catalogue pagination and category filtering cover titles beyond the first page', async () => {
+  const pool = harness.getPool();
+  const category = (await pool.query("INSERT INTO categories (name) VALUES ('Synthetic paging category') RETURNING id")).rows[0].id;
+  await pool.query('INSERT INTO book_title_categories (title_id, category_id) VALUES ($1, $2)', [fixture.titleId, category]);
+  const found = await listPublicReservationBooks(pool, { category: 'Synthetic paging category', page: 1, limit: 1 });
+  assert.equal(found.total, 1);
+  assert.equal(found.items[0].titleId, fixture.titleId);
 });
 
 test('PG: maintenance and archive cannot invalidate a promised book', async () => {
@@ -84,6 +133,37 @@ test('PG: maintenance and archive cannot invalidate a promised book', async () =
   const copyId = (await harness.getPool().query('SELECT copy_id FROM reservations WHERE id = $1', [order.reservation.id])).rows[0].copy_id;
   await assert.rejects(() => withTransaction(harness.getPool(), tx => updateBookCopy(tx, copyId, { location: 'KHO_HOI_SINH_VIEN' }, fixture.actor.memberId)), /giữ chỗ/);
   await assert.rejects(() => withTransaction(harness.getPool(), tx => archiveBookCopy(tx, copyId, fixture.actor.memberId)), /giữ chỗ/);
+});
+
+test('PG: full catalogue includes unavailable/no-copy titles, 50 per page and real categories without reserving them', async () => {
+  const pool = harness.getPool();
+  const category = 'Catalogue all ' + randomUUID();
+  const categoryId = (await pool.query('INSERT INTO categories (name) VALUES ($1) RETURNING id', [category])).rows[0].id;
+  const titles = await pool.query(`INSERT INTO book_titles (title)
+    SELECT 'Catalogue ' || lpad(n::text, 3, '0') FROM generate_series(1, 51) AS n RETURNING id`);
+  for (const row of titles.rows) await pool.query('INSERT INTO book_title_categories (title_id, category_id) VALUES ($1, $2)', [row.id, categoryId]);
+  await pool.query('INSERT INTO book_title_categories (title_id, category_id) VALUES ($1, $2)', [fixture.titleId, categoryId]);
+  const first = await listPublicReservationBooks(pool, { category, includeUnavailable: true, limit: 50 });
+  const second = await listPublicReservationBooks(pool, { category, includeUnavailable: true, limit: 50, page: 2 });
+  assert.equal(first.items.length, 50);
+  assert.equal(first.total, 52);
+  assert.equal(second.items.length, 2);
+  assert.equal(new Set([...first.items, ...second.items].map(b => b.titleId)).size, 52);
+  assert(first.categories?.includes(category));
+  assert(first.items.every(b => b.availableCopiesCount === 0));
+  const available = await listPublicReservationBooks(pool, { category, includeUnavailable: true, onlyAvailable: true });
+  assert.equal(available.total, 1);
+  assert.equal(available.items[0].titleId, fixture.titleId);
+  assert.equal(available.items[0].availableCopiesCount, 6);
+  const held = await reserve('0911000088', '192.0.2.188');
+  const reduced = await listPublicReservationBooks(pool, { category, includeUnavailable: true, onlyAvailable: true });
+  assert.equal(reduced.items[0].availableCopiesCount, 5);
+  await withTransaction(pool, tx => cancelReservation(tx, { id: held.reservation.id }, fixture.actor));
+  await pool.query("UPDATE book_copies SET status = 'MAINTENANCE' WHERE id IN (SELECT bc.id FROM book_copies bc JOIN book_editions be ON be.id = bc.edition_id WHERE be.title_id = $1)", [fixture.titleId]);
+  assert.equal((await listPublicReservationBooks(pool, { category })).total, 0);
+  const all = await listPublicReservationBooks(pool, { category, includeUnavailable: true });
+  assert.equal(all.total, 52);
+  assert(all.items.every(b => b.availableCopiesCount === 0));
 });
 
 test('PG: handoff, return, quota and borrower identity stay consistent', async () => {

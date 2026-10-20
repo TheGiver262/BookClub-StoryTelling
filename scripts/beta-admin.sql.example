@@ -1,0 +1,24 @@
+-- Template cho admin đầu tiên. Chỉnh 3 giá trị NULL; chạy trong SQL Editor SAU 01-schema và 02-access.
+-- Không chứa mật khẩu. Tạo Auth user trên Dashboard trước, email admin@internal.ysbk.edu.vn, Auto Confirm.
+DO $$
+DECLARE
+  auth_user_id uuid := NULL; -- UUID từ Authentication > Users
+  admin_name text := NULL; -- Họ tên thật
+  admin_phone text := NULL; -- SĐT thật
+  member_id uuid;
+BEGIN
+  IF auth_user_id IS NULL OR admin_name IS NULL OR admin_phone IS NULL THEN
+    RAISE EXCEPTION 'Điền UUID, họ tên và SĐT trước khi chạy';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = auth_user_id AND lower(email) = 'admin@internal.ysbk.edu.vn' AND email_confirmed_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'Auth user chưa đúng email hoặc chưa xác nhận';
+  END IF;
+  IF EXISTS (SELECT 1 FROM members WHERE is_admin) THEN
+    RAISE EXCEPTION 'Đã có admin; không chạy lại bootstrap';
+  END IF;
+  INSERT INTO members (full_name, username, gen, team, role_title, school_year, phone, is_admin, is_active)
+  VALUES (admin_name, 'admin', 'Ban quản trị', 'BAN_CHU_NHIEM', 'Quản trị hệ thống', 'CLB YSBK', admin_phone, true, true)
+  RETURNING id INTO member_id;
+  INSERT INTO internal_identities (member_id, username, normalized_username, provider_subject)
+  VALUES (member_id, 'admin', 'admin', auth_user_id::text);
+END $$;

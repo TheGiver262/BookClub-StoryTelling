@@ -32,6 +32,7 @@ export interface TurnstileVerifyResult {
 export interface TurnstileVerifyOptions {
   expectedHostname?: string;
   expectedAction?: string;
+  allowTestKeys?: boolean;
 }
 
 /**
@@ -90,6 +91,11 @@ export async function verifyTurnstileToken(
     const data = (await res.json()) as any;
     const isSuccess = data.success === true;
     const errorCodes = Array.isArray(data['error-codes']) ? data['error-codes'] : undefined;
+
+    // Official dummy keys omit the real hostname/action; the caller must restrict this to loopback development.
+    if (isSuccess && options?.allowTestKeys && secret === '1x0000000000000000000000000000000AA' && data.metadata?.result_with_testing_key === true) {
+      return { success: true, hostname: data.hostname, challengeTs: data.challenge_ts };
+    }
 
     // Kiểm tra tính hợp lệ bổ sung nếu cấu hình hostname/action
     if (isSuccess && options?.expectedHostname && data.hostname !== options.expectedHostname) {

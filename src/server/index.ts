@@ -5,6 +5,10 @@ import { expireReservations } from './reservations/service.ts';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const path = new URL(request.url).pathname;
+    if (env.ASSETS && !path.startsWith('/api/') && path !== '/api' && path !== '/health' && !path.startsWith('/health/')) {
+      return env.ASSETS.fetch(request);
+    }
     // Workers sockets belong to the request that opened them.
     const requestEnv = { ...env };
     try { return await handleRequest(request, requestEnv); }

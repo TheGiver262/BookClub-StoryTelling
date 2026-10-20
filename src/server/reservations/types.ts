@@ -46,6 +46,12 @@ export interface CreateReservationResult {
   isReplay?: boolean;
 }
 
+export interface StaffReservationDto extends PublicReservationDto {
+  fullName: string;
+  phone: string;
+  fulfillmentIssue: 'COPY_UNAVAILABLE' | null;
+}
+
 export interface FulfillReservationInput {
   borrowerId?: string;
   paymentMethod: 'CASH' | 'BANK_TRANSFER';
@@ -68,6 +74,7 @@ export interface ExpireReservationsResult {
 }
 
 export interface PublicReservationBookDto {
+  coverPrice?: number | null;
   titleId: string;
   title: string;
   author: string;

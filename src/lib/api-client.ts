@@ -2464,23 +2464,27 @@ export const apiClient = {
   },
 
   // 14. Public & Staff Book Reservations
-  async listPublicReservationBooks(params?: { search?: string; page?: number; limit?: number }): Promise<{ items: any[]; total: number; page: number; limit: number }> {
+  async listPublicReservationBooks(params?: { search?: string; category?: string; page?: number; limit?: number; includeUnavailable?: boolean; onlyAvailable?: boolean }): Promise<{ items: any[]; total: number; page: number; limit: number; categories?: string[] }> {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
+    if (params?.category) query.set('category', params.category);
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.includeUnavailable) query.set('includeUnavailable', 'true');
+    if (params?.onlyAvailable) query.set('onlyAvailable', 'true');
     const qs = query.toString() ? `?${query.toString()}` : '';
-    const res = await requestJson<any>(`/api/v1/public/reservation-books${qs}`, { method: 'GET' });
+    const res = await requestJson<any>(`/api/v1/public/reservation-books${qs}`, { method: 'GET', cache: 'no-store' });
     return {
       items: unwrapData<any[]>(res) || [],
       total: res?.meta?.total ?? (Array.isArray(res?.data) ? res.data.length : 0),
       page: res?.meta?.page ?? 1,
       limit: res?.meta?.limit ?? 20,
+      categories: res?.meta?.categories,
     };
   },
 
   async listPublicPickupSchedules(): Promise<any[]> {
-    const res = await requestJson<any>('/api/v1/public/pickup-schedules', { method: 'GET' });
+    const res = await requestJson<any>('/api/v1/public/pickup-schedules', { method: 'GET', cache: 'no-store' });
     return unwrapData<any[]>(res) || [];
   },
 
@@ -2521,7 +2525,7 @@ export const apiClient = {
     return unwrapData<any>(res);
   },
 
-  async listStaffReservations(params?: { scheduleId?: string; status?: string; search?: string; page?: number; limit?: number }): Promise<{ items: any[]; total: number; page: number; limit: number }> {
+  async listStaffReservations(params?: { scheduleId?: string; status?: string; search?: string; page?: number; limit?: number }): Promise<{ items: any[]; total: number; page: number; limit: number; attentionCount: number }> {
     const query = new URLSearchParams();
     if (params?.scheduleId) query.set('scheduleId', params.scheduleId);
     if (params?.status) query.set('status', params.status);
@@ -2535,6 +2539,7 @@ export const apiClient = {
       total: res?.meta?.total ?? (Array.isArray(res?.data) ? res.data.length : 0),
       page: res?.meta?.page ?? 1,
       limit: res?.meta?.limit ?? 50,
+      attentionCount: res?.meta?.attentionCount ?? 0,
     };
   },
 
@@ -2557,6 +2562,10 @@ export const apiClient = {
       body: JSON.stringify({ reason }),
     });
     return unwrapData<any>(res);
+  },
+
+  async reportStaffReservationIssue(reservationId: string, reason: string): Promise<void> {
+    await requestJson(`/api/v1/reservations/${reservationId}/issue`, { method: 'POST', body: JSON.stringify({ reason }) });
   },
 };
 

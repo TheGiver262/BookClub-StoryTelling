@@ -7,14 +7,22 @@ import {
 import { formatVND, type Book } from '../data/mockData';
 import { apiClient, type PublicApprovedResultDto, type SafePublicActivityDto, type SafePublicReviewDto } from '../lib/api-client';
 import ReservationSection from './ReservationSection';
+import { startAvailabilityRefresh } from '../lib/availability-refresh';
 
-export default function PublicPortal() {
+const BOOKS_PER_PAGE = 50;
+
+export default function PublicPortal({ catalogOnly = false }: { catalogOnly?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('TẤT CẢ');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [activeTab, setActiveTab] = useState<'sach' | 'hoat-dong' | 'review' | 'tuyen' | 'dat-sach' | 'tra-don'>('sach');
   const [reservationBookId, setReservationBookId] = useState<string>('');
   const [publicBooks, setPublicBooks] = useState<Book[]>([]);
+  const [bookPage, setBookPage] = useState(1);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [catalogCategories, setCatalogCategories] = useState<string[]>([]);
+  const [bookTotal, setBookTotal] = useState(0);
+  const [booksUpdatedAt, setBooksUpdatedAt] = useState('');
   const [bookAvailability, setBookAvailability] = useState<Record<string, number>>({});
   const [bookDeposits, setBookDeposits] = useState<Record<string, number>>({});
   const [publicSchedules, setPublicSchedules] = useState<any[]>([]);
@@ -22,20 +30,39 @@ export default function PublicPortal() {
   const [publicReviews, setPublicReviews] = useState<SafePublicReviewDto[]>([]);
   const [publicResults, setPublicResults] = useState<PublicApprovedResultDto[]>([]);
   const [publicError, setPublicError] = useState('');
+  const [bookError, setBookError] = useState('');
   useEffect(() => {
+    if (activeTab !== 'sach') return;
     let active = true;
-    const task = window.setTimeout(() => {
-      apiClient.listPublicReservationBooks({ search: searchQuery, limit: 100 }).then(result => {
+    let busy = false;
+    const refresh = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const result = await apiClient.listPublicReservationBooks({ search: searchQuery,
+          category: selectedCategory === 'TẤT CẢ' ? undefined : selectedCategory, page: bookPage, limit: BOOKS_PER_PAGE, includeUnavailable: true, onlyAvailable });
         if (!active) return;
-        setPublicBooks(result.items.map(b => ({ id: b.titleId, title: b.title, authors: [b.author], categories: [b.category], coverImage: b.coverImageUrl,
-          publisher: '', publishYear: 0, description: '', coverPrice: null, copies: [] })));
+        setPublicBooks(result.items.map(b => ({ id: b.titleId, title: b.title, authors: [b.author], categories: b.category.split(', '), coverImage: b.coverImageUrl,
+          publisher: '', publishYear: 0, description: '', coverPrice: b.coverPrice ?? null, copies: [] })));
         setBookAvailability(Object.fromEntries(result.items.map(b => [b.titleId, b.availableCopiesCount])));
         setBookDeposits(Object.fromEntries(result.items.map(b => [b.titleId, b.standardDeposit])));
-      }).catch(() => { if (active) { setPublicBooks([]); setPublicError('Không tải được danh mục sách. Vui lòng tải lại trang.'); } });
-    }, 200);
-    return () => { active = false; window.clearTimeout(task); };
-  }, [searchQuery]);
+        setBookTotal(result.total);
+        setCatalogCategories(result.categories || []);
+        setBookError('');
+        if (bookPage > Math.max(1, Math.ceil(result.total / BOOKS_PER_PAGE))) setBookPage(1);
+        setBooksUpdatedAt(new Date().toLocaleTimeString('vi-VN'));
+      } catch {
+        if (active) { setPublicBooks([]); setBookAvailability({}); setBooksUpdatedAt(''); setBookError('Không tải được danh mục sách. Vui lòng thử lại.'); }
+      } finally { busy = false; }
+    };
+    setPublicBooks([]);
+    setBooksUpdatedAt('');
+    const task = window.setTimeout(() => void refresh(), 200);
+    const stop = startAvailabilityRefresh(refresh);
+    return () => { active = false; window.clearTimeout(task); stop(); };
+  }, [searchQuery, selectedCategory, bookPage, activeTab, onlyAvailable]);
   useEffect(() => {
+    if (catalogOnly) return;
     let active = true;
     const load = async () => {
       const results = await Promise.allSettled([apiClient.listPublicPickupSchedules(), apiClient.listPublicActivities(), apiClient.getPublicReviews(), apiClient.getPublicApprovedResults()]);
@@ -48,16 +75,17 @@ export default function PublicPortal() {
     };
     void load();
     return () => { active = false; };
-  }, []);
+  }, [catalogOnly]);
 
   useEffect(() => {
+    if (catalogOnly) return;
     if (new URLSearchParams(window.location.search).get('public') === '1') return;
     let active = true;
     apiClient.getMe().then(actor => {
       if (active && actor.isActive && (actor.role === 'MEMBER' || actor.role === 'ADMIN') && !actor.isAlumni) window.location.replace('/noi-bo');
     }).catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [catalogOnly]);
   
   // Real Review submission states (Fixed R10)
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -75,32 +103,36 @@ export default function PublicPortal() {
 
   // Deep linking and URL preservation on mount & refresh
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const syncLocation = () => {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam === 'sach' || tabParam === 'hoat-dong' || tabParam === 'review' || tabParam === 'tuyen' || tabParam === 'dat-sach' || tabParam === 'tra-don') {
+      if (tabParam === 'sach' || tabParam === 'dat-sach' || tabParam === 'tra-don' || !catalogOnly && (tabParam === 'hoat-dong' || tabParam === 'review' || tabParam === 'tuyen')) {
         setActiveTab(tabParam);
-      }
-      const bookId = params.get('sach');
-      if (bookId) {
-        setReservationBookId(bookId);
-        const found = publicBooks.find(b => b.id === bookId);
-        if (found) {
-          setSelectedBook(found);
-          setReviewBookId(found.id);
-        }
-      }
+      } else setActiveTab('sach');
+      setReservationBookId(params.get('sach') || '');
+      setSelectedBook(null);
       if (window.location.hash.startsWith('#token=')) {
         setActiveTab('tra-don');
       }
-    }
-  }, []);
+    };
+    syncLocation();
+    window.addEventListener('popstate', syncLocation);
+    return () => window.removeEventListener('popstate', syncLocation);
+  }, [catalogOnly]);
 
-  const switchTab = (tab: 'sach' | 'hoat-dong' | 'review' | 'tuyen' | 'dat-sach' | 'tra-don') => {
+  useEffect(() => {
+    if (activeTab !== 'sach') return;
+    const bookId = new URLSearchParams(window.location.search).get('sach');
+    const found = publicBooks.find(book => book.id === bookId);
+    if (found) { setSelectedBook(found); setReviewBookId(found.id); }
+  }, [publicBooks, activeTab, reservationBookId]);
+
+  const switchTab = (tab: 'sach' | 'hoat-dong' | 'review' | 'tuyen' | 'dat-sach' | 'tra-don', bookId?: string) => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('tab', tab);
+      if (bookId) url.searchParams.set('sach', bookId);
       window.history.pushState(null, '', url.toString());
     }
   };
@@ -151,14 +183,9 @@ export default function PublicPortal() {
     }
   };
 
-  const categories = ['TẤT CẢ', 'Kỹ năng sống', 'Tư duy', 'Công nghệ', 'Văn hóa Bách Khoa', 'Lịch sử', 'Tiểu thuyết'];
+  const categories = ['TẤT CẢ', ...catalogCategories];
 
-  const filteredBooks = publicBooks.filter((b) => {
-    const matchesSearch = b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          b.authors.some(a => a.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'TẤT CẢ' || b.categories.includes(selectedCategory);
-    return matchesSearch && matchesCategory;
-  });
+  const filteredBooks = publicBooks;
 
   const filteredCandidates = publicResults.filter(c => c.candidateCode.toLowerCase().includes(candidateQuery.toLowerCase()));
 
@@ -166,19 +193,19 @@ export default function PublicPortal() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Banner Navigation */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex flex-wrap lg:flex-nowrap gap-4 items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
             <img 
-              src="/assets/logo-ysbk.png" 
+              src="/book/assets/club-logo-v8.svg"
               alt="Logo CLB Yêu Sách Bách Khoa Hà Nội" 
               className="h-10 w-auto object-contain"
             />
             <div>
-              <div className="font-bold text-base sm:text-lg text-brand-navy leading-tight">
-                CLB Yêu Sách Bách Khoa
+              <div className="font-serif font-medium text-sm sm:text-base text-brand-navy leading-tight">
+                Câu lạc bộ Yêu Sách Bách Khoa Hà Nội
               </div>
               <div className="text-xs text-brand-red font-medium tracking-wide">
-                Mở sách đọc tương lai!
+                Mở sách, đọc tương lai
               </div>
             </div>
           </div>
@@ -203,27 +230,28 @@ export default function PublicPortal() {
             >
               Tra Cứu Đơn
             </button>
-            <button 
+            {!catalogOnly && (<button
               onClick={() => switchTab('hoat-dong')}
               className={`hover:text-brand-navy transition ${activeTab === 'hoat-dong' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
             >
               Lịch Trực & Sự Kiện
-            </button>
-            <button 
+            </button>)}
+            {!catalogOnly && (<button
               onClick={() => switchTab('review')}
               className={`hover:text-brand-navy transition ${activeTab === 'review' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
             >
               Góc Review
-            </button>
-            <button 
+            </button>)}
+            {!catalogOnly && (<button
               onClick={() => switchTab('tuyen')}
               className={`hover:text-brand-navy transition ${activeTab === 'tuyen' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
             >
               Kết Quả Tuyển Gen
-            </button>
+            </button>)}
           </nav>
 
           <div className="flex items-center gap-3">
+            <a href="/?public=1" className="text-sm text-brand-navy underline underline-offset-4">Về cuốn sách</a>
             <a 
               href="/noi-bo" 
               className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-md bg-brand-navy text-white hover:bg-brand-navy-hover transition shadow-sm"
@@ -254,24 +282,24 @@ export default function PublicPortal() {
           >
             Tra Cứu Đơn
           </button>
-          <button 
+          {!catalogOnly && (<button
             onClick={() => switchTab('hoat-dong')}
             className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'hoat-dong' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
           >
             Lịch Trực Bàn
-          </button>
-          <button 
+          </button>)}
+          {!catalogOnly && (<button
             onClick={() => switchTab('review')}
             className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'review' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
           >
             Góc Review
-          </button>
-          <button 
+          </button>)}
+          {!catalogOnly && (<button
             onClick={() => switchTab('tuyen')}
             className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'tuyen' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
           >
             Kết Quả Tuyển
-          </button>
+          </button>)}
         </div>
       </header>
 
@@ -282,11 +310,11 @@ export default function PublicPortal() {
             <BookOpen className="w-3.5 h-3.5" />
             Văn hóa đọc sinh viên Bách Khoa
           </span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight leading-tight">
-            Mở sách đọc tương lai!
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-slate-900 tracking-tight leading-tight">
+            {catalogOnly ? 'Một cuốn sách. Một hành trình mới.' : 'Mở sách, đọc tương lai'}
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-            Hệ thống tra cứu sách, lịch trực và quản lý mượn–trả của CLB Yêu Sách Bách Khoa Hà Nội tại Thư viện Tạ Quang Bửu & Văn phòng Hội Sinh viên.
+            {catalogOnly ? 'Khám phá tủ sách chung của CLB. Đặt một quyển, chọn buổi trực và hẹn gặp chúng mình — không cần tài khoản.' : 'Những hoạt động, chia sẻ và thông tin tuyển thành viên của CLB Yêu Sách Bách Khoa Hà Nội.'}
           </p>
 
           {/* Quick Search Bar */}
@@ -296,9 +324,11 @@ export default function PublicPortal() {
             </div>
             <input 
               type="text" 
+              aria-label="Tìm sách theo tên hoặc tác giả"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
+                setBookPage(1);
                 if (activeTab !== 'sach') setActiveTab('sach');
               }}
               placeholder="Tìm theo tên sách, tác giả (ví dụ: Đắc Nhân Tâm, Clean Code...)"
@@ -306,7 +336,8 @@ export default function PublicPortal() {
             />
             {searchQuery && (
               <button 
-                onClick={() => setSearchQuery('')}
+                aria-label="Xóa từ khóa tìm sách"
+                onClick={() => { setSearchQuery(''); setBookPage(1); }}
                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
@@ -319,6 +350,7 @@ export default function PublicPortal() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {publicError && <p role="alert" className="mb-4 text-sm text-rose-700">{publicError}</p>}
+        {bookError && <p role="alert" className="mb-4 text-sm text-rose-700">{bookError}</p>}
         
         {/* TAB 1: TRA CỨU SÁCH */}
         {activeTab === 'sach' && (
@@ -332,7 +364,7 @@ export default function PublicPortal() {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => { setSelectedCategory(cat); setBookPage(1); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${
                     selectedCategory === cat 
                       ? 'bg-brand-navy text-white shadow-sm' 
@@ -343,6 +375,11 @@ export default function PublicPortal() {
                 </button>
               ))}
             </div>
+
+            <label className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={onlyAvailable} onChange={e => { setOnlyAvailable(e.target.checked); setBookPage(1); }} className="accent-brand-navy" />
+              Chỉ hiện sách còn có thể giữ chỗ
+            </label>
 
             {/* Book Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -358,8 +395,10 @@ export default function PublicPortal() {
                   >
                     <div className="relative aspect-[3/4] bg-slate-100 overflow-hidden">
                       <img 
-                        src={book.coverImage} 
+                        src={book.coverImage || '/book/assets/club-logo-v8.svg'}
                         alt={book.title} 
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                       />
                       <div className="absolute top-2.5 right-2.5">
@@ -370,7 +409,7 @@ export default function PublicPortal() {
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shadow-sm">
-                            Đang mượn hết
+                            Chưa còn bản để giữ chỗ
                           </span>
                         )}
                       </div>
@@ -386,10 +425,10 @@ export default function PublicPortal() {
                           ))}
                         </div>
                         <h3 className="font-serif font-bold text-slate-900 text-base line-clamp-2 group-hover:text-brand-navy transition">
-                          {book.title}
+                          <button type="button" className="text-left" onClick={event => { event.stopPropagation(); openBookModal(book); }}>{book.title}</button>
                         </h3>
                         <p className="text-xs text-slate-500 mt-1">
-                          {book.authors.join(', ')} · {book.publishYear}
+                          {book.authors.join(', ')}{book.publishYear ? ` · ${book.publishYear}` : ''}
                         </p>
                       </div>
 
@@ -415,7 +454,7 @@ export default function PublicPortal() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setReservationBookId(book.id);
-                              switchTab('dat-sach');
+                              switchTab('dat-sach', book.id);
                             }}
                             className="w-full py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
                           >
@@ -433,10 +472,18 @@ export default function PublicPortal() {
             {filteredBooks.length === 0 && (
               <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
                 <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h4 className="font-semibold text-slate-700">Không tìm thấy sách phù hợp</h4>
-                <p className="text-sm text-slate-400 mt-1">Thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc thể loại.</p>
+                <h4 className="font-semibold text-slate-700">{booksUpdatedAt || bookError ? 'Không tìm thấy sách phù hợp' : 'Đang tải danh mục sách...'}</h4>
+                <p className="text-sm text-slate-400 mt-1">{booksUpdatedAt || bookError ? 'Thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc thể loại.' : 'Đang cập nhật tồn sách từ máy chủ.'}</p>
               </div>
             )}
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+              <span>{booksUpdatedAt ? `${bookTotal} đầu sách${onlyAvailable ? ' còn có thể giữ chỗ' : ''} · ${BOOKS_PER_PAGE} cuốn/trang · Cập nhật ${booksUpdatedAt}` : 'Đang cập nhật danh mục...'}</span>
+              <div className="flex items-center gap-3">
+                <button disabled={bookPage === 1} onClick={() => setBookPage(p => p - 1)} className="px-3 py-2 border rounded disabled:opacity-40">Trang trước</button>
+                <span>Trang {bookPage} / {Math.max(1, Math.ceil(bookTotal / BOOKS_PER_PAGE))}</span>
+                <button disabled={bookPage * BOOKS_PER_PAGE >= bookTotal} onClick={() => setBookPage(p => p + 1)} className="px-3 py-2 border rounded disabled:opacity-40">Trang sau</button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -676,8 +723,9 @@ export default function PublicPortal() {
                     onClick={() => {
                       setReservationBookId(selectedBook.id);
                       closeBookModal();
-                      switchTab('dat-sach');
+                      switchTab('dat-sach', selectedBook.id);
                     }}
+                    disabled={!bookAvailability[selectedBook.id]}
                     className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-sm"
                   >
                     <BookOpen className="w-3.5 h-3.5" />
@@ -828,7 +876,7 @@ export default function PublicPortal() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <img src="/assets/logo-ysbk.png" alt="Logo YSBK" className="h-8 w-auto brightness-200" />
+              <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" className="h-8 w-auto brightness-200" />
               <span className="font-bold text-white text-sm">CLB Yêu Sách Bách Khoa Hà Nội</span>
             </div>
             <p className="text-slate-400 leading-relaxed">
@@ -850,7 +898,6 @@ export default function PublicPortal() {
             <p className="text-slate-400 leading-relaxed">
               Email: clbyeusachbachkhoahanoi@gmail.com<br />
               Fanpage: fb.com/CLBYeuSachBachKhoaHaNoi<br />
-              Hệ thống thử nghiệm phiên bản v0.11 (Mô phỏng UI Prototype).
             </p>
           </div>
         </div>

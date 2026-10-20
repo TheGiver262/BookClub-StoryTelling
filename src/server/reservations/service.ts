@@ -25,6 +25,7 @@ import type {
   CreateReservationInput,
   ReservationRequestContext,
   PublicReservationDto,
+  StaffReservationDto,
   CreateReservationResult,
   FulfillReservationInput,
   FulfillReservationResult,
@@ -36,6 +37,7 @@ import type {
 import { calculateDeposit } from '../catalog/rules.ts';
 import { issueLoanReceipt } from '../circulation/service.ts';
 import { computePayloadHash } from '../shared/idempotency.ts';
+import { recordAuditLog } from '../shared/audit.ts';
 
 export class ReservationError extends AppError {
   constructor(message: string, code = 'RESERVATION_ERROR', httpStatus = 400) {
@@ -768,35 +770,41 @@ export async function expireReservations(
  */
 export async function listPublicReservationBooks(
   db: Queryable,
-  params?: { search?: string; page?: number; limit?: number }
-): Promise<{ items: PublicReservationBookDto[]; total: number; page: number; limit: number }> {
+  params?: { search?: string; category?: string; page?: number; limit?: number; includeUnavailable?: boolean; onlyAvailable?: boolean }
+): Promise<{ items: PublicReservationBookDto[]; total: number; page: number; limit: number; categories?: string[] }> {
   const page = Number.isSafeInteger(params?.page) && params!.page! > 0 ? params!.page! : 1;
   const limit = Number.isSafeInteger(params?.limit) && params!.limit! > 0 ? Math.min(100, params!.limit!) : 20;
   const search = params?.search?.trim() || '';
-  const available = `WITH available AS (
-    SELECT bt.id AS title_id, bt.title, bc.barcode, bc.cover_price, be.cover_image_url
-    FROM book_titles bt JOIN book_editions be ON be.title_id = bt.id
-    JOIN book_copies bc ON bc.edition_id = be.id
-    WHERE bc.status = 'AVAILABLE'
+  const category = params?.category?.trim() || '';
+  const available = `WITH matching_copies AS (
+    SELECT bt.id AS title_id, bt.title, bc.barcode, bc.cover_price, be.cover_image_url,
+      COALESCE(bc.status = 'AVAILABLE'
       AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.copy_id = bc.id AND r.status = 'HELD' AND r.expires_at > clock_timestamp())
-      AND NOT EXISTS (SELECT 1 FROM loan_items li WHERE li.copy_id = bc.id AND li.returned_at IS NULL AND li.carried_forward_at IS NULL)
-      AND ($1 = '' OR bt.id::text = $1 OR unaccent(lower(bt.title)) ILIKE '%' || unaccent(lower($1)) || '%'
+      AND NOT EXISTS (SELECT 1 FROM loan_items li WHERE li.copy_id = bc.id AND li.returned_at IS NULL AND li.carried_forward_at IS NULL), FALSE) AS is_available
+    FROM book_titles bt LEFT JOIN book_editions be ON be.title_id = bt.id
+    LEFT JOIN book_copies bc ON bc.edition_id = be.id
+    WHERE ($1 = '' OR bt.id::text = $1 OR unaccent(lower(bt.title)) ILIKE '%' || unaccent(lower($1)) || '%'
         OR EXISTS (SELECT 1 FROM book_title_authors bta JOIN authors a ON a.id = bta.author_id
           WHERE bta.title_id = bt.id AND unaccent(lower(a.name)) ILIKE '%' || unaccent(lower($1)) || '%'))
-  )`;
-  const count = await db.query<{ total: string }>(`${available} SELECT COUNT(DISTINCT title_id) AS total FROM available`, [search]);
+      AND ($2 = '' OR EXISTS (SELECT 1 FROM book_title_categories btc JOIN categories c ON c.id = btc.category_id WHERE btc.title_id = bt.id AND c.name = $2))
+  ), available AS (SELECT * FROM matching_copies ${params?.includeUnavailable && !params?.onlyAvailable ? '' : 'WHERE is_available'})`;
+  const count = await db.query<{ total: string }>(`${available} SELECT COUNT(DISTINCT title_id) AS total FROM available`, [search, category]);
   const rows = await db.query<any>(`${available}, chosen AS (
-    SELECT DISTINCT ON (title_id) *, COUNT(*) OVER (PARTITION BY title_id) AS available_copies_count
-    FROM available ORDER BY title_id, barcode
+    SELECT DISTINCT ON (title_id) *, COUNT(*) FILTER (WHERE is_available) OVER (PARTITION BY title_id) AS available_copies_count
+    FROM available ORDER BY title_id, is_available DESC, barcode NULLS LAST
   ) SELECT chosen.*,
     (SELECT string_agg(a.name, ', ' ORDER BY a.name) FROM book_title_authors bta JOIN authors a ON a.id = bta.author_id WHERE bta.title_id = chosen.title_id) AS author,
     (SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM book_title_categories btc JOIN categories c ON c.id = btc.category_id WHERE btc.title_id = chosen.title_id) AS category
-    FROM chosen ORDER BY title, title_id LIMIT $2 OFFSET $3`, [search, limit, (page - 1) * limit]);
+    FROM chosen ORDER BY title, title_id LIMIT $3 OFFSET $4`, [search, category, limit, (page - 1) * limit]);
+  const categories = params?.includeUnavailable
+    ? (await db.query<{ name: string }>('SELECT DISTINCT c.name FROM categories c JOIN book_title_categories btc ON btc.category_id = c.id ORDER BY c.name')).rows.map(row => row.name)
+    : undefined;
   return {
     items: rows.rows.map(r => ({ titleId: r.title_id, title: r.title, author: r.author || '', category: r.category || '',
+      coverPrice: r.cover_price == null ? null : Number(r.cover_price),
       coverImageUrl: r.cover_image_url || undefined, standardDeposit: Number(calculateDeposit(r.cover_price == null ? null : BigInt(r.cover_price))),
       availableCopiesCount: Number(r.available_copies_count) })),
-    total: Number(count.rows[0]?.total || 0), page, limit,
+    total: Number(count.rows[0]?.total || 0), page, limit, categories,
   };
 }
 
@@ -836,10 +844,37 @@ export async function listPublicPickupSchedules(db: Queryable): Promise<PublicPi
 /**
  * 8. Danh sách đơn chờ nhận cho thành viên tại quầy trực (PRF-03 canonical schema)
  */
+// Call inside the caller's transaction: reporting an incident never cancels the reader's hold.
+export async function reportReservationIssue(db: Queryable, reservationId: string, actor: AuthenticatedActor, reason: unknown): Promise<void> {
+  if (!actor?.isActive || actor.isAlumni || !['MEMBER', 'ADMIN'].includes(actor.role)) {
+    throw new ForbiddenError('Chỉ thành viên nội bộ mới được báo sự cố.', 'FORBIDDEN');
+  }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reservationId)) {
+    throw new BadRequestError('Mã định danh đơn không hợp lệ.', 'INVALID_RESERVATION_ID');
+  }
+  if (typeof reason !== 'string' || !reason.trim() || reason.trim().length > 1000) {
+    throw new BadRequestError('Nhập lý do sự cố từ 1 đến 1000 ký tự.', 'INVALID_INCIDENT_REASON');
+  }
+  const result = await db.query<any>(`SELECT r.copy_id, r.status, r.expires_at > clock_timestamp() AS is_current,
+      bc.status AS copy_status FROM reservations r JOIN book_copies bc ON bc.id = r.copy_id
+      WHERE r.id = $1 FOR UPDATE OF r, bc`, [reservationId]);
+  const row = result.rows[0];
+  if (!row) throw new ReservationNotFoundError();
+  if (row.status !== 'HELD' || !row.is_current) throw new ConflictError('Chỉ báo sự cố cho đơn đang giữ chỗ còn hiệu lực.', 'RESERVATION_NOT_HELD');
+  if (row.copy_status === 'MAINTENANCE') return;
+  if (row.copy_status !== 'AVAILABLE') throw new ConflictError('Bản sách đã có trạng thái cần xử lý. Hãy kiểm tra cảnh báo hiện tại.', 'COPY_UNAVAILABLE');
+  const loans = await db.query('SELECT id FROM loan_items WHERE copy_id = $1 AND returned_at IS NULL AND carried_forward_at IS NULL LIMIT 1', [row.copy_id]);
+  if (loans.rows.length) throw new ConflictError('Bản sách đang có khoản mượn chưa trả; cần kiểm tra trước khi đổi trạng thái.', 'COPY_UNAVAILABLE');
+  await db.query(`UPDATE book_copies SET status = 'MAINTENANCE', condition_note = concat_ws(E'\\n', NULLIF(condition_note, ''), $2::text) WHERE id = $1`,
+    [row.copy_id, `Sự cố giữ chỗ: ${reason.trim()}`]);
+  await recordAuditLog(db, { actorId: actor.memberId || actor.userId, action: 'RESERVATION_FULFILLMENT_ISSUE', targetResource: 'book_copies', targetId: row.copy_id,
+    details: { reservationId, reason: reason.trim(), previousStatus: row.copy_status, status: 'MAINTENANCE' } });
+}
+
 export async function listStaffReservations(
   db: Queryable,
   filter: ReservationFilter
-): Promise<{ items: PublicReservationDto[]; total: number; page: number; limit: number }> {
+): Promise<{ items: StaffReservationDto[]; total: number; page: number; limit: number; attentionCount: number }> {
   const page = Number.isSafeInteger(filter.page) && filter.page! > 0 ? filter.page! : 1;
   const limit = Number.isSafeInteger(filter.limit) && filter.limit! > 0 ? Math.min(100, filter.limit!) : 50;
   const offset = (page - 1) * limit;
@@ -871,15 +906,19 @@ export async function listStaffReservations(
   }
 
   const whereClause = conditions.join(' AND ');
+  const issueCondition = `r.status = 'HELD' AND r.expires_at > clock_timestamp() AND
+    (bc.status <> 'AVAILABLE' OR EXISTS (SELECT 1 FROM loan_items li WHERE li.copy_id = r.copy_id AND li.returned_at IS NULL AND li.carried_forward_at IS NULL))`;
 
-  const countRes = await db.query<{ total: string }>(
-    `SELECT COUNT(*) AS total FROM reservations r WHERE ${whereClause}`,
+  const countRes = await db.query<{ total: string; attention_count: string }>(
+    `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE ${issueCondition}) AS attention_count
+     FROM reservations r JOIN book_copies bc ON bc.id = r.copy_id WHERE ${whereClause}`,
     values
   );
   const total = Number(countRes.rows[0]?.total || 0);
 
   const selectSql = `
     SELECT r.*, bt.title AS book_title, bc.barcode AS copy_barcode,
+           (${issueCondition}) AS requires_attention,
            (SELECT string_agg(a.name, ', ' ORDER BY a.name) 
             FROM book_title_authors bta 
             JOIN authors a ON a.id = bta.author_id 
@@ -888,13 +927,14 @@ export async function listStaffReservations(
     JOIN book_titles bt ON r.title_id = bt.id
     JOIN book_copies bc ON r.copy_id = bc.id
     WHERE ${whereClause}
-    ORDER BY r.created_at DESC
+    ORDER BY requires_attention DESC, r.created_at DESC, r.id
     LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
   `;
 
   values.push(limit, offset);
   const rowsRes = await db.query<any>(selectSql, values);
 
-  const items = rowsRes.rows.map(row => ({ ...toPublicReservationDto(row), fullName: row.full_name, phone: row.phone, copyBarcode: row.copy_barcode }));
-  return { items, total, page, limit };
+  const items: StaffReservationDto[] = rowsRes.rows.map(row => ({ ...toPublicReservationDto(row), fullName: row.full_name, phone: row.phone, copyBarcode: row.copy_barcode,
+    fulfillmentIssue: row.requires_attention ? 'COPY_UNAVAILABLE' : null }));
+  return { items, total, page, limit, attentionCount: Number(countRes.rows[0]?.attention_count || 0) };
 }

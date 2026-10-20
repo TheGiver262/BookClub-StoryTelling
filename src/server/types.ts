@@ -1,6 +1,8 @@
 export type ActorRole = 'ADMIN' | 'MEMBER' | 'ALUMNI' | 'GUEST' | 'ANONYMOUS';
 
 export interface Env {
+  ASSETS?: { fetch(request: Request): Promise<Response> };
+  HYPERDRIVE?: { connectionString: string };
   DATABASE_URL?: string;
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
@@ -11,6 +13,7 @@ export interface Env {
   RESERVATION_IP_SECRET?: string;
   TURNSTILE_EXPECTED_HOSTNAME?: string;
   NODE_ENV?: string;
+  LOCAL_TESTING?: string;
 }
 
 export interface AuthenticatedActor {

@@ -10,18 +10,25 @@ pg.types.setTypeParser(1082, (val: string) => val);
 let poolInstance: Pool | null = null;
 const requestPools = new WeakMap<Env, Pool>();
 
+function databaseUrl(env?: Env): string | undefined {
+  if (env?.NODE_ENV === 'production' && !env.HYPERDRIVE?.connectionString) {
+    throw new Error('HYPERDRIVE is required in production.');
+  }
+  return env?.HYPERDRIVE?.connectionString || env?.DATABASE_URL || process.env.DATABASE_URL;
+}
+
 export function getDatabasePool(env?: Env): Pool {
   const existing = env ? requestPools.get(env) : poolInstance;
   if (existing) return existing;
 
-  const dbUrl = env?.DATABASE_URL || process.env.DATABASE_URL;
+  const dbUrl = databaseUrl(env);
   if (!dbUrl) {
     throw new Error('DATABASE_URL is not configured.');
   }
 
   const pool = new PgPool({
     connectionString: dbUrl,
-    max: 10,
+    max: 2,
     idleTimeoutMillis: 5000,
     connectionTimeoutMillis: 3000,
   });
@@ -39,7 +46,7 @@ export async function closeDatabasePool(env: Env): Promise<void> {
 
 export async function checkDatabaseReadiness(env?: Env): Promise<{ ok: boolean; message?: string }> {
   try {
-    const dbUrl = env?.DATABASE_URL || process.env.DATABASE_URL;
+    const dbUrl = databaseUrl(env);
     if (!dbUrl) {
       return { ok: false, message: 'DATABASE_URL chưa được cấu hình.' };
     }

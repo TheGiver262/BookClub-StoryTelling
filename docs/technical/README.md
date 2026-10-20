@@ -10,6 +10,10 @@ Tác giả: Antigravity (Kiến trúc sư hệ thống & Kỹ sư Backend).
 
 | Tài liệu | Nội dung chính | Cấp độ bằng chứng / Trạng thái |
 |---|---|---|
+| [book-landing-local.md](book-landing-local.md) | Landing cuốn sách bản chính, tủ sách 50 cuốn/trang, theme công khai/nội bộ và kiểm chứng | Đã tích hợp local 4321; chưa deploy |
+| [local-development.md](local-development.md) | Docker local, cổng 4321, tài khoản, volume bền vững, kiểm thử và checklist trước beta | Ưu tiên hiện tại; chưa triển khai beta |
+| [beta-deployment-guide.md](beta-deployment-guide.md) | Dashboard Supabase, Hyperdrive, Workers, Turnstile; gói Free, tải thứ Ba/thứ Năm và chi phí chat | Hướng dẫn cấu hình; chưa deploy cloud |
+| [beta-verification.md](beta-verification.md) | Thay đổi beta, kết quả kiểm thử local và gate cloud còn mở | Xem bằng chứng theo từng môi trường |
 | [architecture.md](architecture.md) | Kiến trúc tổng thể C4, phân rã module, Cloudflare Workers + Supabase PostgreSQL, trade-offs | Thiết kế kiến trúc đề xuất |
 | [domain-data.md](domain-data.md) | Mô hình domain, từ điển dữ liệu, toàn vẹn ràng buộc, index & tìm kiếm tiếng Việt | Thiết kế thực thể & DDL đề xuất |
 | [transactions-finance.md](transactions-finance.md) | Giao dịch tài chính lõi: mượn, trả/chuyển tiếp, 2 quỹ, cọc/phạt, bán lô, khóa & idempotency | Thiết kế giao dịch & Bút toán |

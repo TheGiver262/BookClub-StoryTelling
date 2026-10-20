@@ -1,5 +1,5 @@
 ---
-import PublicPortal from '../components/PublicPortal';
+import BookLanding from '../components/BookLanding.astro';
 import '../styles/global.css';
 ---
 
@@ -8,11 +8,40 @@ import '../styles/global.css';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/assets/logo-ysbk.png" />
-    <title>CLB Yêu Sách Bách Khoa Hà Nội (YSBK) — Mở Sách Đọc Tương Lai</title>
+    <link rel="icon" type="image/svg+xml" href="/book/assets/club-logo-v8.svg" />
+    <link rel="preload" as="font" href="/book/assets/dancing-script.ttf" type="font/ttf" crossorigin />
+    <link rel="preload" as="image" href="/book/assets/cover-minimal-v4.png" />
+    <title>CLB Yêu Sách Bách Khoa Hà Nội (YSBK) — Mở sách, đọc tương lai</title>
     <meta name="description" content="Trang thông tin tra cứu sách, lịch trực bàn và kết nối bạn đọc của Câu lạc bộ Yêu Sách Bách Khoa Hà Nội." />
   </head>
-  <body>
-    <PublicPortal client:load />
+  <body class="no-js">
+    <BookLanding />
+    <section class="loan-guide" id="cach-muon" aria-labelledby="guide-title">
+      <span class="eyebrow">Một cuốn sách đang chờ bạn</span>
+      <h2 id="guide-title">Đọc tiếp câu chuyện của mình.<br />Bắt đầu bằng một cuốn sách.</h2>
+      <p class="guide-intro">Tủ sách chung của Yêu Sách dành cho bạn đọc muốn khám phá, học hỏi và sẻ chia. Bạn không cần tài khoản để đặt trước; hãy chọn một cuốn và hẹn gặp chúng mình tại buổi trực.</p>
+      <div class="guide-steps">
+        <article><span>01</span><h3>Tìm cuốn sách của bạn</h3><p>Mở tủ sách, tìm theo tên hoặc tác giả, lọc thể loại và xem số bản còn có thể giữ chỗ. Mỗi đơn dành cho một quyển.</p></article>
+        <article><span>02</span><h3>Giữ chỗ và chọn buổi trực</h3><p>Điền đầy đủ thông tin, chọn buổi trực thứ Ba hoặc thứ Năm còn nhận đặt, xác nhận tiền cọc và hoàn tất CAPTCHA. Lưu mã và liên kết tra đơn sau khi đặt thành công.</p></article>
+        <article><span>03</span><h3>Gặp nhau ở bàn sách</h3><p>Đến đúng buổi trực đã chọn, đọc tên và số điện thoại để thành viên đối chiếu, làm thủ tục nhận sách. Đơn online mới là giữ chỗ; sách được giữ đến hết buổi trực.</p></article>
+      </div>
+      <p class="guide-rules">Mỗi số điện thoại có tối đa <strong>3 đơn đang giữ hoặc sách đang mượn</strong>. Trả một quyển sẽ mở lại một suất của số điện thoại. Mỗi IP chỉ tạo tối đa <strong>3 đơn trong 24 giờ</strong>, kể cả khi bạn vừa trả sách. Không đến nhận trước khi buổi trực kết thúc, đơn hết hạn và sách được mở lại để người khác đặt. Tình trạng sách được kiểm tra lại khi xác nhận.</p>
+      <div class="guide-actions"><a class="guide-button" href="/sach/" target="_blank" rel="noopener">Khám phá tủ sách <span aria-hidden="true">↗</span></a><a class="guide-secondary" href="/sach/?tab=tra-don" target="_blank" rel="noopener">Tra cứu đơn đã đặt ↗</a></div>
+      <footer class="site-end"><p>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội<br />Mở sách, đọc tương lai</p><nav aria-label="Kết nối CLB"><a href="/cong-dong?tab=hoat-dong">Lịch trực & hoạt động</a><a href="/cong-dong?tab=tuyen">Tuyển thành viên</a><a href="https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/" target="_blank" rel="noreferrer">Facebook ↗</a><a href="/login">Thành viên đăng nhập</a></nav></footer>
+    </section>
+    <script>
+      import { apiClient } from '../lib/api-client';
+      const current = new URL(window.location.href);
+      const tab = current.searchParams.get('tab');
+      // Giữ liên kết đặt/tra đơn cũ, đặc biệt token trong hash không gửi lên máy chủ.
+      if (tab || current.searchParams.has('sach') || current.hash.startsWith('#token=')) {
+        const path = !tab || ['sach', 'dat-sach', 'tra-don'].includes(tab) ? '/sach/' : '/cong-dong';
+        window.location.replace(path + current.search + current.hash);
+      } else if (current.searchParams.get('public') !== '1') {
+        apiClient.getMe().then(actor => {
+          if (actor.isActive && !actor.isAlumni && ['ADMIN', 'MEMBER'].includes(actor.role)) window.location.replace('/noi-bo');
+        }).catch(() => {});
+      }
+    </script>
   </body>
 </html>

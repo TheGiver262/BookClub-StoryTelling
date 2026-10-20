@@ -12,8 +12,10 @@ info:
     email: clbyeusachbachkhoahanoi@gmail.com
 
 servers:
+  - url: /api/v1
+    description: API cùng origin với frontend beta
   - url: https://api.ysbk.edu.vn/api/v1
-    description: Production API Server (Cloudflare Workers Edge Gateway)
+    description: Tên miền minh họa trong thiết kế cũ, chưa phải endpoint được triển khai
   - url: http://localhost:8787/api/v1
     description: Local Development & PoC Testing Server
 
@@ -2588,6 +2590,24 @@ paths:
           required: false
           schema:
             type: string
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tên thể loại chính xác
+        - name: includeUnavailable
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Hiển thị toàn bộ đầu sách, kể cả chưa có bản khả dụng; trả thêm meta.categories để dựng bộ lọc. Không thay đổi điều kiện tạo giữ chỗ.
+        - name: onlyAvailable
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Khi xem toàn bộ danh mục, chỉ lấy các đầu sách còn ít nhất một bản có thể giữ chỗ.
         - name: page
           in: query
           required: false
@@ -2602,7 +2622,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: Danh sách sách và số lượng bản khả dụng
+          description: Danh sách sách và số lượng bản khả dụng, meta.total/page/limit; meta.categories có khi includeUnavailable=true. Trang tra cứu dùng limit=50. Đầu sách chưa có bản khả dụng có availableCopiesCount=0, không được tạo giữ chỗ.
         '400':
           description: Tham số không hợp lệ
           content:
@@ -2778,7 +2798,7 @@ paths:
             default: 50
       responses:
         '200':
-          description: Danh sách đơn đặt nội bộ
+          description: Danh sách nội bộ có fullName, phone, fulfillmentIssue (COPY_UNAVAILABLE hoặc null); meta.attentionCount là tổng cảnh báo trong bộ lọc. Ưu tiên cảnh báo trước, Cache-Control no-store.
         '401':
           description: Chưa đăng nhập
           content:
@@ -2791,6 +2811,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{id}/issue:
+    post:
+      tags: [Reservations]
+      summary: Báo bản sách đã giữ không thể giao, chuyển MAINTENANCE và ghi audit; không hủy đơn
+      operationId: reportStaffReservationIssue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Đã báo hoặc bản đã ở MAINTENANCE; đơn vẫn HELD, không gửi email/SMS
+        '400':
+          description: Lý do trống hoặc quá dài
+        '401':
+          description: Chưa đăng nhập
+        '403':
+          description: Không phải thành viên nội bộ đang hoạt động
+        '404':
+          description: Không tìm thấy đơn
+        '409':
+          description: Đơn không còn HELD có hiệu lực hoặc trạng thái bản sách không cho phép thao tác
 
   /reservations/{id}/fulfill:
     post:

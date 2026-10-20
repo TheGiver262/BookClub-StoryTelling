@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { startAvailabilityRefresh } from '../lib/availability-refresh';
 import { 
   LayoutDashboard, BookOpen, Users, Calendar, 
   Wallet, Award, BarChart3, Settings, ShieldAlert,
@@ -192,6 +193,10 @@ export default function InternalWorkspace() {
 
   // Reservations State (PR-7)
   const [staffReservations, setStaffReservations] = useState<any[]>([]);
+  const [reservationAttentionCount, setReservationAttentionCount] = useState(0);
+  const [reservationPage, setReservationPage] = useState(1);
+  const [reservationTotal, setReservationTotal] = useState(0);
+  const reservationRequestRef = useRef(0);
   const [demoReservations, setDemoReservations] = useState<any[]>([
     {
       id: 'res-demo-01',
@@ -673,6 +678,7 @@ export default function InternalWorkspace() {
   const clearLiveSensitiveData = useCallback(() => {
     // RF-06: Huỷ bỏ toàn bộ pending response và xóa sạch mọi state nhạy cảm
     activeRequestVersionRef.current += 1;
+    setAuthLoading(false);
     actionKeyRegistry.clearAll();
 
     setActor(null);
@@ -691,6 +697,9 @@ export default function InternalWorkspace() {
     setLivePendingDeposits([]);
     setLivePendingFines([]);
     setStaffReservations([]);
+    setReservationAttentionCount(0);
+    setReservationTotal(0);
+    setReservationPage(1);
     setSelectedReservationForFulfill(null);
     setSelectedReservationForCancel(null);
     setReservationSearchQuery('');
@@ -1089,15 +1098,20 @@ export default function InternalWorkspace() {
   // PR-7: Quản lý đơn giữ chỗ tại quầy bàn trực
   const fetchStaffReservations = async () => {
     const version = activeRequestVersionRef.current;
+    const requestId = ++reservationRequestRef.current;
     setIsLoadingReservations(true);
     try {
       if (workspaceMode === 'LIVE') {
         const res = await apiClient.listStaffReservations({
           status: reservationFilterStatus === 'ALL' ? undefined : (reservationFilterStatus as any),
           search: reservationSearchQuery.trim() || undefined,
+          page: reservationPage, limit: 50,
         });
-        if (version !== activeRequestVersionRef.current) return;
+        if (version !== activeRequestVersionRef.current || requestId !== reservationRequestRef.current) return;
         setStaffReservations(res.items || []);
+        setReservationAttentionCount(res.attentionCount);
+        setReservationTotal(res.total);
+        if (reservationPage > Math.max(1, Math.ceil(res.total / 50))) setReservationPage(1);
       } else {
         // DEMO Mode
         let filtered = demoReservations;
@@ -1114,13 +1128,22 @@ export default function InternalWorkspace() {
           );
         }
         setStaffReservations(filtered);
+        setReservationAttentionCount(0);
+        setReservationTotal(filtered.length);
       }
     } catch (err: any) {
-      if (version === activeRequestVersionRef.current) { setStaffReservations([]); setApiError(err.message || 'Không tải được đơn đặt.'); }
+      if (version === activeRequestVersionRef.current && requestId === reservationRequestRef.current) { setStaffReservations([]); setReservationAttentionCount(0); setApiError(err.message || 'Không tải được đơn đặt.'); }
     } finally {
-      setIsLoadingReservations(false);
+      if (version === activeRequestVersionRef.current && requestId === reservationRequestRef.current) setIsLoadingReservations(false);
     }
   };
+
+  useEffect(() => {
+    if (activeModule !== 'quay-sach' || deskSubTab !== 'RESERVATIONS') return;
+    const task = window.setTimeout(() => void fetchStaffReservations(), 250);
+    const stop = workspaceMode === 'LIVE' ? startAvailabilityRefresh(fetchStaffReservations) : () => {};
+    return () => { window.clearTimeout(task); stop(); reservationRequestRef.current++; };
+  }, [activeModule, deskSubTab, workspaceMode, reservationFilterStatus, reservationSearchQuery, reservationPage]);
 
   const handleExecuteFulfillReservation = async () => {
     const version = activeRequestVersionRef.current;
@@ -2753,6 +2776,7 @@ export default function InternalWorkspace() {
               Đến Trang Đăng Nhập (/login)
             </a>
             <button 
+              hidden={import.meta.env.PUBLIC_DEMO_CONTENT === 'false'}
               onClick={() => setWorkspaceMode('DEMO')}
               className="w-full py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold hover:bg-amber-100 transition"
             >
@@ -2809,6 +2833,7 @@ export default function InternalWorkspace() {
               Về Cổng Thông Tin
             </a>
             <button 
+              hidden={import.meta.env.PUBLIC_DEMO_CONTENT === 'false'}
               onClick={() => setWorkspaceMode('DEMO')} 
               className="text-[11px] text-emerald-300 hover:text-white underline"
             >
@@ -2859,7 +2884,7 @@ export default function InternalWorkspace() {
           <div className="h-14 px-4 border-b border-slate-200 flex items-center justify-between">
             {!isSidebarCollapsed && (
               <div className="flex items-center gap-2">
-                <img src="/assets/logo-ysbk.png" alt="YSBK" className="h-7 w-auto" />
+                <img src="/book/assets/club-logo-v8.svg" alt="YSBK" className="h-7 w-auto" />
                 <span className="font-bold text-sm text-brand-navy">YSBK Nội Bộ</span>
               </div>
             )}
@@ -3801,6 +3826,7 @@ export default function InternalWorkspace() {
                           value={reservationFilterStatus}
                           onChange={(e) => {
                             setReservationFilterStatus(e.target.value);
+                            setReservationPage(1);
                           }}
                           className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700"
                         >
@@ -3817,7 +3843,7 @@ export default function InternalWorkspace() {
                           <input
                             type="text"
                             value={reservationSearchQuery}
-                            onChange={(e) => setReservationSearchQuery(e.target.value)}
+                            onChange={(e) => { setReservationSearchQuery(e.target.value); setReservationPage(1); }}
                             placeholder="Mã đơn / SĐT / Tên..."
                             className="w-40 sm:w-48 pl-3 pr-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                           />
@@ -3834,6 +3860,9 @@ export default function InternalWorkspace() {
                       </div>
                     </div>
 
+                    {reservationAttentionCount > 0 && <div role="alert" className="p-4 bg-rose-50 text-rose-800 text-sm border-b border-rose-200">
+                      Có {reservationAttentionCount} đơn trong bộ lọc không thể giao bản sách đang giữ. Gọi tên/SĐT trong danh sách để xác nhận hướng xử lý, sau đó hủy đơn nếu cần. Hệ thống không tự hủy hoặc gửi tin nhắn.
+                    </div>}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
@@ -3865,6 +3894,7 @@ export default function InternalWorkspace() {
                                   </td>
                                   <td className="py-3 px-4">
                                     <div className="font-bold text-slate-900">{res.bookTitle}</div>
+                                    {res.fulfillmentIssue && <p className="text-rose-700 font-semibold mt-1">Sách không thể giao — cần gọi bạn đọc</p>}
                                     <div className="text-[11px] text-slate-500">
                                       {res.authorName || ''} · Mã vạch: <span className="font-mono font-semibold">{res.copyBarcode || 'Chưa gán'}</span>
                                     </div>
@@ -3926,11 +3956,19 @@ export default function InternalWorkspace() {
                                             setFulfillPaymentConfirmed(false);
                                             setFulfillNotes('');
                                           }}
+                                          disabled={Boolean(res.fulfillmentIssue)}
                                           className="px-2.5 py-1.5 rounded text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm flex items-center gap-1"
                                         >
                                           <CheckCircle className="w-3.5 h-3.5" />
                                           Giao Sách & Thu Cọc
                                         </button>
+                                        {workspaceMode === 'LIVE' && !res.fulfillmentIssue && <button className="px-2 py-1.5 rounded text-xs font-semibold text-rose-700 bg-rose-50"
+                                          onClick={async () => {
+                                            const reason = window.prompt('Lý do không thể giao cuốn này (mất/hỏng...). Bản sách sẽ chuyển chờ xử lý; đơn chưa bị hủy. Không nhập thông tin cá nhân.');
+                                            if (!reason?.trim()) return;
+                                            try { await apiClient.reportStaffReservationIssue(res.id, reason.trim()); await fetchStaffReservations(); }
+                                            catch (err: any) { setApiError(err.message || 'Không báo được sự cố.'); }
+                                          }}>Báo sự cố</button>}
                                         <button
                                           onClick={() => {
                                             setSelectedReservationForCancel(res);
@@ -3952,12 +3990,19 @@ export default function InternalWorkspace() {
                         </tbody>
                       </table>
                     </div>
+                    {workspaceMode === 'LIVE' && <div className="p-4 flex items-center justify-between text-xs text-slate-600">
+                      <span>{reservationTotal} đơn · Trang {reservationPage} / {Math.max(1, Math.ceil(reservationTotal / 50))}</span>
+                      <div className="flex gap-3">
+                        <button disabled={reservationPage === 1} onClick={() => setReservationPage(p => p - 1)} className="disabled:opacity-40">Trang trước</button>
+                        <button disabled={reservationPage * 50 >= reservationTotal} onClick={() => setReservationPage(p => p + 1)} className="disabled:opacity-40">Trang sau</button>
+                      </div>
+                    </div>}
                   </div>
                 )}
 
 
                 {/* Calling Reminder List */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                {workspaceMode === 'DEMO' && <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                       <Phone className="w-4 h-4 text-brand-red" />
@@ -3979,7 +4024,7 @@ export default function InternalWorkspace() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div>}
               </div>
             )}
 
