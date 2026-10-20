@@ -1,0 +1,43 @@
+graph TB
+    %% C4 Container & Backend Modules Diagram
+
+    subgraph Client_Side ["Tầng Trình Duyệt & Giao Diện"]
+        SPA_Public["Astro Static / SSR Pages<br/>(Cổng Công Khai, SEO cao, Tra cứu sách)"]
+        SPA_Internal["React Islands / Workspace<br/>(Quầy Mượn-Trả, 2 Quỹ, Phân ca, Tuyển)"]
+    end
+
+    subgraph Edge_Gateway ["Tầng Mạng & Cổng API (Cloudflare Workers)"]
+        WAF["Cloudflare WAF & Cache<br/>(Rate Limit, Chống DDoS, Cache tĩnh)"]
+        
+        subgraph Backend_Modules ["Các Module Nghiệp Vụ Backend"]
+            Mod_Auth["Module Identity & Access<br/>(RBAC, Token Version, Map Username)"]
+            Mod_Circulation["Module Circulation Engine<br/>(Mượn-Trả, Cọc tự động, Hạn 14 ngày)"]
+            Mod_Catalog["Module Catalog & Inventory<br/>(Đầu sách, Mã vạch, 2 Kho + Bàn tạm)"]
+            Mod_Finance["Module Finance & Sổ Kép<br/>(Quỹ 1, Quỹ 2, Hộp tiền ca, Lô sách bán)"]
+            Mod_Duty["Module Duty & Scheduling<br/>(Parser Excel, Đề xuất 2 chính + 3-5 hỗ trợ)"]
+            Mod_Recruitment["Module Recruitment Drive<br/>(Sync Form, Chấm riêng, Hội đồng tổng kết)"]
+            Mod_Reporting["Module Reporting & Audit<br/>(KPI Dashboard, Lọc trường an toàn Cựu)"]
+        end
+    end
+
+    subgraph Data_Storage ["Tầng Lưu Trữ (PostgreSQL 16 trên Supabase)"]
+        PgBouncer["PgBouncer Connection Pooler<br/>(Port 6543, Transaction Mode)"]
+        Postgres_DB[("PostgreSQL Database<br/>- Schema 15 Bảng<br/>- Row Locks: FOR UPDATE<br/>- Unaccent FTS")]
+    end
+
+    SPA_Public -->|HTTPS GET| WAF
+    SPA_Internal -->|HTTPS REST API| WAF
+
+    WAF --> Mod_Auth
+    Mod_Auth --> Mod_Circulation
+    Mod_Auth --> Mod_Catalog
+    Mod_Auth --> Mod_Finance
+    Mod_Auth --> Mod_Duty
+    Mod_Auth --> Mod_Recruitment
+    Mod_Auth --> Mod_Reporting
+
+    Mod_Circulation -->|Điều phối Transaction| Mod_Finance
+    Mod_Circulation --> Mod_Catalog
+
+    Backend_Modules -->|TCP Connection Pool| PgBouncer
+    PgBouncer -->|SQL Queries & Locks| Postgres_DB

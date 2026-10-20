@@ -1,0 +1,214 @@
+sequenceDiagram
+    %% Sequence giao dịch mượn và trả một phần (phiếu chuyển tiếp)
+
+    actor Member as Thành Viên Trực Bàn
+    participant UI as Giao Diện Quầy Sách
+    participant API as Circulation & Finance Engine
+    participant DB as PostgreSQL Database
+
+    Note over Member, DB: 1. LUỒNG CHO MƯỢN SÁCH TẠI BÀN (Tối đa 2 cuốn, Khóa chống Deadlock)
+    Member->>UI: Chọn bạn đọc, quét 1-2 mã vạch, chọn PTTT (CASH / BANK_TRANSFER) & xác nhận đã thu cọc
+    UI->>API: POST /circulation/loans (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    API->>DB: INSERT INTO idempotency_records (actor_id, operation, key) ON CONFLICT DO NOTHING
+    alt Replay Idempotency (Key đã COMPLETED cùng payload)
+        API->>DB: SELECT cached response FROM idempotency_records WHERE ...
+        API->>DB: COMMIT
+        API-->>UI: 200/201 (Trả lại cached biên nhận từ trước)
+    else Giao dịch mới hoặc phục hồi
+        Note over API, DB: Thứ tự khóa tài nguyên chống deadlock:
+        API->>DB: 1. SELECT * FROM cash_sessions WHERE id = ... FOR UPDATE (Check ca đang mở)
+        API->>DB: 2. SELECT * FROM borrowers WHERE id = ... FOR UPDATE (Check bạn đọc active)
+        API->>DB: 3. SELECT * FROM book_copies WHERE id IN (...) ORDER BY id ASC FOR UPDATE (Khóa bản sách)
+        alt Bản sách không AVAILABLE hoặc phiên quầy đã đóng
+            API->>DB: ROLLBACK (Giải phóng khóa, không để lại rác)
+            API-->>UI: 409 Conflict (CopyNotAvailableError / ClosedSessionError)
+        else Tất cả tài nguyên hợp lệ
+            API->>API: Tính tiền cọc từng cuốn: max(50k, round50k) = 50k + 100k = 150k
+            API->>API: Tính hạn mượn: Ngày mượn + 14 ngày lịch (Asia/Ho_Chi_Minh)
+            API->>DB: INSERT INTO loan_receipts (hạn 14 ngày, renew_count=0, status='ACTIVE')
+            API->>DB: INSERT INTO loan_items (gán receipt_id, copy_id, deposit_snapshot)
+            API->>DB: INSERT INTO deposit_allocations (tracking số cọc còn lại từng cuốn)
+            alt Phương thức CASH (Tiền mặt quầy)
+                API->>DB: INSERT journal_entries (Nợ TIEN_MAT_HOP 150k / Có COC_PHAI_HOAN 150k)
+                API->>DB: UPDATE cash_sessions SET expected_closing_cash += 150k
+            else Phương thức BANK_TRANSFER (Chuyển khoản)
+                API->>DB: INSERT journal_entries (Nợ TIEN_NGAN_HANG 150k / Có COC_PHAI_HOAN 150k)
+                Note over API, DB: Quỹ tiền mặt quầy giữ nguyên, không cộng dồn float
+            end
+            API->>DB: UPDATE book_copies SET status = 'BORROWED'
+            API->>DB: INSERT INTO system_audit_logs (Ghi log nghiệp vụ kiểm toán trực tiếp)
+            API->>DB: UPDATE idempotency_records SET status = 'COMPLETED', response_body = ...
+            API->>DB: COMMIT
+            API-->>UI: 201 Created (Phiếu mượn YSBK-PM-001, Cache-Control: no-store)
+        end
+    end
+    deactivate API
+    UI-->>Member: Hiển thị biên nhận chi tiết & in/gửi xác nhận cọc
+
+    Note over Member, DB: 2. LUỒNG TRẢ TOÀN BỘ SÁCH & HOÀN CỌC CHỜ XÁC NHẬN (CHẶNG 08)
+    Member->>UI: Nhận lại toàn bộ sách mượn, nhập mức phạt chốt & lý do (nếu khác gợi ý), chọn PTTT hoàn
+    UI->>API: POST /circulation/loans/{id}/settle-return (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    Note over API, DB: Khóa chống deadlock: cash_sessions -> loan_receipts -> loan_items -> book_copies -> deposit_allocations
+    API->>API: Tính hạn hiệu lực & phạt gợi ý (1k/ngày trên toàn phiếu, Asia/Ho_Chi_Minh)
+    alt P = 0 (Đúng hạn hoặc miễn phạt có lý do)
+        API->>DB: UPDATE book_copies SET status = 'AVAILABLE'
+        API->>DB: UPDATE loan_receipts SET status = 'RETURNED'
+        API->>DB: INSERT INTO refund_intents (amount = D, status = 'PENDING')
+    else 0 < P < D (Hoàn đủ D và thu P riêng)
+        API->>DB: UPDATE book_copies SET status = 'AVAILABLE'
+        API->>DB: UPDATE loan_receipts SET status = 'RETURNED'
+        API->>DB: INSERT INTO refund_intents (amount = D, status = 'PENDING')
+        Note over API: Thu phạt P riêng biệt khi tiền thực được nhận
+    else P >= D (Tịch thu toàn bộ cọc làm phạt)
+        API->>DB: UPDATE book_copies SET status = 'AVAILABLE'
+        API->>DB: UPDATE loan_receipts SET status = 'RETURNED'
+        API->>DB: INSERT journal_entries (Nợ COC_PHAI_HOAN D / Có THU_PHAT_GIU_COC D)
+        API->>DB: UPDATE deposit_allocations SET status = 'FORFEITED', remaining_amount = 0
+        Note over API: Không tạo refund intent, không thu thêm P - D
+    end
+    API->>DB: COMMIT
+    API-->>UI: 200 OK (ReturnSettlementResponseDto & refundIntents PENDING)
+    deactivate API
+
+    Note over Member, DB: 3. XÁC NHẬN HOÀN TRẢ TIỀN CỌC THỰC TẾ (CONFIRM REFUND)
+    Member->>UI: Trao tiền mặt tận tay hoặc kiểm tra app ngân hàng xác nhận chuyển khoản
+    UI->>API: POST /finance/refunds/{intentId}/confirm (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    Note over API, DB: Khóa chống deadlock: cash_sessions -> refund_intents -> deposit_allocations
+    alt Phương thức CASH (Tiền mặt quầy)
+        API->>DB: Kiểm tra số dư tiền mặt khả dụng của hộp quầy hiện tại
+        API->>DB: INSERT journal_entries (Nợ COC_PHAI_HOAN / Có TIEN_MAT_HOP ca hiện tại)
+        API->>DB: UPDATE cash_sessions SET expected_closing_cash -= amount
+    else Phương thức BANK_TRANSFER (Chuyển khoản)
+        API->>DB: INSERT journal_entries (Nợ COC_PHAI_HOAN / Có TIEN_NGAN_HANG)
+    end
+    API->>DB: UPDATE refund_intents SET status = 'CONFIRMED', confirmed_at = NOW()
+    API->>DB: UPDATE deposit_allocations SET status = 'REFUNDED', remaining_amount = 0
+    API->>DB: COMMIT
+    API-->>UI: 200 OK (ConfirmRefundResponseDto - Hạch toán đúng ca chi thực)
+    deactivate API
+
+    Note over Member, DB: 4. LUỒNG TRẢ MỘT PHẦN & CHUYỂN TIẾP CỌC (CHẶNG 09 - ĐÃ TRIỂN KHAI)
+    Member->>UI: Chọn trả 1 cuốn, giữ 1 cuốn trong phiếu 2 cuốn, chọn PTTT & quyết định phạt
+    UI->>API: POST /circulation/loans/{id}/settle-return (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    Note over API, DB: S09-01: Đóng logical hold cũ trước khi tạo dòng mượn mới (tránh 23505)
+    API->>DB: UPDATE loan_items SET carried_forward_at = NOW() WHERE receipt_id = oldId AND copy_id = keptCopyId
+    API->>DB: UPDATE book_copies SET status = 'AVAILABLE' WHERE id = returnedCopyId
+    API->>DB: UPDATE loan_receipts SET status = 'PARTIAL_SETTLED' WHERE id = oldId
+    alt Case P = 0 hoặc 0 < P < D (Cọc được chuyển tiếp)
+        API->>DB: INSERT INTO loan_receipts (status = 'ACTIVE', renew_count = 0, preceding_receipt_id = oldId)
+        API->>DB: INSERT INTO loan_items (receipt_id = newId, copy_id = keptCopyId, deposit_snapshot)
+        API->>DB: INSERT INTO deposit_allocations (status = 'HELD', transferred_from_allocation_id = oldAllocId)
+        API->>DB: INSERT INTO refund_intents (amount = refundedAmount, status = 'PENDING')
+    else Case P >= D (Tịch thu toàn bộ cọc làm phạt, nộp cọc mới T73)
+        API->>DB: UPDATE deposit_allocations SET status = 'FORFEITED', remaining_amount = 0 WHERE id IN (oldAllocs)
+        API->>DB: INSERT journal_entries (Nợ COC_PHAI_HOAN D / Có THU_PHAT_GIU_COC D)
+        alt Tiền cọc mới chưa xác nhận (T73 Pending)
+            API->>DB: INSERT INTO loan_receipts (status = 'PENDING_DEPOSIT', preceding_receipt_id = oldId)
+            API->>DB: INSERT INTO loan_items (receipt_id = newId, copy_id = keptCopyId)
+            API->>DB: INSERT INTO deposit_allocations (status = 'PENDING_DEPOSIT')
+            Note over API, DB: Sách giữ nguyên trạng thái BORROWED, hold được bảo lưu an toàn
+        else Tiền cọc mới đã xác nhận thanh toán
+            API->>DB: INSERT INTO loan_receipts (status = 'ACTIVE', preceding_receipt_id = oldId)
+            API->>DB: INSERT INTO loan_items (receipt_id = newId, copy_id = keptCopyId)
+            API->>DB: INSERT INTO deposit_allocations (status = 'HELD')
+            API->>DB: INSERT journal_entries (Nợ TIEN_MAT/NGAN_HANG / Có COC_PHAI_HOAN)
+        end
+    end
+    API->>DB: COMMIT
+    API-->>UI: 200 OK (SettleReturnResult & Successor receipt info)
+    deactivate API
+
+    Note over Member, DB: 5. LUỒNG GIA HẠN & DỜI LỊCH THEO CA TRỰC / NGHỈ LỄ (CHẶNG 10)
+    Member->>UI: Chọn gia hạn phiếu mượn (nhập phạt nếu quá hạn)
+    UI->>API: POST /circulation/loans/{id}/renew (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    Note over API, DB: Khóa chống deadlock: cash_sessions -> loan_receipts -> loan_items -> deposit_allocations
+    API->>DB: SELECT * FROM loan_receipts WHERE id = ... FOR UPDATE
+    alt Phiếu đã tất toán (RETURNED, PARTIAL_SETTLED) hoặc đang PENDING_DEPOSIT
+        API->>DB: ROLLBACK
+        API-->>UI: 409 Conflict (InvalidLoanStatusForRenewalError)
+    else renew_count >= 3 (Đã đạt trần gia hạn tối đa)
+        API->>DB: ROLLBACK
+        API-->>UI: 409 Conflict (MaxRenewalsExceededError - Tối đa 3 lần)
+    else Hợp lệ để gia hạn
+        API->>DB: SELECT holiday_date FROM calendar_holidays WHERE is_active = true
+        alt Trong hạn (In-time)
+            API->>API: Base = currentDueDate (+14 ngày)
+            API->>API: Tịnh tiến qua ngày nghỉ lễ & chọn ca trực Thứ Ba/Thứ Năm kế tiếp
+        else Quá hạn (Overdue)
+            API->>API: Base = today (Asia/Ho_Chi_Minh) (+14 ngày)
+            API->>API: Chốt quyết định phạt (1k/ngày quá hạn)
+            alt Thu phạt ngay tiền mặt
+                API->>DB: INSERT journal_entries (Nợ TIEN_MAT_HOP / Có THU_PHAT_GIU_COC)
+                API->>DB: UPDATE cash_sessions SET expected_closing_cash += fineAmount
+                API->>API: fineStatus = 'COLLECTED', finePending = false
+            else Phạt chờ thu (Pending Fine)
+                API->>API: fineStatus = 'PENDING', finePending = true
+            else Miễn phạt (Có lý do)
+                API->>API: fineStatus = 'WAIVED'
+            end
+        end
+        API->>DB: UPDATE loan_receipts SET due_date = newDueDate, renew_count = renew_count + 1
+        API->>DB: INSERT INTO loan_renewals (receipt_id, renewal_sequence, previous_due_date, new_due_date, fine_status, ...)
+        API->>DB: INSERT INTO system_audit_logs (Ghi log kiểm toán thao tác gia hạn)
+        API->>DB: COMMIT
+        API-->>UI: 200 OK (RenewLoanResultDto - Hạn mượn mới & renew_count cập nhật)
+    end
+    deactivate API
+
+    Note over Member, DB: 6. LUỒNG BÁO MẤT SÁCH & TỊCH THU CỌC (CHẶNG 11: LOST BOOK)
+    Member->>UI: Chọn bản sách báo mất, nhập lý do bắt buộc (Mất sách mất cọc, zero cash delta)
+    UI->>API: POST /circulation/loans/{id}/lost (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    Note over API, DB: Khóa: loan_receipts -> loan_items -> book_copies -> deposit_allocations
+    API->>DB: UPDATE book_copies SET status = 'LOST' WHERE id IN (lostCopyIds)
+    API->>DB: UPDATE loan_items SET is_lost = TRUE, lost_at = NOW(), lost_reason = reason WHERE id IN (lostItemIds)
+    Note over API, DB: returned_at giữ nguyên NULL vì không thu hồi sách vật lý
+    API->>DB: UPDATE deposit_allocations SET status = 'FORFEITED', remaining_amount = 0 WHERE copy_id IN (lostCopyIds)
+    API->>DB: INSERT journal_entries (Nợ COC_PHAI_HOAN / Có THU_PHAT số tiền cọc cuốn mất)
+    Note over API: Quỹ tiền mặt giữ nguyên (zero cash delta), không thu thêm theo giá bìa
+    alt Toàn bộ sách trên phiếu đã mất/trả
+        API->>DB: UPDATE loan_receipts SET status = 'LOST' WHERE id = receiptId
+        API->>DB: INSERT INTO loan_settlements (settlement_type = 'LOST', deposit_forfeited = totalDeposit, ...)
+    else Còn sách khác đang mượn
+        Note over API, DB: Phiếu giữ nguyên trạng thái ACTIVE cho các cuốn còn lại
+    end
+    API->>DB: INSERT INTO system_audit_logs (Ghi log nghiệp vụ REPORT_BOOK_LOSS)
+    API->>DB: COMMIT
+    API-->>UI: 200 OK (ReportBookLossResultDto - Trạng thái LOST & cọc đã tịch thu)
+    deactivate API
+
+    Note over Member, DB: 7. LUỒNG SỬA SAI CHỨNG TỪ SỔ CÁI (CHẶNG 11: REVERSAL CORRECTION)
+    Member->>UI: Nhập mã bút toán gốc & lý do sửa sai bắt buộc
+    UI->>API: POST /finance/ledger/corrections (Header X-Idempotency-Key)
+    activate API
+    API->>DB: BEGIN TRANSACTION (Client kết nối duy nhất)
+    API->>DB: SELECT * FROM journal_entries WHERE id = originalEntryId FOR UPDATE
+    alt Bút toán đã bị đảo trước đó hoặc là bút toán đảo
+        API->>DB: ROLLBACK
+        API-->>UI: 409 Conflict (ENTRY_ALREADY_REVERSED / CANNOT_REVERSE_A_REVERSAL)
+    else Giao dịch tiền mặt & số dư ca trực không đủ
+        API->>DB: ROLLBACK
+        API-->>UI: 400 Bad Request (INSUFFICIENT_CASH_IN_SESSION)
+    else Hợp lệ để sửa sai
+        API->>DB: INSERT journal_entries (reversal_of_entry_id = originalId, Đảo chéo Nợ <-> Có)
+        alt Bút toán gốc ghi Nợ TIEN_MAT_HOP (chi hoàn lại tiền mặt)
+            API->>DB: UPDATE cash_sessions SET expected_closing_cash -= amount
+        else Bút toán gốc ghi Có TIEN_MAT_HOP (thu lại tiền mặt)
+            API->>DB: UPDATE cash_sessions SET expected_closing_cash += amount
+        end
+        API->>DB: INSERT INTO system_audit_logs (Ghi log nghiệp vụ FINANCE_LEDGER_CORRECTION)
+        API->>DB: COMMIT
+        API-->>UI: 200 OK (DocumentCorrectionResultDto - Mã chứng từ đảo REV-...)
+    end
+    deactivate API

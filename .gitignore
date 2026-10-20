@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+.astro/
+.wrangler/
+
+# Environment files and credentials (CRITICAL)
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+
+# Review & test artifacts
+.review-artifacts/
+__pycache__/
+*.pyc
+screenshots/
+backups/

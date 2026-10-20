@@ -1,0 +1,42 @@
+sequenceDiagram
+    %% Sequence danh tính, cấp username nội bộ và thu hồi quyền theo ADR 001
+
+    actor Admin as Quản Trị Viên (Admin)
+    actor Member as Thành Viên / Cựu TV
+    actor Guest as Khách / Bạn Đọc
+    participant Gateway as Cloudflare Worker Gateway
+    participant Auth as Identity & Managed Auth
+    participant DB as PostgreSQL Database
+
+    Note over Admin, DB: 1. ADMIN CẤP TÀI KHOẢN NỘI BỘ (Quy trình nội bộ / CLI)
+    Admin->>Auth: Provisioning {username: 'nam.noidung', team: 'NOI_DUNG', email_realm: 'synthetic'}
+    Auth->>DB: INSERT INTO members (id, username, team, is_admin, is_alumni, token_version=1)
+    Auth->>DB: INSERT INTO internal_identities (member_id, normalized_username, provider_subject)
+    Auth-->>Admin: Tài khoản nội bộ đã sẵn sàng
+
+    Note over Member, DB: 2. THÀNH VIÊN ĐĂNG NHẬP NỘI BỘ
+    Member->>Gateway: POST /api/v1/auth/login-internal {username, password}
+    Gateway->>Auth: Xác thực với Managed Auth qua synthetic realm
+    Auth-->>Gateway: Provider OK (provider_subject)
+    Gateway->>DB: SELECT m.id, m.is_admin, m.is_alumni, m.token_version FROM internal_identities ii JOIN members m ...
+    DB-->>Gateway: Role = 'MEMBER', token_version = 1
+    Gateway-->>Member: JWT Token / Cookie {role: 'MEMBER', tokenVersion: 1}
+
+    Note over Guest, DB: 3. KHÁCH ĐĂNG NHẬP GOOGLE CÔNG KHAI
+    Guest->>Gateway: POST /api/v1/auth/login-guest {token}
+    Gateway->>Auth: Xác thực Google OAuth qua Managed Auth
+    Auth-->>Gateway: Guest Provider Subject Verified
+    Gateway-->>Guest: JWT Token {role: 'GUEST'}
+    Note over Guest, Gateway: Khách gọi API nội bộ -> Gateway chặn ngay (HTTP 403 Forbidden)
+
+    Note over Admin, DB: 4. CHUYỂN CỰU THÀNH VIÊN & THU HỒI PHIÊN CŨ TỨC THÌ
+    Admin->>Gateway: PATCH /api/v1/members/m-01/status {isAlumni: true}
+    Gateway->>DB: UPDATE members SET is_alumni = TRUE, is_admin = FALSE, token_version = token_version + 1
+    DB-->>Gateway: Updated (token_version = 2, is_admin = FALSE)
+    Gateway-->>Admin: 200 OK (Đã chuyển cựu thành viên)
+
+    Note over Member, Gateway: Thành viên cũ gửi request với JWT cũ (ver = 1)
+    Member->>Gateway: GET /api/v1/members (JWT ver = 1)
+    Gateway->>DB: SELECT token_version FROM members WHERE id = ...
+    DB-->>Gateway: DB token_version = 2 (Lệch với token ver = 1)
+    Gateway-->>Member: 401 Unauthorized (Phiên đã hết hiệu lực, thu hồi tức thì)

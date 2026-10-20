@@ -1,0 +1,42 @@
+graph LR
+    %% Sơ đồ Hạ tầng Triển khai & Vận hành
+
+    subgraph Developer_Local ["Môi Trường Phát Triển Local"]
+        Dev_PC["Máy Của Kỹ Sư / Antigravity"]
+        Local_Astro["Astro Dev Server (Port 4321)"]
+        Local_DB[("PostgreSQL Local (Test DB)")]
+        Local_Puppeteer["Puppeteer-core (Test Viewports)"]
+        
+        Dev_PC --> Local_Astro
+        Dev_PC --> Local_DB
+        Dev_PC --> Local_Puppeteer
+    end
+
+    subgraph Production_Cloud ["Hạ Tầng Production (Cloud Miễn Phí / Tối Ưu)"]
+        subgraph Cloudflare_Infra ["Cloudflare Ecosystem (Chủ sản phẩm đứng tên)"]
+            CF_Pages["Cloudflare Pages<br/>(Static Hosting Astro UI)"]
+            CF_Workers["Cloudflare Workers Edge<br/>(API Gateway & Transaction Handler)"]
+            CF_R2["Cloudflare R2 Bucket<br/>(Lưu tệp Backup mã hóa GPG)"]
+        end
+
+        subgraph Supabase_Infra ["Supabase Managed Cloud (Region Singapore)"]
+            PgBouncer_Pool["PgBouncer Pooler<br/>(Port 6543 - Transaction Mode)"]
+            Supa_Postgres[("PostgreSQL 16 DB<br/>(Max 500MB Free Tier)")]
+            Supa_Storage["Supabase Storage<br/>(Ảnh bìa sách WebP)"]
+        end
+
+        subgraph Monitoring_Alerts ["Cảnh Báo & Giám Sát Vận Hành"]
+            Alert_System["Hệ Thống Giám Sát & Cảnh Báo"]
+            Product_Owner["Chủ Sản Phẩm (Product Owner)<br/>- Nắm Master Key<br/>- Nhận SMS/Email khẩn cấp<br/>- Không chuyển giao theo BCN"]
+        end
+
+        CF_Pages -->|Gọi REST API| CF_Workers
+        CF_Workers -->|TCP Pool| PgBouncer_Pool
+        PgBouncer_Pool --> Supa_Postgres
+        CF_Workers --> Supa_Storage
+
+        Supa_Postgres -.->|pg_dump hằng ngày lúc 02:00| CF_R2
+        Supa_Postgres -.->|Cảnh báo quá tải/quota| Alert_System
+        CF_Workers -.->|Cảnh báo lỗi 5xx| Alert_System
+        Alert_System -->|Thông báo tức thời| Product_Owner
+    end

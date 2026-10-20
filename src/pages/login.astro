@@ -1,0 +1,133 @@
+---
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/assets/logo-ysbk.png" />
+    <title>Đăng Nhập — CLB Yêu Sách Bách Khoa Hà Nội</title>
+  </head>
+  <body class="bg-slate-50 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      <div class="p-6 text-center border-b border-slate-100 bg-slate-50/50">
+        <img src="/assets/logo-ysbk.png" alt="Logo YSBK" class="h-12 w-auto mx-auto mb-2" />
+        <h1 class="text-xl font-bold text-brand-navy">Đăng Nhập Hệ Thống YSBK</h1>
+        <p class="text-xs text-slate-500 mt-1">Dành cho thành viên có tài khoản do CLB cấp</p>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- Form 1: Thành viên nội bộ -->
+        <form id="formInternal" class="space-y-4 text-xs">
+          <div id="internalError" class="hidden p-3 bg-rose-50 rounded-lg border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
+            <div id="internalErrorText"></div>
+          </div>
+
+          <div>
+            <label for="internalUsername" class="block font-semibold text-slate-700 mb-1">Tên đăng nhập nội bộ (Do CLB cấp):</label>
+            <input 
+              id="internalUsername"
+              name="username"
+              type="text" 
+              required
+              placeholder="Ví dụ: dung.bcn, anh.haucan, admin_bcn..." 
+              autocomplete="username"
+              class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-navy focus:outline-none"
+            />
+          </div>
+          <div>
+            <label for="internalPassword" class="block font-semibold text-slate-700 mb-1">Mật khẩu:</label>
+            <input 
+              id="internalPassword"
+              name="password"
+              type="password" 
+              required
+              placeholder="Nhập mật khẩu nội bộ..."
+              autocomplete="current-password"
+              class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-navy focus:outline-none"
+            />
+          </div>
+          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-900 text-[11px] leading-relaxed">
+            <strong>Quy tắc danh tính nội bộ:</strong> Thành viên và Cựu thành viên dùng username riêng được admin cấp. Bạn đọc đặt sách tại trang công khai, không cần đăng nhập.
+          </div>
+          <button 
+            type="submit"
+            id="btnLoginSubmit"
+            class="block w-full text-center py-2.5 rounded-lg bg-brand-navy text-white font-bold hover:bg-brand-navy-hover transition shadow-sm text-sm disabled:opacity-50"
+          >
+            Đăng Nhập Không Gian Nội Bộ
+          </button>
+        </form>
+
+        <div class="pt-4 border-t border-slate-100 text-center">
+          <a href="/?public=1" class="text-xs text-slate-500 hover:text-brand-navy">← Quay lại trang chủ công khai</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const formInternal = document.getElementById('formInternal') as HTMLFormElement | null;
+      const internalError = document.getElementById('internalError');
+      const internalErrorText = document.getElementById('internalErrorText');
+      const btnLoginSubmit = document.getElementById('btnLoginSubmit') as HTMLButtonElement | null;
+
+      formInternal?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (internalError) internalError.classList.add('hidden');
+
+        const usernameInput = document.getElementById('internalUsername') as HTMLInputElement | null;
+        const passwordInput = document.getElementById('internalPassword') as HTMLInputElement | null;
+
+        const username = usernameInput?.value.trim() || '';
+        const password = passwordInput?.value || '';
+
+        if (!username || !password) {
+          if (internalError && internalErrorText) {
+            internalErrorText.textContent = 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.';
+            internalError.classList.remove('hidden');
+          }
+          return;
+        }
+
+        if (btnLoginSubmit) {
+          btnLoginSubmit.disabled = true;
+          btnLoginSubmit.textContent = 'Đang xác thực...';
+        }
+
+        try {
+          const res = await fetch('/api/v1/auth/login-internal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+            credentials: 'include',
+          });
+
+          const data = await res.json().catch(() => null);
+
+          if (res.ok) {
+            // Thành công -> chuyển tiếp vào không gian nội bộ
+            window.location.href = '/noi-bo';
+          } else {
+            const msg = data?.error?.message || data?.message || `Lỗi đăng nhập (${res.status})`;
+            if (internalError && internalErrorText) {
+              internalErrorText.textContent = msg;
+              internalError.classList.remove('hidden');
+            }
+          }
+        } catch (err: any) {
+          if (internalError && internalErrorText) {
+            internalErrorText.textContent = 'Không thể kết nối đến máy chủ xác thực. Vui lòng thử lại sau.';
+            internalError.classList.remove('hidden');
+          }
+        } finally {
+          if (btnLoginSubmit) {
+            btnLoginSubmit.disabled = false;
+            btnLoginSubmit.textContent = 'Đăng Nhập Không Gian Nội Bộ';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

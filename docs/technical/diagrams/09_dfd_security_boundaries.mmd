@@ -1,0 +1,49 @@
+graph TD
+    %% Data Flow & Security Trust Boundaries Diagram
+
+    subgraph Untrusted_Zone ["VÙNG CÔNG KHAI / INTERNET (UNTRUSTED)"]
+        Client_Public["Khách Vãng Lai & Bạn Đọc"]
+        Client_Member["Trình Duyệt Thành Viên CLB"]
+        Google_Form["Google Form Ứng Viên"]
+    end
+
+    subgraph Edge_Trust_Boundary ["RANH GIỚI TIN CẬY 1: EDGE GATEWAY (CLOUDFLARE)"]
+        WAF_RateLimit["WAF & Rate Limiting (10 req/phút ghi công khai)"]
+        DDoS_Shield["Cloudflare DDoS Shield"]
+        Edge_Auth["JWT & Role Verification (identity_type == INTERNAL)"]
+    end
+
+    subgraph Internal_App_Boundary ["RANH GIỚI TIN CẬY 2: DỊCH VỤ NỘI BỘ (PROTECTED)"]
+        Sanitizer["XSS Sanitizer (Làm sạch review bạn đọc)"]
+        Formula_Filter["Excel Formula Injection Filter (Thêm dấu ' trước =, +, -)"]
+        Alumni_Filter["Server Field Allowlist (Ẩn 100% PII & Số dư tiền với Cựu TV)"]
+        Transaction_Coordinator["Transaction Coordinator (Bút toán kép, Khóa FOR UPDATE)"]
+    end
+
+    subgraph Database_Trust_Boundary ["RANH GIỚI TIN CẬY 3: CƠ SỞ DỮ LIỆU POSTGRESQL"]
+        Connection_Pooler["PgBouncer Pooler (Chỉ chấp nhận kết nối từ IP Worker)"]
+        DB_Storage[("PostgreSQL Database
+        - Public Catalog Data (Thư mục sách)
+        - Sensitive PII (SĐT, MSSV, Điểm tuyển)
+        - Financial Ledgers (Quỹ 1, Quỹ 2, Cọc, Bút toán)
+        - System Audit Logs (Bất biến)")]
+    end
+
+    Client_Public -->|HTTPS GET| WAF_RateLimit
+    Client_Member -->|HTTPS POST + Bearer Token| DDoS_Shield
+    Google_Form -->|HTTPS Webhook + Shared Secret| WAF_RateLimit
+
+    WAF_RateLimit --> Edge_Auth
+    DDoS_Shield --> Edge_Auth
+
+    Edge_Auth --> Sanitizer
+    Edge_Auth --> Formula_Filter
+    Edge_Auth --> Alumni_Filter
+    Edge_Auth --> Transaction_Coordinator
+
+    Sanitizer --> Connection_Pooler
+    Formula_Filter --> Connection_Pooler
+    Alumni_Filter --> Connection_Pooler
+    Transaction_Coordinator --> Connection_Pooler
+
+    Connection_Pooler --> DB_Storage

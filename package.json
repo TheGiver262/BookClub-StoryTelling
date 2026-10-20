@@ -1,0 +1,53 @@
+{
+  "name": "YSBK",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check && tsc --noEmit",
+    "test:unit": "node --experimental-strip-types --test tests/unit/db-harness.test.ts tests/unit/auth-policy.test.ts tests/unit/api-routes.test.ts tests/unit/secrets-guard.test.ts tests/unit/finance-ledger.test.ts tests/unit/cash-sessions.test.ts tests/unit/catalog.test.ts tests/unit/borrowers.test.ts tests/unit/circulation-issue.test.ts tests/unit/circulation-return.test.ts tests/unit/circulation-partial.test.ts tests/unit/circulation-renew.test.ts tests/unit/circulation-lost.test.ts tests/unit/stage12-desk.test.ts tests/unit/members-dues.test.ts tests/unit/availability-import.test.ts tests/unit/scheduler.test.ts tests/unit/form-sync.test.ts tests/unit/evaluation.test.ts tests/unit/sales-consignment.test.ts tests/unit/events-activities.test.ts tests/unit/content-policy.test.ts tests/unit/reports-audit.test.ts tests/unit/backup-restore.test.ts tests/unit/api-client-contract.test.ts tests/unit/canonical-schema-services.test.ts tests/unit/circulation-quote-pending.test.ts tests/unit/settlement-identity-confirmation.test.ts tests/unit/action-pagination-demo-boundary.test.ts tests/unit/public-export-restore-reports.test.ts tests/unit/reservations.test.ts tests/unit/reservation-rules.test.ts tests/unit/reservation-captcha.test.ts tests/unit/reservation-api.test.ts tests/unit/reservation-expiry.test.ts tests/unit/reservation-repair.test.ts",
+    "test:db": "node --experimental-strip-types --test --test-concurrency=1 tests/integration/schema.test.ts tests/integration/loan-item-constraints.test.ts tests/integration/finance-ledger.test.ts tests/integration/cash-sessions.test.ts tests/integration/catalog-borrowers.test.ts tests/integration/issue-loan.test.ts tests/integration/return-loan.test.ts tests/integration/partial-return.test.ts tests/integration/renew-loan.test.ts tests/integration/lost-book.test.ts tests/integration/roster.test.ts tests/integration/recruitment-schema.test.ts tests/integration/recruitment-evaluation.test.ts tests/integration/sales-settlement.test.ts tests/integration/events.test.ts tests/integration/content-policy.test.ts tests/integration/reports.test.ts tests/integration/reservations.test.ts tests/integration/reservation-flow.test.ts",
+    "server:dev": "wrangler dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "onlyBuiltDependencies": [
+    "esbuild",
+    "workerd"
+  ],
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.21.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "dependencies": {
+    "@astrojs/react": "^7.1.0",
+    "@astrojs/tailwind": "^6.0.2",
+    "astro": "^7.4.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.59.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.6.1",
+    "pg": "^8.23.1",
+    "postcss": "^8.5.30",
+    "puppeteer-core": "^25.14.0",
+    "tailwindcss": "3.4.17",
+    "typescript": "~5.8.3",
+    "wrangler": "^4.151.1"
+  }
+}

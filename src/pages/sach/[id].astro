@@ -1,0 +1,417 @@
+---
+import { INITIAL_BOOKS, INITIAL_REVIEWS, calculateDeposit, formatVND } from '../../data/mockData';
+import '../../styles/global.css';
+
+export interface BookCopyItem {
+  barcode: string;
+  location: string;
+  status: string;
+}
+
+export interface BookDetailData {
+  id: string;
+  title: string;
+  originalTitle?: string | null;
+  description: string;
+  authors: string[];
+  categories: string[];
+  publisher: string;
+  publishYear: number;
+  coverPrice: number | null;
+  coverImage?: string;
+  copies: BookCopyItem[];
+}
+
+export interface ReviewItem {
+  id: string;
+  readerName: string;
+  rating: number;
+  content: string;
+  submittedAt: string;
+}
+
+export async function getStaticPaths() {
+  const paths: Array<{
+    params: { id: string };
+    props: { book: BookDetailData; isMock: boolean; reviews: ReviewItem[] };
+  }> = [];
+
+  // Nguồn 1: Sách thật từ cơ sở dữ liệu PostgreSQL (nếu có biến kết nối)
+  const dbUrl = process.env.DATABASE_URL || process.env.TEST_DATABASE_URL;
+  if (dbUrl) {
+    try {
+      const pg = await import('pg');
+      const pool = new pg.default.Pool({ connectionString: dbUrl, connectionTimeoutMillis: 3000 });
+      const titlesRes = await pool.query(`
+        SELECT bt.id, bt.title, bt.original_title, bt.description,
+          COALESCE((SELECT JSON_AGG(a.name ORDER BY a.name) FROM book_title_authors bta JOIN authors a ON a.id = bta.author_id WHERE bta.title_id = bt.id), '[]'::json) AS authors,
+          COALESCE((SELECT JSON_AGG(c.name ORDER BY c.name) FROM book_title_categories btc JOIN categories c ON c.id = btc.category_id WHERE btc.title_id = bt.id), '[]'::json) AS categories
+        FROM book_titles bt
+      `);
+
+      for (const row of titlesRes.rows) {
+        const editionsRes = await pool.query(`
+          SELECT be.id, be.publisher, be.publish_year, be.isbn, be.cover_image_url,
+            (SELECT bc.cover_price FROM book_copies bc WHERE bc.edition_id = be.id AND bc.cover_price IS NOT NULL LIMIT 1) AS sample_cover_price
+          FROM book_editions be WHERE be.title_id = $1
+          ORDER BY be.publish_year DESC NULLS LAST, be.created_at ASC
+        `, [row.id]);
+
+        const copiesRes = await pool.query(`
+          SELECT bc.barcode, bc.location, bc.status
+          FROM book_copies bc
+          JOIN book_editions be ON be.id = bc.edition_id
+          WHERE be.title_id = $1 AND bc.status != 'ARCHIVED'
+        `, [row.id]);
+
+        const reviewsRes = await pool.query(`
+          SELECT id, author_name, rating, content, created_at, moderated_at
+          FROM book_reviews
+          WHERE book_id = $1 AND status = 'APPROVED'
+          ORDER BY moderated_at DESC NULLS LAST, created_at DESC
+        `, [row.id]);
+
+        const firstEdition = editionsRes.rows[0] || {};
+        const coverPrice = firstEdition.sample_cover_price ? Number(firstEdition.sample_cover_price) : 0;
+
+        paths.push({
+          params: { id: row.id },
+          props: {
+            book: {
+              id: row.id,
+              title: row.title,
+              originalTitle: row.original_title,
+              description: row.description || '',
+              authors: Array.isArray(row.authors) ? row.authors : JSON.parse(row.authors || '[]'),
+              categories: Array.isArray(row.categories) ? row.categories : JSON.parse(row.categories || '[]'),
+              publisher: firstEdition.publisher || 'Nhiều NXB',
+              publishYear: firstEdition.publish_year || 2024,
+              coverPrice,
+              coverImage: firstEdition.cover_image_url || '/assets/logo-ysbk.png',
+              copies: copiesRes.rows.map((c: any) => ({
+                barcode: c.barcode,
+                location: c.location,
+                status: c.status,
+              })),
+            },
+            isMock: false,
+            reviews: reviewsRes.rows.map((r: any) => ({
+              id: r.id,
+              readerName: r.author_name || r.reader_name,
+              rating: Number(r.rating),
+              content: r.content,
+              submittedAt: r.moderated_at
+                ? new Intl.DateTimeFormat('en-CA').format(new Date(r.moderated_at))
+                : new Intl.DateTimeFormat('en-CA').format(new Date(r.created_at)),
+            })),
+          },
+        });
+      }
+      await pool.end();
+    } catch (err: any) {
+      console.error('[sach/[id].astro] Lỗi truy vấn cơ sở dữ liệu sách thật:', err.message);
+      throw new Error(`[sach/[id].astro] Không thể tải catalog sách thật từ DATABASE_URL: ${err.message}`);
+    }
+  }
+
+  // Nguồn 2: INITIAL_BOOKS (mock / preview catalog) làm baseline
+  const existingIds = new Set(paths.map((p) => p.params.id));
+  for (const mockBook of INITIAL_BOOKS) {
+    if (!existingIds.has(mockBook.id)) {
+      const mockReviews: ReviewItem[] = INITIAL_REVIEWS.filter(
+        (r) => r.status === 'APPROVED' && r.bookTitle.toLowerCase() === mockBook.title.toLowerCase()
+      ).map((r) => ({
+        id: r.id,
+        readerName: r.readerName,
+        rating: r.rating,
+        content: r.content,
+        submittedAt: r.submittedAt,
+      }));
+
+      paths.push({
+        params: { id: mockBook.id },
+        props: {
+          book: mockBook,
+          isMock: true,
+          reviews: mockReviews,
+        },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { book, isMock, reviews } = Astro.props;
+const isStaging = import.meta.env.PUBLIC_ENV === 'staging' || import.meta.env.MODE === 'staging';
+
+// Chỉ hiển thị reviews đã APPROVED, tuyệt đối không lộ PII
+const approvedReviews: ReviewItem[] = reviews || [];
+const standardDeposit = calculateDeposit(book.coverPrice);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  'name': book.title,
+  'author': book.authors.map((a: string) => ({ '@type': 'Person', 'name': a })),
+  'description': book.description,
+  'image': book.coverImage || 'https://yeusachbk.org/assets/logo-ysbk.png',
+  'offers': {
+    '@type': 'Offer',
+    'price': standardDeposit,
+    'priceCurrency': 'VND',
+    'availability': book.copies?.some((c: any) => c.status === 'AVAILABLE')
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock',
+  },
+};
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/assets/logo-ysbk.png" />
+
+    <!-- SEO Meta Tags -->
+    <title>{book.title} — Tủ Sách CLB Yêu Sách Bách Khoa (YSBK)</title>
+    <meta name="description" content={book.description.substring(0, 160)} />
+    <link rel="canonical" href={`https://yeusachbk.org/sach/${book.id}`} />
+
+    <!-- OpenGraph & Social Sharing Meta Tags -->
+    <meta property="og:title" content={`${book.title} — YSBK`} />
+    <meta property="og:description" content={book.description.substring(0, 200)} />
+    <meta property="og:image" content={book.coverImage || '/assets/logo-ysbk.png'} />
+    <meta property="og:type" content="book" />
+    <meta property="og:url" content={`https://yeusachbk.org/sach/${book.id}`} />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Staging / Preview Rule: noindex trên môi trường staging nhưng không dùng thay Authorization -->
+    <meta name="robots" content={isStaging ? "noindex, nofollow" : "index, follow"} />
+  </head>
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src="/assets/logo-ysbk.png" alt="Logo YSBK" class="h-9 w-auto object-contain" />
+          <div>
+            <div class="font-bold text-base text-brand-navy leading-tight">CLB Yêu Sách Bách Khoa</div>
+            <div class="text-[11px] text-brand-red font-medium">Mở sách đọc tương lai!</div>
+          </div>
+        </a>
+        <a 
+          href="/" 
+          class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+        >
+          ← Quay lại trang chủ
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+      {isMock && (
+        <div class="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-2">
+            <span class="font-bold">⚠️ Bản xem trước dữ liệu mẫu:</span>
+            <span>Cuốn sách này đang được hiển thị từ bộ dữ liệu mẫu dự phòng (Catalog Mock).</span>
+          </div>
+          <span class="text-[10px] font-mono bg-amber-200/70 text-amber-950 font-bold px-2 py-0.5 rounded">MOCK_PREVIEW</span>
+        </div>
+      )}
+
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-6">
+          <div class="w-full sm:w-52 aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shrink-0 shadow">
+            <img 
+              src={book.coverImage || '/assets/logo-ysbk.png'} 
+              alt={book.title} 
+              class="w-full h-full object-cover"
+            />
+          </div>
+
+          <div class="flex-1">
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              {book.categories.map((c) => (
+                <span class="text-xs font-semibold bg-brand-navy-soft text-brand-navy px-2.5 py-0.5 rounded-full">
+                  {c}
+                </span>
+              ))}
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-slate-900 leading-tight">
+              {book.title}
+            </h1>
+
+            <p class="text-sm text-slate-600 mt-2">
+              Tác giả: <span class="font-semibold text-slate-800">{book.authors.join(', ')}</span>
+            </p>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Nhà xuất bản: {book.publisher} ({book.publishYear})
+            </p>
+
+            <div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <div class="text-slate-400">Giá bìa:</div>
+                <div class="font-bold text-slate-800 tnum text-sm mt-0.5">
+                  {book.coverPrice ? formatVND(book.coverPrice) : 'Chưa có giá'}
+                </div>
+              </div>
+              <div>
+                <div class="text-slate-400">Tiền cọc quy định:</div>
+                <div class="font-bold text-brand-navy tnum text-sm mt-0.5">
+                  {formatVND(standardDeposit)}
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-xs text-slate-700 leading-relaxed font-sans">
+              <h3 class="font-bold text-slate-900 mb-1 text-sm">Giới thiệu sách:</h3>
+              <p>{book.description}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trạng thái các bản sách vật lý (Chỉ công khai mã barcode, vị trí, tình trạng sẵn sàng - KHÔNG có PII) -->
+        <div class="mt-8 pt-6 border-t border-slate-100">
+          <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
+            <span>Trạng thái các bản sách vật lý tại quầy</span>
+            <span class="text-xs text-slate-400 font-normal">Hạn mượn tiêu chuẩn 14 ngày</span>
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="copies-table">
+              <thead class="bg-slate-50 text-slate-500 font-semibold uppercase">
+                <tr>
+                  <th class="py-2.5 px-3">Mã bản sách</th>
+                  <th class="py-2.5 px-3">Vị trí lưu kho</th>
+                  <th class="py-2.5 px-3">Tình trạng</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="copies-tbody">
+                {book.copies && book.copies.length > 0 ? (
+                  book.copies.map((copy: any) => (
+                    <tr>
+                      <td class="py-3 px-3 font-mono font-medium text-slate-800">{copy.barcode}</td>
+                      <td class="py-3 px-3 text-slate-600">
+                        {copy.location === 'BAN_TRUC_TAM' && 'Bàn trực sảnh Thư viện TQB'}
+                        {copy.location === 'KHO_THU_VIEN' && 'Kho Thư viện Tạ Quang Bửu'}
+                        {copy.location === 'KHO_HOI_SINH_VIEN' && 'Kho Văn phòng Hội Sinh viên'}
+                        {copy.location !== 'BAN_TRUC_TAM' && copy.location !== 'KHO_THU_VIEN' && copy.location !== 'KHO_HOI_SINH_VIEN' && (copy.location || 'Bàn trực')}
+                      </td>
+                      <td class="py-3 px-3">
+                        {copy.status === 'AVAILABLE' ? (
+                          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                            Sẵn sàng cho mượn
+                          </span>
+                        ) : (
+                          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                            Đang có bạn đọc mượn
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colspan="3" class="py-4 text-center text-slate-400">
+                      Hiện chưa có bản sách vật lý nào tại quầy.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Góc Review Sách Đã Được Duyệt (Chỉ hiển thị bài APPROVED, không PII) -->
+        <div class="mt-8 pt-6 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-brand-navy">Cảm Nhận & Đánh Giá Từ Bạn Đọc</h3>
+            <a 
+              href={`/?tab=review&sach=${book.id}`}
+              class="text-xs font-semibold text-brand-navy hover:underline"
+            >
+              Gửi cảm nhận sách này →
+            </a>
+          </div>
+
+          <div id="reviews-container">
+            {approvedReviews.length === 0 ? (
+              <p class="text-xs text-slate-400 italic py-3" id="no-reviews-msg">
+                Chưa có đánh giá nào được duyệt cho cuốn sách này. Hãy là người đầu tiên chia sẻ cảm nhận!
+              </p>
+            ) : (
+              <div class="space-y-3" id="reviews-list">
+                {approvedReviews.map((rev) => (
+                  <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                      <span class="font-bold text-slate-800">{rev.readerName}</span>
+                      <span class="text-amber-500">{'★'.repeat(rev.rating)}</span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed font-serif">
+                      "{rev.content}"
+                    </p>
+                    <div class="mt-2 text-[10px] text-slate-400">
+                      Đăng ngày: {rev.submittedAt} · Đã duyệt bởi Ban Quản Trị YSBK
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Client-side SWR Revalidation (Tự động cập nhật tình trạng sách & review đã duyệt mới nhất mà không lộ PII) -->
+    <script define:vars={{ bookId: book.id }}>
+      async function revalidateBookData() {
+        try {
+          // Revalidate review đã duyệt từ API công khai
+          const revRes = await fetch(`/api/v1/public/books/${bookId}/reviews`);
+          if (revRes.ok) {
+            const revData = await revRes.json();
+            const reviews = revData.data || [];
+            const container = document.getElementById('reviews-container');
+            if (container && reviews.length > 0) {
+              const html = `
+                <div class="space-y-3">
+                  ${reviews.map(r => `
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                      <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                        <span class="font-bold text-slate-800">${escapeHtml(r.authorName || r.readerName || 'Bạn đọc')}</span>
+                        <span class="text-amber-500">${'★'.repeat(Number(r.rating) || 5)}</span>
+                      </div>
+                      <p class="text-xs text-slate-700 leading-relaxed font-serif">
+                        "${escapeHtml(r.content || '')}"
+                      </p>
+                      <div class="mt-2 text-[10px] text-slate-400">
+                        Đăng ngày: ${r.moderatedAt ? r.moderatedAt.slice(0, 10) : (r.approvedAt ? r.approvedAt.slice(0, 10) : (r.createdAt ? r.createdAt.slice(0, 10) : 'Gần đây'))} · Đã duyệt bởi Ban Quản Trị YSBK
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+              container.innerHTML = html;
+            }
+          }
+        } catch {
+          // Fallback nhẹ nhàng nếu API không sẵn sàng (môi trường tĩnh thuần)
+        }
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.addEventListener('DOMContentLoaded', revalidateBookData);
+      }
+    </script>
+  </body>
+</html>

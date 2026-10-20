@@ -1,0 +1,238 @@
+---
+import '../styles/global.css';
+
+const isStaging = import.meta.env.PUBLIC_ENV === 'staging' || import.meta.env.MODE === 'staging';
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/assets/logo-ysbk.png" />
+    <title>Không tìm thấy trang — CLB Yêu Sách Bách Khoa</title>
+    <meta name="robots" content={isStaging ? "noindex, nofollow" : "noindex"} />
+  </head>
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col justify-between">
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200">
+      <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <img src="/assets/logo-ysbk.png" alt="Logo YSBK" class="h-9 w-auto object-contain" />
+          <div>
+            <div class="font-bold text-base text-brand-navy leading-tight">CLB Yêu Sách Bách Khoa</div>
+            <div class="text-[11px] text-brand-red font-medium">Mở sách đọc tương lai!</div>
+          </div>
+        </a>
+        <a 
+          href="/" 
+          class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+        >
+          ← Trang chủ
+        </a>
+      </div>
+    </header>
+
+    <!-- Container: Dynamic Book Render or Standard 404 -->
+    <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full" id="fallback-container">
+      <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm p-8" id="default-404">
+        <div class="text-6xl font-serif font-bold text-brand-navy mb-4">404</div>
+        <h1 class="text-xl font-bold text-slate-800 mb-2">Trang bạn tìm kiếm không tồn tại</h1>
+        <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">
+          Đường dẫn có thể đã thay đổi hoặc cuốn sách này chưa được cập nhật vào danh mục công khai.
+        </p>
+        <a 
+          href="/" 
+          class="inline-block px-5 py-2.5 rounded-xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-hover transition shadow-sm"
+        >
+          Quay về Trang chủ YSBK
+        </a>
+      </div>
+    </main>
+
+    <footer class="py-6 border-t border-slate-200 text-center text-xs text-slate-400 bg-white">
+      © 2026 CLB Yêu Sách Bách Khoa — YSBK. All rights reserved.
+    </footer>
+
+    <!-- Client-side SPA Dynamic Resolver for /sach/:id (P22-12) -->
+    <script>
+      (async function() {
+        const path = window.location.pathname;
+        const match = path.match(/^\/sach\/([a-zA-Z0-9_-]+)\/?$/);
+        if (!match) return;
+
+        const bookId = match[1];
+        const container = document.getElementById('fallback-container');
+        if (!container) return;
+
+        try {
+          const res = await fetch(`/api/v1/catalog/books/${bookId}`);
+          if (!res.ok) return;
+
+          const json = await res.json();
+          const book = json.data;
+          if (!book) return;
+
+          // Lấy tiếp các review đã APPROVED
+          let reviews = [];
+          try {
+            const revRes = await fetch(`/api/v1/public/books/${bookId}/reviews`);
+            if (revRes.ok) {
+              const revJson = await revRes.json();
+              reviews = revJson.data || [];
+            }
+          } catch {}
+
+          const calculateDeposit = (price: any) => {
+            if (!price || price <= 0) return 50000;
+            return Math.max(50000, Math.floor((price + 25000) / 50000) * 50000);
+          };
+          const standardDeposit = book.calculatedDeposit || book.standardDeposit || calculateDeposit(book.coverPrice);
+          const authors = Array.isArray(book.authors) ? book.authors.join(', ') : (book.authors || 'Đang cập nhật');
+          const categories = Array.isArray(book.categories) ? book.categories : [];
+
+          document.title = `${book.title} — Tủ Sách CLB Yêu Sách Bách Khoa (YSBK)`;
+
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+              <div class="flex flex-col sm:flex-row gap-6">
+                <div class="w-full sm:w-52 aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shrink-0 shadow">
+                  <img 
+                    src="${book.coverImage || '/assets/logo-ysbk.png'}" 
+                    alt="${escapeHtml(book.title)}" 
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div class="flex-1">
+                  <div class="flex flex-wrap gap-1.5 mb-2">
+                    ${categories.map((c: any) => `
+                      <span class="text-xs font-semibold bg-brand-navy-soft text-brand-navy px-2.5 py-0.5 rounded-full">
+                        ${escapeHtml(c)}
+                      </span>
+                    `).join('')}
+                  </div>
+
+                  <h1 class="text-2xl sm:text-3xl font-serif font-bold text-slate-900 leading-tight">
+                    ${escapeHtml(book.title)}
+                  </h1>
+
+                  <p class="text-sm text-slate-600 mt-2">
+                    Tác giả: <span class="font-semibold text-slate-800">${escapeHtml(authors)}</span>
+                  </p>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Mã đầu sách: <span class="font-mono">${escapeHtml(book.id)}</span>
+                  </p>
+
+                  <div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <div class="text-slate-400">Giá bìa tham chiếu:</div>
+                      <div class="font-bold text-slate-800 tnum text-sm mt-0.5">
+                        ${book.coverPrice ? Number(book.coverPrice).toLocaleString('vi-VN') + ' ₫' : 'Chưa có giá'}
+                      </div>
+                    </div>
+                    <div>
+                      <div class="text-slate-400">Tiền cọc quy định:</div>
+                      <div class="font-bold text-brand-navy tnum text-sm mt-0.5">
+                        ${standardDeposit.toLocaleString('vi-VN')} ₫
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 text-xs text-slate-700 leading-relaxed font-sans">
+                    <h3 class="font-bold text-slate-900 mb-1 text-sm">Giới thiệu sách:</h3>
+                    <p>${escapeHtml(book.description || 'Chưa có thông tin mô tả.')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trạng thái bản sách -->
+              <div class="mt-8 pt-6 border-t border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
+                  <span>Trạng thái các bản sách vật lý tại quầy</span>
+                  <span class="text-xs text-slate-400 font-normal">Hạn mượn tiêu chuẩn 14 ngày</span>
+                </h3>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 font-semibold uppercase">
+                      <tr>
+                        <th class="py-2.5 px-3">Mã bản sách</th>
+                        <th class="py-2.5 px-3">Vị trí lưu kho</th>
+                        <th class="py-2.5 px-3">Tình trạng</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${book.copies && book.copies.length > 0 ? book.copies.map((c: any) => `
+                        <tr>
+                          <td class="py-3 px-3 font-mono font-medium text-slate-800">${escapeHtml(c.barcode)}</td>
+                          <td class="py-3 px-3 text-slate-600">${escapeHtml(c.location || 'Bàn trực sảnh Thư viện')}</td>
+                          <td class="py-3 px-3">
+                            ${c.status === 'AVAILABLE' ? `
+                              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                Sẵn sàng cho mượn
+                              </span>
+                            ` : `
+                              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                                Đang có bạn đọc mượn
+                              </span>
+                            `}
+                          </td>
+                        </tr>
+                      `).join('') : `
+                        <tr>
+                          <td colspan="3" class="py-4 text-center text-slate-400">
+                            Hiện chưa có bản sách vật lý nào tại quầy.
+                          </td>
+                        </tr>
+                      `}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Reviews -->
+              <div class="mt-8 pt-6 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-base font-bold text-brand-navy">Cảm Nhận & Đánh Giá Từ Bạn Đọc</h3>
+                  <a href="/?tab=review&sach=${book.id}" class="text-xs font-semibold text-brand-navy hover:underline">
+                    Gửi cảm nhận sách này →
+                  </a>
+                </div>
+                ${reviews.length === 0 ? `
+                  <p class="text-xs text-slate-400 italic py-3">
+                    Chưa có đánh giá nào được duyệt cho cuốn sách này. Hãy là người đầu tiên chia sẻ cảm nhận!
+                  </p>
+                ` : `
+                  <div class="space-y-3">
+                    ${reviews.map((r: any) => `
+                      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                          <span class="font-bold text-slate-800">${escapeHtml(r.readerName || 'Bạn đọc')}</span>
+                          <span class="text-amber-500">${'★'.repeat(Number(r.rating) || 5)}</span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed font-serif">
+                          "${escapeHtml(r.content || '')}"
+                        </p>
+                        <div class="mt-2 text-[10px] text-slate-400">
+                          Đăng ngày: ${r.approvedAt ? r.approvedAt.slice(0, 10) : (r.createdAt ? r.createdAt.slice(0, 10) : 'Gần đây')} · Đã duyệt bởi Ban Quản Trị YSBK
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                `}
+              </div>
+            </div>
+          `;
+        } catch (e) {
+          // Giữ nguyên giao diện 404 mặc định nếu không tải được sách
+        }
+
+        function escapeHtml(str: string): string {
+          const div = document.createElement('div');
+          div.textContent = str;
+          return div.innerHTML;
+        }
+      })();
+    </script>
+  </body>
+</html>

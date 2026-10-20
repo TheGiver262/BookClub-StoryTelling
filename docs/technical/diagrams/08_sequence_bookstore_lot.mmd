@@ -1,0 +1,41 @@
+sequenceDiagram
+    %% Sequence quyết toán lô sách bán mới (2 bút toán riêng biệt)
+
+    actor Logistics as Thành Viên Hậu Cần
+    participant UI as Giao Diện Tài Chính
+    participant API as Sales & Finance Engine
+    participant DB as PostgreSQL Database
+    actor Supplier as Nhà Sách Đối Tác
+
+    Note over Logistics, Supplier: 1. TIẾP NHẬN ĐỢT BÁN SÁCH MỚI
+    Logistics->>API: Nhập đợt: 100 cuốn, giá bìa 100k, chiết khấu 35% -> Đơn giá 65k
+    Logistics->>Supplier: Đặt cọc một phần nhỏ: 1.000.000 ₫
+    API->>DB: INSERT journal_entries (Nợ COC_NHA_SACH 1M / Có TIEN_NGAN_HANG 1M)
+
+    Note over Logistics, UI: 2. BÁN HÀNG TẠI SỰ KIỆN (Bán thu tiền ngay, không nợ)
+    Logistics->>UI: Bán được 60 cuốn với giá 80k (chiết khấu 20% cho người mua)
+    UI->>API: Thu tiền ngay từ khách: 60 × 80k = 4.800.000 ₫
+    API->>DB: INSERT journal_entries (Nợ TIEN_MAT 4.8M / Có DOANH_THU_BAN 4.8M)
+
+    Note over Logistics, Supplier: 3. CUỐI ĐỢT: TRẢ HÀNG DƯ & ĐỐI SOÁT
+    Logistics->>Supplier: Trả lại 40 cuốn dư (100 - 60 = 40 cuốn)
+    Supplier-->>Logistics: Xác nhận nhận lại đủ 40 cuốn vật lý
+
+    Note over Logistics, DB: 4. QUYẾT TOÁN 2 GIAO DỊCH TÁCH BIỆT (THEO ĐẶC TẢ ĐÃ CHỐT)
+    Logistics->>UI: Thực hiện quyết toán lô sách
+    UI->>API: POST /finance/bookstore-lots/lot-01/settle
+    activate API
+    API->>DB: BEGIN TRANSACTION
+
+    Note over API, DB: Bút toán 1: Nhà sách hoàn trả lại tiền cọc 1 triệu
+    API->>DB: INSERT journal_entries (Nợ TIEN_NGAN_HANG 1.000.000 / Có COC_NHA_SACH 1.000.000)
+
+    Note over API, DB: Bút toán 2: CLB thanh toán tiền 60 cuốn đã bán cho nhà sách
+    API->>DB: INSERT journal_entries (Nợ GIA_VON_BAN 3.900.000 / Có TIEN_NGAN_HANG 3.900.000)
+
+    Note over API: TUYỆT ĐỐI KHÔNG GỘP THÀNH 1 KHOẢN CHI RÒNG 2.900.000 ₫
+    API->>DB: UPDATE bookstore_lots SET is_settled = TRUE
+    API->>DB: COMMIT
+    API-->>UI: 200 OK (Quyết toán lô sách thành công)
+    deactivate API
+    UI-->>Logistics: Hiển thị 2 biên nhận độc lập: Hoàn cọc 1M & Chi thanh toán 3.9M
