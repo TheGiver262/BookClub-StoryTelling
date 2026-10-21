@@ -1,5 +1,11 @@
 # Bằng chứng chuẩn bị beta — 20/10/2026
 
+## Phân định snapshot 21/10/2026
+
+Các kết quả 20/10 bên dưới giữ nguyên theo môi trường/lần chạy. Các đợt sau có bằng chứng tại [landing](book-landing-local.md), [publishing/CTV](public-portal-publishing.md), [concept](../mockups/stitch-ui-2026-10-21/verification-handoff.json) và ảnh UI trong `docs/mockups/qa-evidence-2026-10-21/`; sự tồn tại ảnh không chứng minh toàn bộ UAT.
+
+Lượt handoff chỉ xác nhận readiness local 200 DB/Auth connected và HTTP landing/preview. Không chạy lại suite, không deploy. Xem [trạng thái hiện hành](../CURRENT-STATE.md) trước khi đóng gate; đề xuất tài khoản/đổi sách/IP chưa là tính năng được nghiệm thu.
+
 > Đây là snapshot đợt chuẩn bị beta trước khi chuyển ưu tiên sang local. Kiểm tra browser và stack local mới hơn được ghi trong [local-development.md](local-development.md); beta tiếp tục tạm hoãn.
 
 Phạm vi: chuẩn bị code/config và hướng dẫn cho Supabase Free + Workers/Hyperdrive Free + Turnstile. Chưa triển khai cloud, chưa ghi Supabase thật, chưa nâng gói, chưa commit/push các thay đổi beta.

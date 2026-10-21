@@ -4,7 +4,7 @@
  * 1. Anon submit bị chặn 401 (G-guest-session-barrier)
  * 2. Guest có phiên hợp lệ submit thành công PENDING, lưu DB thật (G-guest-flexibility, Fix R10)
  * 3. Bài pending không xuất hiện trên public API (G-pending-isolation)
- * 4. Member duyệt APPROVED thì bài xuất hiện trên public API (G-moderation-approval)
+ * 4. ADMIN duyệt APPROVED thì bài xuất hiện trên public API (G-moderation-approval)
  * 5. Sửa bài đã duyệt tạo version pending mới, không làm leak bản sửa trước khi duyệt (G-version-isolation)
  * 6. XSS sanitization tước bỏ script độc hại (G-xss-sanitize)
  * 7. Public DTO không rò rỉ PII người mượn hoặc email/ghi chú riêng (G-public-privacy, Fix R13)
@@ -81,6 +81,9 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       created_at: new Date().toISOString(),
     });
   });
+  it('Chỉ ADMIN được kiểm duyệt review, MEMBER không được vượt qua quyền này',async()=>{
+    await assert.rejects(()=>moderateBookReview(db,mockMemberActor,'review',{decision:'APPROVED'}),(error:any)=>error.errorCode==='ADMIN_REQUIRED');
+  });
 
   it('Gate 1 (G-guest-session-barrier): Người dùng ẩn danh (Anon) gửi review bị chặn 401 Unauthorized', async () => {
     await assert.rejects(
@@ -137,7 +140,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
     assert.equal(publicReviews.length, 0, 'Public API không được trả về bài đánh giá đang PENDING');
   });
 
-  it('Gate 4 (G-moderation-approval): Thành viên CLB duyệt APPROVED thì đánh giá xuất hiện công khai', async () => {
+  it('Gate 4 (G-moderation-approval): Quản trị viên duyệt APPROVED thì đánh giá xuất hiện công khai', async () => {
     const review = await submitBookReview(db, mockGuestActor, {
       bookId: 'book-dac-nhan-tam',
       authorName: 'Lê Minh Khôi',
@@ -145,14 +148,14 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       content: 'Một trong những cuốn sách làm thay đổi thói quen lắng nghe của mình.',
     });
 
-    // Member duyệt APPROVED
-    const moderated = await moderateBookReview(db, mockMemberActor, review.id, {
+    // ADMIN duyệt APPROVED
+    const moderated = await moderateBookReview(db, mockAdminActor, review.id, {
       decision: 'APPROVED',
       moderationNote: 'Nội dung tích cực, phù hợp thuần phong mỹ tục.',
     });
 
     assert.equal(moderated.status, 'APPROVED');
-    assert.equal(moderated.moderatedBy, mockMemberActor.memberId || mockMemberActor.userId);
+    assert.equal(moderated.moderatedBy, mockAdminActor.memberId || mockAdminActor.userId);
     assert.ok(moderated.moderatedAt);
 
     // Public API query
@@ -172,7 +175,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       content: 'Bản nhận xét ban đầu rất hay.',
     });
 
-    await moderateBookReview(db, mockMemberActor, review.id, { decision: 'APPROVED' });
+    await moderateBookReview(db, mockAdminActor, review.id, { decision: 'APPROVED' });
 
     // Public đang thấy bản gốc v1
     let publicReviews = await getPublicReviews(db, 'book-dac-nhan-tam');
@@ -195,7 +198,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
     assert.equal(publicReviews.length, 0, 'Bài chuyển PENDING phải tạm ẩn khỏi public để chờ duyệt lại');
 
     // 4. Member duyệt lại bài v2
-    const reApproved = await moderateBookReview(db, mockMemberActor, review.id, { decision: 'APPROVED' });
+    const reApproved = await moderateBookReview(db, mockAdminActor, review.id, { decision: 'APPROVED' });
     assert.equal(reApproved.status, 'APPROVED');
     assert.equal(reApproved.content, 'Bản nhận xét đã được cập nhật thêm góc nhìn thực tế tại Bách Khoa.');
     assert.equal(reApproved.pendingContent, null);
@@ -227,7 +230,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       content: 'Sách rất đáng đọc trong những năm tháng đại học.',
     });
 
-    await moderateBookReview(db, mockMemberActor, review.id, {
+    await moderateBookReview(db, mockAdminActor, review.id, {
       decision: 'APPROVED',
       moderationNote: 'Lưu ý kiểm tra thông tin sinh viên nội bộ: SV có lịch sử mượn tốt.',
     });
@@ -249,7 +252,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       },
       (err: any) => {
         assert.equal(err.name, 'ForbiddenError');
-        assert.equal(err.errorCode, 'GUEST_ACCESS_DENIED');
+        assert.equal(err.errorCode, 'ADMIN_REQUIRED');
         assert.equal(err.statusCode, 403);
         return true;
       }

@@ -1,5 +1,13 @@
 # Bàn giao đặt sách công khai — 20/10/2026
 
+**Thay đổi sau chat tiếp nối 21/10:** đã triển khai local tài khoản Google bắt buộc cho đơn mới, phiên một trình duyệt và chuẩn bị cổng nội bộ subdomain + Access. Đọc [runbook mới](reader-accounts-local-and-access.md) trước hướng dẫn không đăng nhập phía dưới. Người dùng xác nhận chưa có tài nguyên domain/provider cloud; Google thật/Access chưa bật. Không đổi hạn mức IP/SĐT hoặc thêm đổi sách.
+
+## Tiếp nối bàn giao 21/10/2026
+
+Bản 20/10 bên dưới giữ bằng chứng lần triển khai/review đó. Hiện landing và cổng chung/publishing/CTV được mở rộng, xem [session handoff](../SESSION-HANDOFF.md), [landing](book-landing-local.md) và [publishing](public-portal-publishing.md).
+
+Source hiện có tra/hủy bằng token riêng khi HELD. Chưa coi đổi sách nguyên tử hoặc tài khoản bạn đọc là chức năng đã duyệt. [Nghiên cứu mới](public-reservation-ux-research-2026-10-21.md) là đầu vào thảo luận; giữ quota/SĐT/CAPTCHA/hết hạn cũ. Chưa chạy lại suite trong lượt tài liệu này; không dùng snapshot test để đóng cloud UAT.
+
 Bản này thay thế các tuyên bố nghiệm thu trong snapshot Antigravity trước khi review. Thiết kế gốc: [public-reservation-design.md](public-reservation-design.md). Kế hoạch: [PR-0…PR-9](../superpowers/plans/2026-10-20-public-reservation.md). Chi tiết lỗi và bằng chứng: [review cuối](../reviews/2026-10-20-public-reservation-final-repair.md).
 
 ## Quy tắc đã triển khai

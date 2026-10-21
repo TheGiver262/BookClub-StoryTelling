@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tra cứu phiếu giữ chỗ · YSBK Bách Khoa</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Newsreader & Be Vietnam Pro -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface-variant": "#35483C",
+            "on-primary-fixed-variant": "#294C3A",
+            "on-primary-container": "#DCDED0",
+            "secondary-container": "#A87A4C",
+            "tertiary": "#813C2A",
+            "on-primary-fixed": "#294C3A",
+            "on-primary": "#FFFDF5",
+            "primary-container": "#365E4B",
+            "primary": "#294C3A",
+            "on-tertiary-fixed": "#35483C",
+            "on-tertiary": "#FFFDF5",
+            "outline": "#64705C",
+            "on-surface": "#294C3A",
+            "surface-tint": "#365E4B",
+            "surface-dim": "#DCDED0",
+            "background": "#F8F5EC",
+            "outline-variant": "#DCDED0",
+            "surface-container-highest": "#E8EDDF",
+            "secondary-fixed": "#F7E7DB",
+            "surface-container-low": "#F8F5EC",
+            "primary-fixed": "#DCDED0",
+            "error": "#9B4D36",
+            "inverse-surface": "#35483C",
+            "secondary": "#9B4D36",
+            "on-tertiary-fixed-variant": "#813C2A",
+            "on-error-container": "#813C2A",
+            "surface": "#F8F5EC",
+            "tertiary-container": "#813C2A",
+            "on-background": "#294C3A",
+            "on-secondary-fixed": "#35483C",
+            "secondary-fixed-dim": "#DCDED0",
+            "on-error": "#FFFDF5",
+            "surface-container-lowest": "#FFFDF5",
+            "surface-bright": "#F8F5EC",
+            "primary-fixed-dim": "#DCDED0",
+            "inverse-primary": "#DCDED0",
+            "surface-container-high": "#E8EDDF",
+            "on-secondary-container": "#813C2A",
+            "inverse-on-surface": "#F8F5EC",
+            "error-container": "#F7E7DB",
+            "tertiary-fixed-dim": "#DCDED0",
+            "on-secondary-fixed-variant": "#813C2A",
+            "on-secondary": "#FFFDF5",
+            "surface-container": "#E8EDDF",
+            "on-tertiary-container": "#DCDED0",
+            "tertiary-fixed": "#F4EAD2",
+            "surface-variant": "#E8EDDF",
+            // LOCKED EXACT PALETTE
+            "ysbk-bg": "#F8F5EC",
+            "ysbk-paper": "#FFFDF5",
+            "ysbk-ink": "#35483C",
+            "ysbk-muted": "#64705C",
+            "ysbk-border": "#DCDED0",
+            "ysbk-primary": "#365E4B",
+            "ysbk-primary-hover": "#294C3A",
+            "ysbk-primary-pale": "#E8EDDF",
+            "ysbk-terra": "#9B4D36",
+            "ysbk-terra-hover": "#813C2A",
+            "ysbk-terra-pale": "#F7E7DB",
+            "ysbk-gold": "#A87A4C",
+            "ysbk-gold-pale": "#F4EAD2"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem",
+            "soft-input": "14px",
+            "soft-card": "22px",
+            "soft-modal": "24px"
+          },
+          boxShadow: {
+            "soft-paper": "0 5px 18px rgba(53, 72, 60, 0.08)",
+            "soft-modal": "0 12px 36px rgba(53, 72, 60, 0.16)"
+          },
+          fontFamily: {
+            "headline": ["Newsreader", "serif"],
+            "display": ["Newsreader", "serif"],
+            "body": ["Be Vietnam Pro", "sans-serif"],
+            "label": ["Be Vietnam Pro", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Natural vintage paper receipt scalloped notch aesthetic */
+    .receipt-notch-left {
+      position: absolute;
+      left: -9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background-color: #F8F5EC;
+      box-shadow: inset -2px 0 0 #DCDED0;
+    }
+    .receipt-notch-right {
+      position: absolute;
+      right: -9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background-color: #F8F5EC;
+      box-shadow: inset 2px 0 0 #DCDED0;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <style>small,.text-xs,[class*="text-[10px]"],[class*="text-[11px]"],[class*="text-[12px]"],[class*="text-[13px]"]{font-size:14px!important;line-height:1.5}button{min-height:44px}@media(max-width:767px){button{min-height:48px}}</style><link rel="stylesheet" href="soft-ui.css?v=3">
+</head>
+<body class="bg-ysbk-bg text-ysbk-ink font-body antialiased min-h-screen flex justify-center selection:bg-ysbk-primary-pale selection:text-ysbk-primary">
+<!-- Mobile Viewport Container: strictly 390px width emulation with soft edge framing on large screens -->
+<main class="w-full max-w-[390px] min-h-screen bg-ysbk-bg border-x border-ysbk-border flex flex-col relative pb-28">
+<!-- Top Mobile Header Bar (Compact Mobile Header) -->
+<header class="sticky top-0 z-30 bg-ysbk-bg/95 backdrop-blur-md px-4 py-3 border-b border-ysbk-border flex items-center justify-between">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-soft-input bg-ysbk-primary text-white flex items-center justify-center font-headline font-bold text-base shadow-sm">
+          Y
+        </div>
+<div>
+<span class="block font-headline text-sm font-semibold tracking-tight text-ysbk-primary leading-tight">YSBK · Bách Khoa</span>
+<span class="block text-[11px] text-ysbk-muted tracking-tight font-medium">Mở sách, đọc tương lai</span>
+</div>
+</div>
+<a class="inline-flex items-center space-x-1 text-xs font-medium text-ysbk-primary hover:text-ysbk-primary-hover px-2.5 py-1.5 rounded-soft-input bg-ysbk-primary-pale border border-ysbk-border transition-colors" href="#quay-lai">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+<span>Tủ sách</span>
+</a>
+</header>
+<!-- Main Content Flow -->
+<div class="px-4 pt-5 pb-6 space-y-6">
+<!-- Page Title & Context Header -->
+<section class="space-y-1.5">
+<div class="inline-flex items-center gap-1.5 text-xs text-ysbk-gold font-medium uppercase tracking-wider mb-0.5">
+<span class="w-2 h-0.5 bg-ysbk-gold inline-block"></span>
+<span>Dành cho bạn đọc</span>
+</div>
+<h1 class="font-headline text-3xl font-semibold text-ysbk-primary leading-tight tracking-tight">
+          Tra cứu phiếu giữ chỗ
+        </h1>
+<p class="text-ysbk-muted text-sm leading-relaxed">
+          Kiểm tra tình trạng đơn đặt sách trước khi đến bàn trực nhận sách.
+        </p>
+</section>
+<!-- Security & Lookup Form Card -->
+<section class="bg-ysbk-paper rounded-soft-card p-4 border border-ysbk-border shadow-soft-paper relative">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-ysbk-primary text-xl" data-icon="search">search</span>
+<h2 class="font-headline text-lg font-semibold text-ysbk-ink">Mã số phiếu riêng tư</h2>
+</div>
+<form class="space-y-3.5" onsubmit="event.preventDefault();">
+<div>
+<label class="block text-xs font-medium text-ysbk-ink mb-1.5 flex items-center justify-between" for="lookup-code">
+<span>Mã tra cứu riêng của phiếu <span class="text-ysbk-terra">*</span></span>
+<span class="text-[11px] text-ysbk-muted font-normal">Mã riêng</span>
+</label>
+<div class="relative">
+<input class="w-full h-12 px-3.5 rounded-soft-input bg-ysbk-paper border border-ysbk-border text-sm font-medium tracking-wider text-ysbk-ink placeholder:text-ysbk-muted/60 focus:outline-none focus:ring-1 focus:ring-ysbk-primary focus:border-ysbk-primary transition-all" id="lookup-code" placeholder="Nhập mã tra cứu riêng đã lưu" type="text" />
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-ysbk-muted text-base" data-icon="lock">lock</span>
+</div>
+</div>
+<!-- Helper Privacy Note -->
+<div class="p-3 bg-ysbk-bg rounded-soft-input border border-ysbk-border/80 flex items-start space-x-2.5">
+<span class="material-symbols-outlined text-ysbk-muted text-base shrink-0 mt-0.5" data-icon="shield">shield</span>
+<p class="text-xs text-ysbk-muted leading-relaxed">
+              Mã tra cứu gồm Mã riêng được cấp ngay khi bạn gửi phiếu giữ chỗ. <strong class="font-medium text-ysbk-ink">Không hỗ trợ tra cứu công khai bằng số điện thoại</strong> để bảo mật danh tính bạn đọc.
+            </p>
+</div>
+<!-- Submit Action Button -->
+<button class="w-full h-12 rounded-soft-input bg-ysbk-primary hover:bg-ysbk-primary-hover active:scale-[0.99] text-white text-sm font-medium flex items-center justify-center space-x-2 transition-all shadow-sm" type="submit">
+<span class="material-symbols-outlined text-base" data-icon="quick_reference_all">quick_reference_all</span>
+<span>Tra cứu trạng thái phiếu</span>
+</button>
+</form>
+</section>
+<!-- Search Result Receipt Card (Tactile Paper Ticket) -->
+<section class="relative bg-ysbk-paper rounded-soft-card border border-ysbk-border shadow-soft-paper overflow-hidden pt-4 pb-5 px-4 space-y-4">
+<!-- Scalloped receipt notch visual on horizontal divider later -->
+<div class="flex items-center justify-between border-b border-ysbk-border pb-3">
+<div class="space-y-0.5">
+<span class="text-[11px] font-mono tracking-widest text-ysbk-muted uppercase block">PHIẾU HẸN NHẬN SÁCH TẠI BÀN TRỰC</span>
+<span class="font-mono text-xs font-semibold text-ysbk-ink">Mã phiếu: #BK-701</span>
+</div>
+<!-- Status Pill Badge: Held -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ysbk-primary-pale text-ysbk-primary text-xs font-semibold border border-ysbk-primary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-ysbk-primary animate-pulse"></span>
+<span>ĐANG GIỮ CHỖ</span>
+</div>
+</div>
+<!-- Book Detail Segment -->
+<div class="flex gap-3.5 pt-1">
+<div class="w-16 h-22 rounded-soft-input bg-ysbk-bg border border-ysbk-border p-1 shrink-0 overflow-hidden shadow-sm flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-ysbk-primary text-2xl mb-1" data-icon="menu_book">menu_book</span>
+<span class="text-[9px] font-mono uppercase text-ysbk-muted tracking-tight">KỆ A2</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline text-lg font-bold text-ysbk-ink leading-tight truncate">Dế Mèn phiêu lưu ký</h3>
+<p class="text-xs text-ysbk-muted mt-0.5">Tác giả: <span class="text-ysbk-ink font-medium">Tô Hoài</span></p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-0.5 rounded-md bg-ysbk-bg border border-ysbk-border text-[11px] font-mono text-ysbk-muted">Mã lưu: VH-012</span>
+<span class="px-2 py-0.5 rounded-md bg-ysbk-bg border border-ysbk-border text-[11px] text-ysbk-muted">Bản bìa mềm</span>
+</div>
+</div>
+</div>
+<!-- Perforated Tear-off Line with Notch effect -->
+<div class="relative my-2 py-2">
+<div class="receipt-notch-left"></div>
+<div class="receipt-notch-right"></div>
+<div class="border-b border-dashed border-ysbk-border w-full"></div>
+</div>
+<!-- Masked Reader & Booking Details Table -->
+<div class="space-y-2.5 text-xs">
+<div class="flex justify-between items-center py-1 border-b border-ysbk-border/60">
+<span class="text-ysbk-muted">Người đặt (ẩn danh):</span>
+<span class="font-medium text-ysbk-ink">Nguyễn V* A* • SĐT: 0988 ••• 214</span>
+</div>
+<div class="flex justify-between items-start py-1 border-b border-ysbk-border/60">
+<span class="text-ysbk-muted">Buổi trực đã chọn:</span>
+<div class="text-right">
+<span class="font-medium text-ysbk-primary block">Thứ Ba (Buổi trực minh họa)</span>
+<span class="text-[11px] text-ysbk-muted">Giờ trực: Xem lịch được công bố tại quầy</span>
+</div>
+</div>
+<div class="flex justify-between items-start py-1 border-b border-ysbk-border/60">
+<span class="text-ysbk-muted">Hạn giữ sách:</span>
+<div class="text-right max-w-[210px]">
+<span class="font-medium text-ysbk-terra block">Đến hết buổi trực đã chọn</span>
+<span class="text-[11px] text-ysbk-muted leading-tight block mt-0.5">Sau thời gian này, sách sẽ tự động mở lại cho bạn đọc khác.</span>
+</div>
+</div>
+<div class="flex justify-between items-center py-1">
+<span class="text-ysbk-muted">Tiền cọc minh họa:</span>
+<span class="font-semibold text-ysbk-ink">30.000đ <span class="font-normal text-[11px] text-ysbk-muted">(hoàn trả khi trả sách)</span></span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="pt-3 flex flex-col gap-2">
+<button class="w-full h-11 rounded-soft-input bg-ysbk-bg hover:bg-ysbk-paper border border-ysbk-border text-ysbk-ink text-xs font-medium flex items-center justify-center space-x-2 transition-colors active:translate-y-px" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+<span>Sao chép liên kết phiếu</span>
+</button>
+<button class="w-full h-11 rounded-soft-input bg-ysbk-terra-pale hover:bg-[#F4EAD2] border border-ysbk-terra/30 text-ysbk-terra text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-base" data-icon="cancel">cancel</span>
+<span>Hủy phiếu giữ chỗ này</span>
+</button>
+</div>
+</section>
+<!-- Confirmation Miniature Dialog Preview (Cancellation) -->
+<section class="bg-ysbk-paper rounded-soft-modal border-2 border-ysbk-terra/40 p-4 shadow-soft-modal relative space-y-3.5" id="cancel-dialog">
+<div class="flex items-center space-x-2.5 text-ysbk-terra">
+<span class="material-symbols-outlined text-xl" data-icon="warning">warning</span>
+<h3 class="font-headline text-base font-bold text-ysbk-ink">Xác nhận hủy giữ chỗ</h3>
+</div>
+<p class="text-xs text-ysbk-muted leading-relaxed">
+          Bạn có chắc chắn muốn hủy phiếu giữ chỗ <span class="font-semibold text-ysbk-ink">#BK-701</span> này không? Sách sẽ được trả về trạng thái sẵn sàng cho bạn đọc khác.
+        </p>
+<div class="grid grid-cols-2 gap-2.5 pt-1">
+<button class="h-11 rounded-soft-input bg-ysbk-bg border border-ysbk-border text-xs font-medium text-ysbk-ink hover:bg-ysbk-border/40 transition-colors" type="button">
+            Không hủy
+          </button>
+<button class="h-11 rounded-soft-input bg-ysbk-terra hover:bg-ysbk-terra-hover text-white text-xs font-semibold transition-all shadow-sm flex items-center justify-center space-x-1" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="delete_forever">delete_forever</span>
+<span>Xác nhận hủy</span>
+</button>
+</div>
+</section>
+<!-- Legend of 6 Statuses (Soft Paper Container) -->
+<section class="bg-ysbk-paper rounded-soft-card p-4 border border-ysbk-border shadow-soft-paper space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-ysbk-gold text-lg" data-icon="info">info</span>
+<h3 class="font-headline text-sm font-bold text-ysbk-ink">Bảng trạng thái phiếu mượn</h3>
+</div>
+<span class="text-[10px] text-ysbk-muted uppercase font-mono tracking-wider">Quy chuẩn YSBK</span>
+</div>
+<!-- 6 Status Grid -->
+<div class="grid grid-cols-2 gap-2 text-xs">
+<!-- 1. Đang giữ chỗ -->
+<div class="p-2.5 rounded-soft-input bg-ysbk-primary-pale/70 border border-ysbk-primary/20 space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-ysbk-primary-pale text-ysbk-primary text-[10px] font-bold">1. Đang giữ chỗ</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Đang lưu tại quầy, chờ bạn đến lấy.</p>
+</div>
+<!-- 2. Đang mượn -->
+<div class="p-2.5 rounded-soft-input bg-ysbk-terra-pale/70 border border-ysbk-terra/20 space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-ysbk-terra-pale text-ysbk-terra text-[10px] font-bold">2. Đang mượn</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Bạn đọc đã nhận và đang giữ sách.</p>
+</div>
+<!-- 3. Đã trả sách -->
+<div class="p-2.5 rounded-soft-input bg-[#F8F5EC] border border-[#DCDED0] space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-white text-ysbk-primary text-[10px] font-bold">3. Đã trả sách</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Hoàn tất mượn, cọc đã hoàn trả.</p>
+</div>
+<!-- 4. Hết hạn giữ -->
+<div class="p-2.5 rounded-soft-input bg-ysbk-gold-pale/80 border border-ysbk-gold/30 space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-ysbk-gold-pale text-ysbk-gold text-[10px] font-bold">4. Hết hạn giữ</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Quá ca trực, sách về lại kho.</p>
+</div>
+<!-- 5. Đã hủy phiếu -->
+<div class="p-2.5 rounded-soft-input bg-ysbk-bg border border-ysbk-border space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-white text-ysbk-muted text-[10px] font-bold">5. Đã hủy phiếu</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Chủ động hủy bởi bạn đọc / CLB.</p>
+</div>
+<!-- Thông báo hỗ trợ -->
+<div class="p-2.5 rounded-soft-input bg-[#F8F5EC] border border-ysbk-terra/30 space-y-1">
+<span class="inline-block px-2 py-0.5 rounded-full bg-white text-ysbk-terra text-[10px] font-bold">Thông báo hỗ trợ</span>
+<p class="text-[11px] text-ysbk-muted leading-tight">Liên hệ trực ban để hỗ trợ gấp.</p>
+</div>
+</div>
+<!-- Strict reminder note -->
+<p class="text-[11px] text-ysbk-muted bg-ysbk-bg p-2.5 rounded-soft-input border border-ysbk-border/80 leading-relaxed italic">
+          * Lưu ý: Nếu phiếu quá hạn ca trực, sách tự động thu hồi vào kho, không tự ý gia hạn hoặc tạo đơn mới nếu chưa qua bàn trực.
+        </p>
+</section>
+<!-- Watermark / Micro Colophon Notice -->
+<footer class="pt-2 pb-4 text-center space-y-1">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ysbk-paper border border-ysbk-border text-[10px] font-mono text-ysbk-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-ysbk-gold"></span>
+<span>Bản thiết kế · Dữ liệu minh họa</span>
+</div>
+<p class="text-[11px] text-ysbk-muted">
+          © 2013 CLB Yêu Sách Bách Khoa Hà Nội (YSBK)
+        </p>
+</footer>
+</div>
+<!-- Mobile Bottom Navigation Bar (Semantic Shell Dock) -->
+<nav class="fixed bottom-0 w-full max-w-[390px] bg-ysbk-paper/95 backdrop-blur-md border-t border-ysbk-border shadow-lg z-40 py-1.5 px-2 flex justify-around items-center">
+<!-- Tab 1: Tra cứu sách -->
+<a class="flex flex-col items-center py-1 px-2 text-ysbk-muted hover:text-ysbk-primary transition-colors text-center" href="#tra-cuu-sach">
+<span class="material-symbols-outlined text-xl" data-icon="auto_stories">auto_stories</span>
+<span class="text-[10px] font-medium mt-0.5">Tủ sách</span>
+</a>
+<!-- Tab 2: Đặt giữ chỗ -->
+<a class="flex flex-col items-center py-1 px-2 text-ysbk-muted hover:text-ysbk-primary transition-colors text-center" href="#dat-giu-cho">
+<span class="material-symbols-outlined text-xl" data-icon="bookmark_add">bookmark_add</span>
+<span class="text-[10px] font-medium mt-0.5">Đặt giữ</span>
+</a>
+<!-- Tab 3: Tra cứu đơn (ACTIVE TAB) -->
+<a class="flex flex-col items-center py-1 px-2 text-ysbk-primary transition-colors text-center" href="#tra-cuu-don">
+<div class="relative">
+<span class="material-symbols-outlined text-xl font-bold" data-icon="receipt_long">receipt_long</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-ysbk-primary"></span>
+</div>
+<span class="text-[10px] font-bold mt-0.5">Tra phiếu</span>
+</a>
+<!-- Tab 4: Lịch trực & sự kiện -->
+<a class="flex flex-col items-center py-1 px-2 text-ysbk-muted hover:text-ysbk-primary transition-colors text-center" href="#lich-truc">
+<span class="material-symbols-outlined text-xl" data-icon="calendar_month">calendar_month</span>
+<span class="text-[10px] font-medium mt-0.5">Lịch trực</span>
+</a>
+<!-- Tab 5: Tuyển / Menu -->
+<a class="flex flex-col items-center py-1 px-2 text-ysbk-muted hover:text-ysbk-primary transition-colors text-center" href="#goc-review">
+<span class="material-symbols-outlined text-xl" data-icon="groups">groups</span>
+<span class="text-[10px] font-medium mt-0.5">CLB</span>
+</a>
+</nav>
+</main>
+</body></html>

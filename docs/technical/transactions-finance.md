@@ -1,5 +1,9 @@
 # YSBK — Thiết Kế Giao Dịch Tài Chính, Bút Toán & Khóa Đồng Thời (transactions-finance.md)
 
+## Ranh giới cập nhật UI/giữ chỗ 21/10/2026
+
+[Trạng thái hiện hành](../CURRENT-STATE.md) bổ sung giữ chỗ một quyển/đơn và CTV/publishing; không thay nghiệp vụ cọc/phạt/chuyển tiếp/hai quỹ đã chốt ở đây. Đổi UI không đổi quote/confirm/idempotency, không tự tính lại số tiền client hoặc biến cọc thành thu nhập. Đổi sách trong đơn chờ nhận còn là [đề xuất](public-reservation-ux-research-2026-10-21.md); chưa sửa transaction hoặc bút toán theo ý đó.
+
 Tài liệu thiết kế chi tiết các use case giao dịch lõi, pseudocode, bút toán kép, thuật toán tính tiền và cơ chế khóa dòng ACID.  
 Ngày lập: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.
 

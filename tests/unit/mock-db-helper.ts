@@ -3033,6 +3033,7 @@ export class MockCashDbQueryable implements Queryable {
         author_id: params[1],
         author_name: params[2],
         author_email: params[3],
+        is_club_review: !!params[6],
         rating: params[4],
         content: params[5],
         status: 'PENDING',

@@ -1,5 +1,9 @@
 # Kế hoạch triển khai cổng công khai và đặt sách
 
+## Trạng thái lúc chuyển chat 21/10/2026
+
+Đã có triển khai local và các đợt review sau khi viết kế hoạch này. Đọc [session handoff](../../SESSION-HANDOFF.md), [trạng thái hiện hành](../../CURRENT-STATE.md) và [bàn giao giữ chỗ](../../technical/public-reservation-handoff.md) trước khi chạy tiếp; không làm lại PR-0…PR-9. Nghiên cứu tài khoản bạn đọc/đổi sách/thay IP chưa được chốt, không tự bổ sung vào implementation từ đề xuất.
+
 > Dành cho agent thực thi: dùng quy trình `executing-plans`, làm tuần tự các bước có checkbox. Không dùng subagent. Tài liệu này được viết để lập kế hoạch; chưa cho biết tính năng đã được triển khai hoặc kiểm thử.
 
 **Mục tiêu:** giữ các sửa lỗi hậu chặng 22, kiểm chứng và sửa phần còn tái hiện, sau đó triển khai đặt 1 quyển/đơn không đăng nhập theo [thiết kế đã chốt](../../technical/public-reservation-design.md).

@@ -9,8 +9,9 @@ const settings = JSON.parse(readFileSync(new URL('../.local/ysbk/settings.json',
 validateLocalSettings(settings);
 const accounts = JSON.parse(readFileSync(new URL('../.local/ysbk/accounts.json', import.meta.url), 'utf8'));
 const checks = [];
+const readerCookie=process.env.YSBK_READER_SESSION_COOKIE;
 const ok = message => { checks.push(message); console.log(`PASS: ${message}`); };
-const request = (path, options = {}) => fetch(base + path, { ...options, signal: AbortSignal.timeout(15000) });
+const request = (path, options = {}) => fetch(base + path, { ...options, headers:{...(readerCookie?{Cookie:readerCookie}:{}),...options.headers},signal: AbortSignal.timeout(15000) });
 const post = (body, headers = {}) => ({ method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
 
 assert.equal((await request('/')).status, 200);
@@ -42,6 +43,18 @@ const catalog = await books.json();
 assert.ok(catalog.data.length > 0, 'Cần ít nhất một sách khả dụng để kiểm tra đặt sách');
 const schedules = (await (await request('/api/v1/public/pickup-schedules')).json()).data;
 assert.ok(schedules.length > 0, 'Cần ca trực mở để kiểm tra đặt sách');
+const anonymous = await fetch(base+'/api/v1/public/reservations',post({}));
+assert.equal(anonymous.status,401);
+assert.equal((await anonymous.json()).error.code,'READER_LOGIN_REQUIRED');
+ok('Đặt sách bắt buộc đăng nhập bạn đọc trước CAPTCHA');
+if(!readerCookie){
+  const blocked=['Chưa có phiên Google thật: chưa kiểm chứng tạo/tra/hủy qua tài khoản.'];
+  writeFileSync(new URL('../.local/ysbk/smoke-result.json', import.meta.url),JSON.stringify({timestamp:new Date().toISOString(),status:'PARTIAL',checks,blocked},null,2));
+  console.log('PARTIAL: các kiểm tra cơ bản đạt; cần YSBK_READER_SESSION_COOKIE của tài khoản QA để thử đặt/tra/hủy.');
+  process.exit(2);
+}
+const readerResponse=await request('/api/v1/readers/me');assert.equal(readerResponse.status,200);
+const reader=(await readerResponse.json()).data;assert.ok(reader.phone&&reader.fullName);
 const missingCaptcha = await request('/api/v1/public/reservations', post({}));
 assert.equal(missingCaptcha.status, 400);
 assert.equal((await missingCaptcha.json()).error.code, 'CAPTCHA_TOKEN_MISSING');
@@ -50,12 +63,14 @@ ok('Danh mục/lịch thật, no-store và từ chối đặt thiếu CAPTCHA');
 const key = randomUUID();
 const fullName = `LOCAL SMOKE ${key}`;
 let token;
+let reservationId;
 let cancelled = false;
 try {
   const created = await request('/api/v1/public/reservations', post({ titleId: catalog.data[0].titleId, scheduleId: schedules[0].id,
     fullName, phone: '0999999901', captchaToken: 'XXXX.DUMMY.TOKEN.XXXX' }, { 'Idempotency-Key': key }));
   assert.equal(created.status, 201, `Create reservation failed: ${created.status} ${await created.clone().text()}`);
   const result = await created.json();
+  reservationId=result.reservation.id;
   token = result.lookupToken;
   assert.ok(token);
   const lookup = await request('/api/v1/public/reservation', { headers: { Authorization: `Bearer ${token}` } });
@@ -78,8 +93,8 @@ try {
     await client.connect();
     assert.equal((await client.query('SELECT current_database() AS name')).rows[0].name, 'ysbk_local');
     // Only remove this script's cancelled synthetic hold; leave user orders and all financial records intact.
-    await client.query(`DELETE FROM reservations WHERE idempotency_key = $1 AND full_name = $2 AND phone = '0999999901'
-      AND status = 'CANCELLED' AND fulfilled_receipt_id IS NULL`, [key, fullName]);
+    await client.query(`DELETE FROM reservations WHERE idempotency_key = $1 AND id=$2 AND reader_account_id=$3
+      AND status = 'CANCELLED' AND fulfilled_receipt_id IS NULL`, [key,reservationId,reader.id]);
   } finally { await client.end(); }
 }
 writeFileSync(new URL('../.local/ysbk/smoke-result.json', import.meta.url), JSON.stringify({ timestamp: new Date().toISOString(), checks }, null, 2));

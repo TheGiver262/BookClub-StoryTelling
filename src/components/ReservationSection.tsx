@@ -3,19 +3,21 @@ import {
   BookOpen, Clock, CheckCircle2, AlertCircle, 
   Copy, ShieldCheck, XCircle, Search, RefreshCw, AlertTriangle
 } from 'lucide-react';
-import { apiClient } from '../lib/api-client';
+import { apiClient,type ReaderProfile } from '../lib/api-client';
 import { startAvailabilityRefresh } from '../lib/availability-refresh';
 import { getReservationIntent, clearReservationIntent } from '../lib/reservation-intent';
 import type { PublicReservationBookDto, PublicPickupScheduleDto, PublicReservationDto } from '../server/reservations/types';
 import { formatVND } from '../data/mockData';
 
 interface ReservationSectionProps {
+  compact?:boolean;
+  reader?: ReaderProfile;
   initialBookId?: string;
   initialMode?: 'create' | 'lookup';
   onNavigateToTab?: (tab: string) => void;
 }
 
-export default function ReservationSection({ initialBookId, initialMode = 'create' }: ReservationSectionProps) {
+export default function ReservationSection({ initialBookId, initialMode = 'create',reader,compact=false }: ReservationSectionProps) {
   const [activeSubTab, setActiveSubTab] = useState<'create' | 'lookup'>(initialMode);
   useEffect(() => { setActiveSubTab(initialMode); }, [initialMode]);
 
@@ -29,10 +31,10 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
   const [selectedBookId, setSelectedBookId] = useState<string>(initialBookId || '');
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState(reader?.fullName||'');
+  const [phone, setPhone] = useState(reader?.phone||'');
   const [studentId, setStudentId] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(reader?.email||'');
   const [depositConfirmed, setDepositConfirmed] = useState(false);
 
   // Turnstile CAPTCHA State (PRF-01, PRF-07)
@@ -286,7 +288,8 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
           studentId: studentId.trim() || undefined,
           email: email.trim() || undefined,
       };
-      const key = await getReservationIntent(payload);
+      const key = await getReservationIntent({...payload,readerAccountId:reader?.id});
+      await apiClient.updateReaderProfile({fullName:payload.fullName,phone:payload.phone});
       const res = await apiClient.createPublicReservation({ ...payload, captchaToken }, key);
       window.dispatchEvent(new Event('ysbk:availability-changed'));
 
@@ -296,7 +299,10 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
         reservation: res.reservation,
       });
     } catch (err: any) {
-      const msg = err.message || 'Đã có lỗi xảy ra khi tạo đơn đặt giữ chỗ. Vui lòng thử lại.';
+      if(err.status===401) window.dispatchEvent(new Event('ysbk:reader-session-ended'));
+      const msg = ['IP_QUOTA_EXCEEDED','PHONE_QUOTA_EXCEEDED'].includes(err.code)
+        ? 'Bạn chưa thể đặt thêm sách lúc này. Vui lòng thử lại sau hoặc liên hệ CLB để được hỗ trợ.'
+        : err.message || 'Đã có lỗi xảy ra khi tạo đơn đặt giữ chỗ. Vui lòng thử lại.';
       setSubmitError(msg);
       // Reset CAPTCHA để khách có thể thử lại an toàn
       resetCaptchaWidget();
@@ -356,42 +362,43 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
     switch (status) {
       case 'HELD':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            Đang giữ chỗ (Chờ nhận)
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8EDDF] text-[#294C3A] border border-[#365E4B]/20">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <Clock className="w-3.5 h-3.5 text-[#365E4B]" />
+            Đang giữ chỗ
           </span>
         );
       case 'BORROWED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            Đã bàn giao sách
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8EDDF] text-[#294C3A] border border-[#365E4B]/20">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#365E4B]" />
+            Đã nhận sách
           </span>
         );
       case 'RETURNED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F8F3E7] text-[#64705C] border border-[#DCDED0]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#365E4B]" />
             Đã trả sách
           </span>
         );
       case 'EXPIRED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F8F3E7] text-[#64705C] border border-[#DCDED0]">
+            <Clock className="w-3.5 h-3.5 text-[#64705C]" />
             Hết hạn giữ chỗ
           </span>
         );
       case 'CANCELLED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-            <XCircle className="w-3.5 h-3.5 text-rose-600" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#813C2A] border border-[#9B4D36]/20">
+            <XCircle className="w-3.5 h-3.5 text-[#9B4D36]" />
             Đã hủy
           </span>
         );
       default:
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#F8F3E7] text-[#35483C] border border-[#DCDED0]">
             {status}
           </span>
         );
@@ -399,84 +406,87 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className={compact?'reader-reservation':'max-w-4xl mx-auto px-4 sm:px-6 py-8'}>
       {/* Sub-tab navigation */}
-      <div className="flex border-b border-slate-200 mb-8">
-        <button
+      {!compact&&<div className="flex border-b border-[#DCDED0] mb-8">
+        {reader&&<button
           onClick={() => setActiveSubTab('create')}
-          className={`pb-4 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 ${
+          className={`pb-3.5 pt-2.5 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 rounded-t-[15px] ${
             activeSubTab === 'create'
-              ? 'border-brand-navy text-brand-navy'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-ysbk-primary bg-[#E8EDDF]/40 text-ysbk-primary font-bold'
+              : 'border-transparent text-[#64705C] hover:text-[#35483C]'
           }`}
         >
           <BookOpen className="w-5 h-5" />
           Đặt Mượn Giữ Chỗ Sách
-        </button>
+        </button>}
         <button
           onClick={() => setActiveSubTab('lookup')}
-          className={`pb-4 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 ${
+          className={`pb-3.5 pt-2.5 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 rounded-t-[15px] ${
             activeSubTab === 'lookup'
-              ? 'border-brand-navy text-brand-navy'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-ysbk-primary bg-[#E8EDDF]/40 text-ysbk-primary font-bold'
+              : 'border-transparent text-[#64705C] hover:text-[#35483C]'
           }`}
         >
           <Search className="w-5 h-5" />
           Tra Cứu & Hủy Đơn
         </button>
-      </div>
+      </div>}
 
       {/* SUBTAB 1: CREATE RESERVATION */}
-      {activeSubTab === 'create' && (
+      {activeSubTab === 'create' && reader && (
         <div>
           {createdReservation ? (
             /* SUCCESS CONFIRMATION CARD */
-            <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 sm:p-8 shadow-xl">
-              <div className="flex items-center gap-3 text-emerald-600 mb-4">
+            <div className="bg-[#FFFDF5] border border-emerald-500/50 rounded-[22px] p-6 sm:p-8 shadow-soft-card">
+              <div className="flex items-center gap-3 text-emerald-700 mb-4">
                 <CheckCircle2 className="w-8 h-8 flex-shrink-0" />
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#35483C]">
                   Đặt Giữ Chỗ Thành Công!
                 </h3>
               </div>
 
-              <p className="text-slate-600 mb-6 text-sm sm:text-base leading-relaxed">
+              <p className="text-[#64705C] mb-6 text-sm sm:text-base leading-relaxed">
                   Yêu cầu giữ chỗ của bạn đã được xác nhận. Vui lòng đến bàn trực đúng ca đã chọn và chuẩn bị tiền đặt cọc để nhận sách.
               </p>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 space-y-3">
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs sm:text-sm text-slate-500">Mã đơn nhận sách:</span>
-                  <span className="font-mono font-bold text-base sm:text-lg text-brand-navy">
-                    {createdReservation.code}
-                  </span>
+              <div className="bg-white border border-[#DCDED0] rounded-[18px] p-5 mb-6 space-y-3 shadow-xs">
+                <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
+                  <span className="text-xs sm:text-sm text-[#64705C]">Mã đơn nhận sách:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-base sm:text-lg text-ysbk-primary">
+                      {createdReservation.code}
+                    </span>
+                    {getStatusBadge(createdReservation.reservation.status)}
+                  </div>
                 </div>
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs sm:text-sm text-slate-500">Tựa sách:</span>
-                  <span className="font-semibold text-slate-900 text-sm sm:text-base text-right">
+                <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
+                  <span className="text-xs sm:text-sm text-[#64705C]">Tựa sách:</span>
+                  <span className="font-semibold text-[#35483C] text-sm sm:text-base text-right">
                     {createdReservation.reservation.bookTitle}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs sm:text-sm text-slate-500">Ca trực hẹn nhận:</span>
-                  <span className="font-medium text-slate-800 text-sm text-right">
+                <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
+                  <span className="text-xs sm:text-sm text-[#64705C]">Ca trực hẹn nhận:</span>
+                  <span className="font-medium text-[#35483C] text-sm text-right">
                     {createdReservation.reservation.shiftDate} ({createdReservation.reservation.shiftTime})
                   </span>
                 </div>
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs sm:text-sm text-slate-500">Địa điểm bàn trực:</span>
-                  <span className="font-medium text-slate-800 text-sm text-right">
+                <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
+                  <span className="text-xs sm:text-sm text-[#64705C]">Địa điểm bàn trực:</span>
+                  <span className="font-medium text-[#35483C] text-sm text-right">
                     {createdReservation.reservation.pickupLocation}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs sm:text-sm text-slate-500">Hạn nhận sách:</span>
+                <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
+                  <span className="text-xs sm:text-sm text-[#64705C]">Hạn nhận sách:</span>
                   <span className="font-semibold text-rose-600 text-sm text-right">
                     {new Date(createdReservation.reservation.expiresAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}
                     {new Date(createdReservation.reservation.expiresAt).toLocaleDateString('vi-VN')}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-slate-500">Tiền cọc cần chuẩn bị:</span>
+                  <span className="text-xs sm:text-sm text-[#64705C]">Tiền cọc cần chuẩn bị:</span>
                   <span className="font-bold text-emerald-700 text-base">
                     {formatVND(createdReservation.reservation.estimatedDeposit)}
                   </span>
@@ -484,27 +494,26 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               </div>
 
               {/* CRITICAL SECURITY WARNING & TOKEN LINK */}
-              <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 mb-6">
+              <div className="bg-[#F7E7DB]/60 border border-[#9B4D36]/30 rounded-[16px] p-5 mb-6">
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-5 h-5 text-ysbk-terracotta flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-bold text-amber-900 text-sm sm:text-base">
+                    <h4 className="font-bold text-[#813C2A] text-sm sm:text-base">
                       Đường Dẫn & Token Tra Cứu Bảo Mật
                     </h4>
-                    <p className="text-xs sm:text-sm text-amber-800 mt-1">
-                      Token này là phương tiện duy nhất để bạn tự tra cứu trạng thái đơn hoặc hủy đơn khi có việc bận. 
-                      Hãy lưu đường dẫn riêng này để tra cứu hoặc hủy đơn về sau.
+                    <p className="text-xs sm:text-sm text-[#813C2A]/90 mt-1">
+                      Bạn có thể xem và hủy đơn trong Sách của tôi. Nếu lưu đường dẫn riêng này, hãy giữ bí mật và đăng nhập đúng tài khoản để sử dụng.
                     </p>
                     <div className="mt-3 flex items-center gap-2">
                       <input 
                         type="text" 
                         readOnly 
                         value={createdReservation.token} 
-                        className="font-mono text-xs bg-white border border-amber-300 rounded-lg px-3 py-2 text-slate-700 flex-1 select-all"
+                        className="font-mono text-xs bg-white border border-[#DCDED0] rounded-[10px] px-3 py-2 text-[#35483C] flex-1 select-all"
                       />
                       <button
                         onClick={() => copyToClipboard(createdReservation.token)}
-                        className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1 transition"
+                        className="px-3.5 py-2 bg-ysbk-terracotta hover:bg-[#813C2A] text-white text-xs font-semibold rounded-[10px] flex items-center gap-1.5 transition"
                       >
                         <Copy className="w-3.5 h-3.5" />
                         {copySuccess ? 'Đã chép' : 'Sao chép'}
@@ -522,45 +531,46 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                     setActiveSubTab('lookup');
                     performLookup(token);
                   }}
-                  className="w-full sm:flex-1 py-3 px-4 bg-brand-navy hover:bg-brand-navy-hover text-white font-semibold rounded-xl text-sm transition text-center shadow-md"
+                  className="w-full sm:flex-1 py-3 px-4 bg-ysbk-primary hover:bg-[#294C3A] text-white font-semibold rounded-[14px] text-sm transition text-center shadow-soft-btn"
                 >
                   Xem Chi Tiết Đơn Đặt
                 </button>
                 <button
                   onClick={() => {
+                    if(compact){window.location.assign('/sach/');return;}
                     setCreatedReservation(null);
                     renewActionKey();
                     setDepositConfirmed(false);
                                   resetCaptchaWidget();
                   }}
-                  className="w-full sm:w-auto py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition text-center"
+                  className="w-full sm:w-auto py-3 px-6 bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] font-semibold rounded-[14px] text-sm transition text-center"
                 >
-                  Đặt Thêm Cuốn Khác
+                  {compact?'Về Tủ sách':'Đặt Thêm Cuốn Khác'}
                 </button>
               </div>
             </div>
           ) : (
             /* BOOKING FORM */
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 sm:p-8 shadow-soft-card">
               <div className="mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                  Đặt Giữ Chỗ Sách Công Khai
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#35483C]">
+                  Thông tin nhận sách
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Không cần đăng nhập tài khoản. Giữ sách đến hết ca trực để bạn đến nhận tại bàn trực.
+                <p className="text-xs sm:text-sm text-[#64705C] mt-1">
+                  Đơn được lưu vào tài khoản bạn đọc. Chọn ca trực nhận sách; sách được giữ đến hết ca đã chọn.
                 </p>
-                {import.meta.env.PUBLIC_LOCAL_TESTING === 'true' && <p className="mt-2 text-xs text-amber-800">Bản local dùng CAPTCHA test của Cloudflare; chưa kiểm tra khả năng chống bot thật.</p>}
+                {import.meta.env.PUBLIC_LOCAL_TESTING === 'true' && <p className="mt-2 text-xs text-[#813C2A]">Bản local dùng CAPTCHA test của Cloudflare; chưa kiểm tra khả năng chống bot thật.</p>}
               </div>
 
               {metadataError && (
-                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-amber-800 text-sm">
+                <div className="mb-6 p-4 bg-[#F7E7DB]/50 border border-[#9B4D36]/30 rounded-[14px] flex items-start justify-between gap-3 text-[#813C2A] text-sm">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" />
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#9B4D36]" />
                     <div>{metadataError}</div>
                   </div>
                   <button
                     onClick={() => void loadMetadata()}
-                    className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
+                    className="px-3 py-1.5 bg-[#F7E7DB] hover:bg-[#E8D0C0] text-[#813C2A] rounded-[10px] text-xs font-semibold flex items-center gap-1 transition"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Thử lại
@@ -569,7 +579,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               )}
 
               {submitError && (
-                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800 text-sm">
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-[14px] flex items-start gap-3 text-rose-800 text-sm">
                   <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
                   <div>{submitError}</div>
                 </div>
@@ -578,29 +588,31 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               <form onSubmit={handleSubmitReservation} className="space-y-6">
                 {/* 1. CHỌN SÁCH */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  <label className="block text-sm font-semibold text-[#35483C] mb-2">
                     1. Chọn cuốn sách muốn mượn <span className="text-rose-500">*</span>
                   </label>
-                  <input aria-label="Tìm sách để đặt" value={bookSearch}
+                  {!compact&&<input aria-label="Tìm sách để đặt" value={bookSearch}
                     onChange={e => { setBookSearch(e.target.value); setSelectedBookId(''); setBooks([]); }}
-                    placeholder="Tìm theo tên sách hoặc tác giả (hiện tối đa 24 kết quả)"
-                    className="w-full px-4 py-3 mb-2 border rounded-xl text-sm" />
+                    placeholder="Tìm theo tên sách hoặc tác giả"
+                    className="w-full px-4 py-3 mb-2 bg-white border border-[#DCDED0] rounded-[14px] text-sm text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary" />}
                   {isLoadingMetadata ? (
-                    <div className="text-sm text-slate-500 py-2 flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-brand-navy" />
+                    <div className="text-sm text-[#64705C] py-2 flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-ysbk-primary" />
                       Đang tải danh mục sách khả dụng...
                     </div>
                   ) : books.length === 0 ? (
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm">
+                    <div className="p-4 bg-[#F8F3E7] border border-[#DCDED0] rounded-[14px] text-[#64705C] text-sm">
                       Hiện chưa có sách nào sẵn sàng để đặt giữ chỗ trực tuyến. Vui lòng quay lại sau hoặc liên hệ thành viên tại bàn trực.
                     </div>
                   ) : (
                     <select
+                      aria-label="Sách giữ chỗ"
+                      disabled={compact}
                       value={selectedBookId}
                       onChange={(e) => {
                         setSelectedBookId(e.target.value);
                       }}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-3 bg-white border border-[#DCDED0] rounded-[14px] text-sm font-medium text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                       required
                     >
                       <option value="">-- Chọn một cuốn sách có sẵn --</option>
@@ -612,7 +624,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                     </select>
                   )}
                   {selectedBook && (
-                    <div className="mt-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center">
+                    <div className="mt-2 text-xs text-[#64705C] bg-[#F8F3E7] p-3 rounded-[12px] border border-[#DCDED0] flex justify-between items-center">
                       <span>Thể loại: <strong>{selectedBook.category}</strong></span>
                       <span className="text-emerald-700 font-semibold">
                         Tiền cọc quy định: {formatVND(selectedBook.standardDeposit)}
@@ -623,16 +635,16 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
                 {/* 2. CHỌN CA TRỰC */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  <label className="block text-sm font-semibold text-[#35483C] mb-2">
                     2. Chọn ca trực bạn sẽ đến nhận sách <span className="text-rose-500">*</span>
                   </label>
                   {isLoadingMetadata ? (
-                    <div className="text-sm text-slate-500 py-2 flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-brand-navy" />
+                    <div className="text-sm text-[#64705C] py-2 flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-ysbk-primary" />
                       Đang tải lịch trực...
                     </div>
                   ) : schedules.length === 0 ? (
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm">
+                    <div className="p-4 bg-[#F8F3E7] border border-[#DCDED0] rounded-[14px] text-[#64705C] text-sm">
                       Hiện chưa có ca trực nào đang mở để hẹn nhận sách. Vui lòng theo dõi thông báo ca trực mới của CLB.
                     </div>
                   ) : (
@@ -641,7 +653,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                       onChange={(e) => {
                         setSelectedScheduleId(e.target.value);
                       }}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-3 bg-white border border-[#DCDED0] rounded-[14px] text-sm font-medium text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                       required
                     >
                       <option value="">-- Chọn ca trực phù hợp --</option>
@@ -652,8 +664,8 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                       ))}
                     </select>
                   )}
-                  <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <p className="mt-1.5 text-xs text-[#64705C] flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[#64705C]" />
                     Sách sẽ được giữ đến thời điểm kết thúc ca trực này.
                   </p>
                 </div>
@@ -661,7 +673,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                 {/* 3. THÔNG TIN BẠN ĐỌC */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+                    <label className="block text-sm font-semibold text-[#35483C] mb-1.5">
                       Họ và tên <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -671,12 +683,12 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                         setFullName(e.target.value);
                       }}
                       placeholder="Nguyễn Văn A"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-2.5 bg-white border border-[#DCDED0] rounded-[14px] text-sm text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+                    <label className="block text-sm font-semibold text-[#35483C] mb-1.5">
                       Số điện thoại <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -686,13 +698,12 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                         setPhone(e.target.value);
                       }}
                       placeholder="0912345678"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-2.5 bg-white border border-[#DCDED0] rounded-[14px] text-sm text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                       required
                     />
-                    <span className="text-[11px] text-slate-400">Mỗi SĐT tối đa 3 suất giữ chỗ hoặc mượn chưa trả.</span>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+                    <label className="block text-sm font-semibold text-[#35483C] mb-1.5">
                       Mã số sinh viên (MSSV)
                     </label>
                     <input
@@ -700,33 +711,34 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                       value={studentId}
                       onChange={(e) => setStudentId(e.target.value)}
                       placeholder="2022xxxx (không bắt buộc)"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-2.5 bg-white border border-[#DCDED0] rounded-[14px] text-sm text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-1.5">
-                      Email
+                    <label className="block text-sm font-semibold text-[#35483C] mb-1.5">
+                      {reader?'Email Google':'Email'}
                     </label>
                     <input
                       type="email"
+                      readOnly={Boolean(reader)}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@sis.hust.edu.vn (không bắt buộc)"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                      className="w-full px-4 py-2.5 bg-white border border-[#DCDED0] rounded-[14px] text-sm text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                     />
                   </div>
                 </div>
 
                 {/* 4. CAM KẾT ĐẶT CỌC */}
-                <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4">
+                <div className="bg-[#E8EDDF]/50 border border-[#365E4B]/20 rounded-[14px] p-4">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={depositConfirmed}
                       onChange={(e) => setDepositConfirmed(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded text-brand-navy focus:ring-brand-navy"
+                      className="mt-1 w-4 h-4 rounded text-ysbk-primary focus:ring-ysbk-primary accent-[#365E4B]"
                     />
-                    <div className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                    <div className="text-xs sm:text-sm text-[#35483C] leading-relaxed">
                       Tôi xác nhận sẽ chuẩn bị khoản tiền cọc <strong>{formatVND(estimatedDeposit)}</strong> và cam kết có mặt tại bàn trực để nhận sách trước giờ kết thúc ca. Tôi hiểu tiền cọc sẽ được hoàn trả đầy đủ khi tôi trả lại sách nguyên vẹn cho CLB.
                     </div>
                   </label>
@@ -734,14 +746,14 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
                 {/* 5. CLOUDFLARE TURNSTILE CAPTCHA THỰC TẾ (PRF-01, PRF-07) */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  <label className="block text-sm font-semibold text-[#35483C] mb-2">
                     Xác minh bảo mật <span className="text-rose-500">*</span>
                   </label>
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col items-center justify-center min-h-[70px]">
+                  <div className="p-3 bg-white border border-[#DCDED0] rounded-[14px] flex flex-col items-center justify-center min-h-[70px]">
                     <div ref={turnstileContainerRef} id="turnstile-widget" />
                     {captchaStatus === 'loading' && (
-                      <div className="text-xs text-slate-500 flex items-center gap-2 py-2">
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-brand-navy" />
+                      <div className="text-xs text-[#64705C] flex items-center gap-2 py-2">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-ysbk-primary" />
                         Đang kết nối dịch vụ bảo mật Cloudflare Turnstile...
                       </div>
                     )}
@@ -758,8 +770,8 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                       </div>
                     )}
                     {captchaStatus === 'unavailable' && (
-                      <div className="text-xs text-amber-700 flex items-center gap-1.5 mt-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                      <div className="text-xs text-[#813C2A] flex items-center gap-1.5 mt-2">
+                        <AlertTriangle className="w-4 h-4 text-[#9B4D36]" />
                         Không thể kết nối đến máy chủ bảo mật CAPTCHA. Vui lòng kiểm tra lại kết nối mạng.
                       </div>
                     )}
@@ -770,7 +782,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                 <button
                   type="submit"
                   disabled={isSubmitting || !captchaToken || books.length === 0 || schedules.length === 0}
-                  className="w-full py-3.5 px-6 bg-brand-navy hover:bg-brand-navy-hover text-white font-bold rounded-xl text-base shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-6 bg-ysbk-primary hover:bg-[#294C3A] text-white font-bold rounded-[14px] text-base shadow-soft-btn transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]"
                 >
                   {isSubmitting ? (
                     <>
@@ -790,11 +802,11 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       {/* SUBTAB 2: LOOKUP RESERVATION */}
       {activeSubTab === 'lookup' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+          <div className="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 sm:p-8 shadow-soft-card">
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#35483C] mb-2">
               Tra Cứu & Quản Lý Đơn Đặt Sách
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mb-6">
+            <p className="text-xs sm:text-sm text-[#64705C] mb-6">
               Nhập mã token bí mật bạn đã nhận được khi đặt sách (hoặc truy cập qua liên kết tra cứu an toàn).
             </p>
 
@@ -810,13 +822,13 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                 value={lookupToken}
                 onChange={(e) => setLookupToken(e.target.value)}
                 placeholder="Nhập chuỗi token bí mật (ví dụ: rsv_tok_...)"
-                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-navy focus:bg-white"
+                className="flex-1 px-4 py-3 bg-white border border-[#DCDED0] rounded-[14px] text-sm font-mono text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                 required
               />
               <button
                 type="submit"
                 disabled={isLookingUp}
-                className="px-6 py-3 bg-brand-navy hover:bg-brand-navy-hover text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                className="px-6 py-3 bg-ysbk-primary hover:bg-[#294C3A] text-white font-semibold rounded-[14px] text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-soft-btn min-h-[44px]"
               >
                 {isLookingUp ? (
                   <>
@@ -833,18 +845,18 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
             </form>
 
             {lookupError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800 text-sm">
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-[14px] flex items-start gap-3 text-rose-800 text-sm">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
                 <div>{lookupError}</div>
               </div>
             )}
 
             {lookupResult && (
-              <div className="border border-slate-200 rounded-xl p-5 sm:p-6 bg-slate-50 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+              <div className="border border-[#DCDED0] rounded-[18px] p-5 sm:p-6 bg-white space-y-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#DCDED0]">
                   <div>
-                    <span className="text-xs text-slate-500 block">Mã đơn nhận sách</span>
-                    <span className="font-mono font-bold text-lg text-brand-navy">{lookupResult.code}</span>
+                    <span className="text-xs text-[#64705C] block">Mã đơn nhận sách</span>
+                    <span className="font-mono font-bold text-lg text-ysbk-primary">{lookupResult.code}</span>
                   </div>
                   <div>
                     {getStatusBadge(lookupResult.status)}
@@ -853,41 +865,41 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-slate-500 text-xs block">Tựa sách</span>
-                    <span className="font-semibold text-slate-900">{lookupResult.bookTitle}</span>
+                    <span className="text-[#64705C] text-xs block">Tựa sách</span>
+                    <span className="font-semibold text-[#35483C]">{lookupResult.bookTitle}</span>
                   </div>
                   {lookupResult.authorName && (
                     <div>
-                      <span className="text-slate-500 text-xs block">Tác giả</span>
-                      <span className="text-slate-800">{lookupResult.authorName}</span>
+                      <span className="text-[#64705C] text-xs block">Tác giả</span>
+                      <span className="text-[#35483C]">{lookupResult.authorName}</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-slate-500 text-xs block">Ca trực hẹn nhận</span>
-                    <span className="text-slate-800">{lookupResult.shiftDate} ({lookupResult.shiftTime})</span>
+                    <span className="text-[#64705C] text-xs block">Ca trực hẹn nhận</span>
+                    <span className="text-[#35483C]">{lookupResult.shiftDate} ({lookupResult.shiftTime})</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 text-xs block">Địa điểm bàn trực</span>
-                    <span className="text-slate-800">{lookupResult.pickupLocation}</span>
+                    <span className="text-[#64705C] text-xs block">Địa điểm bàn trực</span>
+                    <span className="text-[#35483C]">{lookupResult.pickupLocation}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 text-xs block">Hạn nhận sách</span>
+                    <span className="text-[#64705C] text-xs block">Hạn nhận sách</span>
                     <span className="font-medium text-rose-600">
                       {new Date(lookupResult.expiresAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}
                       {new Date(lookupResult.expiresAt).toLocaleDateString('vi-VN')}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 text-xs block">Tiền cọc quy định</span>
+                    <span className="text-[#64705C] text-xs block">Tiền cọc quy định</span>
                     <span className="font-bold text-emerald-700">{formatVND(lookupResult.estimatedDeposit)}</span>
                   </div>
                 </div>
 
                 {lookupResult.status === 'HELD' && (
-                  <div className="pt-4 border-t border-slate-200 flex justify-end">
+                  <div className="pt-4 border-t border-[#DCDED0] flex justify-end">
                     <button
                       onClick={() => setShowCancelModal(true)}
-                      className="px-4 py-2 border border-rose-300 hover:bg-rose-50 text-rose-700 text-sm font-semibold rounded-lg transition"
+                      className="px-4 py-2 border border-rose-300 hover:bg-rose-50 text-rose-700 text-sm font-semibold rounded-[12px] transition"
                     >
                       Hủy Đơn Giữ Chỗ Này
                     </button>
@@ -901,21 +913,21 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
       {/* CANCEL MODAL */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Xác Nhận Hủy Đơn Đặt Sách</h3>
-            <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#35483C]/40 backdrop-blur-xs p-4">
+          <div className="bg-[#FFFDF5] border border-[#DCDED0] rounded-[24px] max-w-md w-full p-6 shadow-soft-modal">
+            <h3 className="font-serif text-lg font-bold text-[#35483C] mb-2">Xác Nhận Hủy Đơn Đặt Sách</h3>
+            <p className="text-sm text-[#64705C] mb-4 leading-relaxed">
               Bạn có chắc chắn muốn hủy đơn đặt giữ chỗ này? Sau khi hủy, cuốn sách sẽ được mở lại cho các bạn đọc khác đăng ký.
             </p>
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#35483C] mb-1">
                 Lý do hủy (không bắt buộc)
               </label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Ví dụ: Có việc bận đột xuất..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-navy"
+                className="w-full px-3 py-2 bg-white border border-[#DCDED0] rounded-[12px] text-sm text-[#35483C] resize-none focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
                 rows={2}
               />
             </div>
@@ -923,14 +935,14 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               <button
                 onClick={() => setShowCancelModal(false)}
                 disabled={isCancelling}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition"
+                className="px-4 py-2 bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] text-sm font-semibold rounded-[12px] transition"
               >
                 Giữ Lại Đơn
               </button>
               <button
                 onClick={handleExecuteCancel}
                 disabled={isCancelling}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-[12px] transition disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
               >
                 {isCancelling ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
                 Xác Nhận Hủy

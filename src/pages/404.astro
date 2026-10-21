@@ -13,20 +13,20 @@ const isStaging = import.meta.env.PUBLIC_ENV === 'staging' || import.meta.env.MO
     <title>Không tìm thấy trang — CLB Yêu Sách Bách Khoa</title>
     <meta name="robots" content={isStaging ? "noindex, nofollow" : "noindex"} />
   </head>
-  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col justify-between">
+  <body class="min-h-screen bg-[#F8F3E7] font-sans text-[#35483C] flex flex-col justify-between">
     <!-- Top Header -->
-    <header class="bg-white border-b border-slate-200">
+    <header class="bg-[#FFFDF5] border-b border-[#DCDED0]">
       <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         <a href="/" class="flex items-center gap-3">
           <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" class="h-9 w-auto object-contain" />
           <div>
-            <div class="font-bold text-base text-brand-navy leading-tight">CLB Yêu Sách Bách Khoa</div>
-            <div class="text-[11px] text-brand-red font-medium">Mở sách, đọc tương lai</div>
+            <div class="font-bold text-base text-[#365E4B] leading-tight">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</div>
+            <div class="text-[11px] text-[#9B4D36] font-medium">Mở sách, đọc tương lai</div>
           </div>
         </a>
         <a 
           href="/" 
-          class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+          class="ui-btn ui-btn-ghost text-xs font-semibold px-3.5 py-1.5 rounded-[14px] border border-[#DCDED0] bg-[#F8F3E7] hover:bg-[#E8EDDF] text-[#35483C] transition"
         >
           ← Trang chủ
         </a>
@@ -35,23 +35,23 @@ const isStaging = import.meta.env.PUBLIC_ENV === 'staging' || import.meta.env.MO
 
     <!-- Container: Dynamic Book Render or Standard 404 -->
     <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full" id="fallback-container">
-      <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm p-8" id="default-404">
-        <div class="text-6xl font-serif font-bold text-brand-navy mb-4">404</div>
-        <h1 class="text-xl font-bold text-slate-800 mb-2">Trang bạn tìm kiếm không tồn tại</h1>
-        <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">
+      <div class="text-center py-16 bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)] p-8" id="default-404">
+        <div class="text-6xl font-serif font-bold text-[#365E4B] mb-4">404</div>
+        <h1 class="text-xl font-serif font-bold text-[#35483C] mb-2">Trang bạn tìm kiếm không tồn tại</h1>
+        <p class="text-sm text-[#64705C] max-w-md mx-auto mb-6">
           Đường dẫn có thể đã thay đổi hoặc cuốn sách này chưa được cập nhật vào danh mục công khai.
         </p>
         <a 
           href="/" 
-          class="inline-block px-5 py-2.5 rounded-xl bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-hover transition shadow-sm"
+          class="ui-btn ui-btn-primary inline-flex px-6 py-2.5 rounded-[14px] text-xs font-bold transition shadow-sm"
         >
           Quay về Trang chủ YSBK
         </a>
       </div>
     </main>
 
-    <footer class="py-6 border-t border-slate-200 text-center text-xs text-slate-400 bg-white">
-      © 2026 CLB Yêu Sách Bách Khoa — YSBK. All rights reserved.
+    <footer class="py-6 border-t border-[#DCDED0] text-center text-xs text-[#64705C] bg-[#FFFDF5]">
+      Câu lạc bộ Yêu Sách Bách Khoa Hà Nội · Mở sách, đọc tương lai
     </footer>
 
     <!-- Client-side SPA Dynamic Resolver for /sach/:id (P22-12) -->

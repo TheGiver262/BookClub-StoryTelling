@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>01 — Tủ sách · PC | YSBK — Câu Lạc Bộ Yêu Sách Bách Khoa</title>
+<!-- Google Fonts: Newsreader (Editorial Serif) & Be Vietnam Pro (Clean Body/UI) -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration with strict Design System tokens -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-lowest": "#ffffff",
+            "surface-bright": "#fcf9f0",
+            "on-secondary-fixed-variant": "#77311d",
+            "on-primary-container": "#aad6bd",
+            "on-tertiary-container": "#f8c28e",
+            "on-primary-fixed": "#002114",
+            "on-tertiary": "#ffffff",
+            "surface-dim": "#dddad1",
+            "primary": "#1e4635",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#a5d0b8",
+            "surface-tint": "#3e6653",
+            "background": "#f8f5ec",
+            "tertiary": "#5a370f",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "surface-container-low": "#f6f3ea",
+            "secondary-fixed": "#ffdbd1",
+            "inverse-surface": "#31312b",
+            "on-tertiary-fixed": "#2c1600",
+            "tertiary-fixed": "#ffdcbe",
+            "primary-fixed": "#c0edd4",
+            "on-surface-variant": "#414944",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-surface": "#1c1c17",
+            "surface-container-highest": "#e5e2da",
+            "secondary": "#954832",
+            "outline": "#717973",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#78321d",
+            "outline-variant": "#c1c8c2",
+            "secondary-fixed-dim": "#ffb5a0",
+            "on-secondary-fixed": "#3b0a00",
+            "inverse-primary": "#a5d0b8",
+            "tertiary-container": "#754e24",
+            "inverse-on-surface": "#f4f1e8",
+            "on-background": "#1c1c17",
+            "surface-container-high": "#ebe8df",
+            "surface-variant": "#e5e2da",
+            "on-primary-fixed-variant": "#264e3c",
+            "on-tertiary-fixed-variant": "#633f16",
+            "secondary-container": "#fe9d80",
+            "primary-container": "#365e4b",
+            "tertiary-fixed-dim": "#f2bc89",
+            "surface": "#fffdf5",
+            "surface-container": "#f1eee5",
+            /* Strict Brand Tokens */
+            "ysbk-bg": "#F8F5EC",
+            "ysbk-paper": "#FFFDF5",
+            "ysbk-ink": "#35483C",
+            "ysbk-muted": "#64705C",
+            "ysbk-border": "#DCDED0",
+            "ysbk-primary": "#365E4B",
+            "ysbk-primary-hover": "#294C3A",
+            "ysbk-primary-pale": "#E8EDDF",
+            "ysbk-terracotta": "#9B4D36",
+            "ysbk-terracotta-hover": "#813C2A",
+            "ysbk-terracotta-pale": "#F7E7DB",
+            "ysbk-gold": "#A87A4C",
+            "ysbk-gold-pale": "#F4EAD2",
+            "ysbk-sage": "#819079"
+          },
+          fontFamily: {
+            headline: ["Newsreader", "serif"],
+            display: ["Newsreader", "serif"],
+            body: ["Be Vietnam Pro", "sans-serif"],
+            label: ["Be Vietnam Pro", "sans-serif"]
+          },
+          boxShadow: {
+            'paper-press': '0 2px 0 #35483C',
+            'paper-border': '0 2px 0 #DCDED0',
+            'ticket-shadow': '0 1px 3px rgba(53, 72, 60, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Editorial fine rules & vintage catalogue textures */
+    .double-rule-top {
+      border-top: 3px double #35483C;
+    }
+    .double-rule-bottom {
+      border-bottom: 3px double #35483C;
+    }
+    .double-rule-fine {
+      border-top: 1px solid #DCDED0;
+      border-bottom: 1px solid #DCDED0;
+      padding-top: 2px;
+      padding-bottom: 2px;
+    }
+    .library-tab {
+      position: relative;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+    .perforated-border {
+      background-image: radial-gradient(#DCDED0 1.5px, transparent 1.5px);
+      background-size: 8px 8px;
+    }
+    /* Subtle paper card pressed offset */
+    .btn-press {
+      box-shadow: 0 2px 0 #35483C;
+      transition: all 120ms ease;
+    }
+    .btn-press:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #35483C;
+    }
+    .btn-press-secondary {
+      box-shadow: 0 2px 0 #DCDED0;
+      transition: all 120ms ease;
+    }
+    .btn-press-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #DCDED0;
+    }
+  </style>
+</head>
+<body class="bg-[#F8F5EC] text-[#35483C] font-body antialiased min-h-screen selection:bg-[#E8EDDF] selection:text-[#365E4B]">
+<!-- TOP HEADER (Physical Masthead & Heritage Identification) -->
+<header class="w-full bg-[#FFFDF5] border-b border-[#DCDED0]"><div class="max-w-[1440px] mx-auto px-10 py-5 flex items-center justify-between"><div class="flex items-center gap-5">
+<div class="w-14 h-14 border border-[#365E4B]/40 p-1 flex flex-col items-center justify-center bg-[#F8F5EC] rounded-2xl shadow-sm">
+<span class="font-headline font-bold text-xs tracking-widest text-[#365E4B]">YSBK</span>
+<span class="text-xs font-mono tracking-tighter text-[#64705C]">KHO</span>
+</div>
+<div>
+<div class="flex items-baseline gap-2">
+<h1 class="font-headline font-bold text-xl md:text-2xl tracking-tight text-[#35483C] leading-none uppercase">
+              Câu lạc bộ Yêu Sách Bách Khoa Hà Nội
+            </h1>
+</div>
+<p class="text-sm text-[#64705C] font-normal tracking-wide mt-1 flex items-center gap-2">
+<span>Mở sách, đọc tương lai</span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#819079]"></span>
+<span class="font-mono text-sm text-[#A87A4C] tracking-tight">KHO BÁCH KHOA • PHÒNG ĐỌC MỞ</span>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex flex-col text-right">
+<span class="text-xs font-mono uppercase tracking-wider text-[#64705C]">Chỉ mục kho lưu</span>
+<span class="text-sm font-mono font-medium text-[#35483C] bg-[#E8EDDF] px-2.5 py-0.5 border border-[#DCDED0] rounded-full">MÃ KHO: BK-LIB</span>
+</div>
+<div class="h-8 w-px bg-[#DCDED0]"></div>
+<a class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-[#FFFDF5] text-[#365E4B] border border-[#365E4B] rounded-xl btn-press-secondary hover:bg-[#E8EDDF] transition-colors" href="#login">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+<span>Đăng nhập nội bộ</span>
+</a>
+</div></div></header>
+<!-- CATALOGUE FILE TABS (Horizontal Across Container - Vintage Index Divider System) -->
+<nav class="w-full bg-[#F8F5EC] border-b border-[#DCDED0] pt-4 px-10">
+<div class="max-w-[1440px] mx-auto flex items-end gap-1.5 overflow-x-auto text-sm"><!-- Tab 1: ACTIVE (Tra cứu sách) -->
+<a class="library-tab bg-[#FFFDF5] border-t-2 border-t-[#365E4B] border-x border-[#DCDED0] border-b border-b-transparent text-[#365E4B] font-semibold px-6 py-2.5 flex items-center gap-2 translate-y-px z-10 shadow-sm" href="#catalogue">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-01</span>
+<span>Tra cứu sách</span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#365E4B]"></span>
+</a>
+<!-- Tab 2: Đặt giữ chỗ -->
+<a class="library-tab bg-[#F8F5EC] hover:bg-[#FFFDF5] border border-transparent hover:border-[#DCDED0] text-[#64705C] hover:text-[#35483C] font-medium px-5 py-2.5 flex items-center gap-2 transition-all" href="#reservation">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-02</span>
+<span>Đặt giữ chỗ</span>
+</a>
+<!-- Tab 3: Tra cứu đơn -->
+<a class="library-tab bg-[#F8F5EC] hover:bg-[#FFFDF5] border border-transparent hover:border-[#DCDED0] text-[#64705C] hover:text-[#35483C] font-medium px-5 py-2.5 flex items-center gap-2 transition-all" href="#lookup">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-03</span>
+<span>Tra cứu đơn</span>
+</a>
+<!-- Tab 4: Lịch trực & sự kiện -->
+<a class="library-tab bg-[#F8F5EC] hover:bg-[#FFFDF5] border border-transparent hover:border-[#DCDED0] text-[#64705C] hover:text-[#35483C] font-medium px-5 py-2.5 flex items-center gap-2 transition-all" href="#duty">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-04</span>
+<span>Lịch trực &amp; sự kiện</span>
+</a>
+<!-- Tab 5: Góc review -->
+<a class="library-tab bg-[#F8F5EC] hover:bg-[#FFFDF5] border border-transparent hover:border-[#DCDED0] text-[#64705C] hover:text-[#35483C] font-medium px-5 py-2.5 flex items-center gap-2 transition-all" href="#review">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-05</span>
+<span>Góc review</span>
+</a>
+<!-- Tab 6: Tuyển thành viên -->
+<a class="library-tab bg-[#F8F5EC] hover:bg-[#FFFDF5] border border-transparent hover:border-[#DCDED0] text-[#64705C] hover:text-[#35483C] font-medium px-5 py-2.5 flex items-center gap-2 transition-all" href="#recruitment">
+<span class="text-[10px] font-mono text-[#819079] tracking-tighter">TAB-06</span>
+<span>Tuyển thành viên</span>
+</a></div>
+</nav>
+<!-- EDITORIAL MASTHEAD (Narrative Opening, Tactile Stamp & Non-profit Statement) -->
+<section class="max-w-[1440px] mx-auto px-10 pt-8 pb-6"><div class="border-y border-[#35483C] py-5 flex flex-col md:flex-row md:items-center justify-between gap-6"><div class="max-w-2xl">
+<span class="text-xs font-mono font-medium tracking-widest text-[#64705C] uppercase block mb-1">
+          TỦ SÁCH CHUNG — PHÒNG ĐỌC MỞ
+        </span>
+<h2 class="font-headline text-3xl md:text-[46px] leading-[1.15] font-semibold text-[#35483C] tracking-tight">
+          Bạn muốn mang câu chuyện nào về nhà?
+        </h2>
+</div>
+<div class="flex items-center gap-4 bg-[#FFFDF5] border border-[#DCDED0] p-5 max-w-md rounded-2xl soft-card-shadow">
+<div class="w-12 h-12 flex-shrink-0 border border-dashed border-[#A87A4C] rounded-xl flex flex-col items-center justify-center p-1 text-center bg-[#F4EAD2]/40">
+<span class="text-[10px] font-mono uppercase text-[#A87A4C] leading-none">YSBK</span>
+<span class="text-xs font-headline font-bold text-[#A87A4C] leading-none mt-0.5">MIỄN PHÍ</span>
+</div>
+<div class="text-sm text-[#64705C] leading-relaxed">
+<p class="font-normal">
+<strong class="font-medium text-[#35483C]">Tủ sách phi lợi nhuận</strong> do sinh viên Bách Khoa gìn giữ. Mượn sách miễn phí bằng niềm tin và sự trân trọng.
+          </p>
+<span class="inline-block mt-1 text-xs font-mono uppercase tracking-wider text-[#9B4D36]">● Lịch trực: Thứ Ba &amp; Thứ Năm</span>
+</div>
+</div></div></section>
+<!-- MAIN CATALOGUE CONTAINER (Two-Column Layout: Index Spine + Shelf Gallery) -->
+<main class="max-w-[1440px] mx-auto px-10 pb-12">
+<div class="flex flex-col lg:flex-row items-start gap-8">
+<!-- LEFT COLUMN: Physical Index Card & Classification Shelves (250px) -->
+<aside class="w-full lg:w-[250px] flex-shrink-0 bg-[#FFFDF5] border border-[#DCDED0] p-5 rounded-2xl soft-card-shadow"><div class="border-b border-[#35483C] pb-2 mb-4">
+<div class="flex items-center justify-between text-[#64705C] text-xs font-mono tracking-wider uppercase mb-0.5">
+<span>MỤC LỤC KỆ SÁCH</span>
+<span>SEC.01</span>
+</div>
+<h3 class="font-headline font-semibold text-lg text-[#35483C]">PHÂN LOẠI KHO</h3>
+</div>
+<nav class="flex flex-col gap-1 text-sm mb-6">
+<a class="flex items-center justify-between py-2 px-3 bg-[#E8EDDF] text-[#365E4B] font-medium rounded-xl transition-all" href="#">
+<span>Tất cả danh mục</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Văn học Việt Nam</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Văn học Kinh điển Thế giới</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Khoa học &amp; Kỹ thuật Bách Khoa</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Triết học &amp; Tư tưởng</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Kỹ năng &amp; Bản thân</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Lịch sử &amp; Địa chí Hà Nội</span>
+</a>
+<a class="flex items-center justify-between py-2 px-3 text-[#64705C] hover:text-[#35483C] hover:bg-[#F8F5EC] rounded-xl transition-colors" href="#">
+<span>Tạp chí &amp; Ký họa sinh viên</span>
+</a>
+</nav>
+<div class="border-t border-[#DCDED0] pt-4 mb-6">
+<h4 class="text-xs font-mono uppercase tracking-wider text-[#35483C] font-semibold mb-3">Tình trạng sách</h4>
+<div class="space-y-2.5 text-sm text-[#35483C]">
+<label class="flex items-center gap-2 cursor-pointer select-none text-[#64705C] hover:text-[#35483C]">
+<input class="rounded border-[#DCDED0] text-[#365E4B] focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Chỉ hiện "Còn trên giá"</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer select-none text-[#64705C] hover:text-[#35483C]">
+<input class="rounded border-[#DCDED0] text-[#365E4B] focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Được mượn nhiều nhất</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer select-none text-[#64705C] hover:text-[#35483C]">
+<input class="rounded border-[#DCDED0] text-[#365E4B] focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5" type="checkbox"/>
+<span>Mới tiếp nhận</span>
+</label>
+</div>
+</div>
+<div class="border border-dashed border-[#819079] p-3 text-center bg-[#F8F5EC]/60 rounded-xl">
+<p class="text-xs font-mono tracking-widest text-[#64705C] uppercase">THƯ VIỆN KÝ ỨC — YSBK</p>
+<p class="text-sm font-headline italic text-[#35483C] font-medium my-0.5">Phòng đọc mở</p>
+<span class="text-xs font-mono text-[#9B4D36]">MÃ SỐ PHIẾU: #BK-LIB</span>
+</div></aside>
+<!-- RIGHT COLUMN: Search Filter Bar & 4-Column Typographic Shelf Grid (1050px) -->
+<section class="flex-1 w-full">
+<!-- Search and Filter Bar -->
+<div class="bg-[#FFFDF5] border border-[#DCDED0] p-5 mb-6 rounded-2xl soft-card-shadow"><div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#819079] text-lg pointer-events-none" data-icon="search">search</span>
+<input class="w-full bg-[#F8F5EC] border border-[#DCDED0] focus:border-[#365E4B] pl-10 pr-4 py-2.5 text-sm text-[#35483C] placeholder-[#819079] rounded-xl focus:outline-none transition-colors" placeholder="Nhập tên sách, tác giả hoặc từ khóa..." type="text" value=""/>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-5 py-2.5 bg-[#365E4B] text-[#FFFDF5] text-sm font-medium rounded-xl btn-press flex items-center gap-1.5 hover:bg-[#294C3A]">
+<span class="material-symbols-outlined text-sm" data-icon="manage_search">manage_search</span>
+<span>Tìm kiếm</span>
+</button>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-[#DCDED0] text-sm">
+<div class="flex items-center flex-wrap gap-2">
+<span class="text-xs font-mono text-[#64705C] mr-1">Bộ lọc nhanh:</span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-[#E8EDDF] text-[#365E4B] text-xs border border-[#365E4B] font-medium rounded-full cursor-pointer hover:bg-[#365E4B] hover:text-[#FFFDF5] transition-colors">
+                Tất cả danh mục
+              </span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-[#FFFDF5] text-[#35483C] text-xs border border-[#DCDED0] rounded-full cursor-pointer hover:border-[#365E4B] hover:text-[#365E4B] transition-colors">
+                Văn học Việt Nam
+              </span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-[#FFFDF5] text-[#35483C] text-xs border border-[#DCDED0] rounded-full cursor-pointer hover:border-[#365E4B] hover:text-[#365E4B] transition-colors">
+                Kinh điển Thế giới
+              </span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-[#FFFDF5] text-[#35483C] text-xs border border-[#DCDED0] rounded-full cursor-pointer hover:border-[#365E4B] hover:text-[#365E4B] transition-colors">
+                Còn sách trên giá
+              </span>
+</div>
+<div class="text-xs font-mono text-[#64705C]">
+              Kho sách (Minh họa)
+            </div>
+</div></div>
+<!-- 4-COLUMN BOOK GRID (8 Authentic Typographic Book Covers) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5"><!-- BOOK 1: Dế Mèn phiêu lưu ký -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-VH-012</span>
+<span>KHO BÁCH KHOA</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Tác phẩm</span>
+<h4 class="font-headline text-xl font-bold text-[#35483C] leading-snug group-hover:text-[#365E4B] transition-colors">
+                    Dế Mèn phiêu lưu ký
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Tô Hoài</p>
+</div>
+<div class="text-xs font-mono text-center text-[#A87A4C] border-t border-[#DCDED0] pt-1">
+                  Ấn bản phòng đọc mở
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Văn học Việt Nam</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Hành trình trưởng thành đầy quả cảm và bài học nhân ái của chú Dế Mèn bên bờ cỏ Bách Khoa.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#365E4B] text-[#FFFDF5] text-sm font-medium rounded-xl btn-press hover:bg-[#294C3A]" href="#book-reserve">
+<span class="material-symbols-outlined text-sm" data-icon="bookmark_add">bookmark_add</span>
+<span>Xem sách &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 2: Số đỏ -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-VH-045</span>
+<span>KỆ 02-B</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Tiểu thuyết hoạt kê</span>
+<h4 class="font-headline text-2xl font-bold text-[#35483C] leading-tight group-hover:text-[#365E4B] transition-colors">
+                    Số đỏ
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Vũ Trọng Phụng</p>
+</div>
+<div class="text-xs font-mono text-center text-[#64705C] border-t border-[#DCDED0] pt-1">
+                  Tủ sách kinh điển
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Văn học Hiện thực</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Bản trào phúng sắc sảo bậc nhất về xã hội Âu hóa nửa mùa thời kỳ trước cách mạng.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 3: Hoàng tử bé -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-KD-108</span>
+<span>BẢN DỊCH NGUYÊN BẢN</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Văn học Pháp</span>
+<h4 class="font-headline text-xl font-bold text-[#35483C] leading-snug group-hover:text-[#365E4B] transition-colors">
+                    Hoàng tử bé
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">A. de Saint-Exupéry</p>
+</div>
+<div class="text-xs font-mono text-center text-[#A87A4C] border-t border-[#DCDED0] pt-1">
+                  Đóa hoa hồng trên tiểu hành tinh
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Kinh điển Thế giới</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Điều cốt lõi thì vô hình trong mắt trần; câu chuyện ngụ ngôn thi vị dành cho người lớn.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 4: Nỗi buồn chiến tranh -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F7E7DB]/40 border border-[#9B4D36]/40 rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#9B4D36]">
+<span>YSBK-VH-089</span>
+<span>ĐANG MƯỢN</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#9B4D36] block mb-1">Tiểu thuyết ký ức</span>
+<h4 class="font-headline text-lg font-bold text-[#35483C] leading-snug group-hover:text-[#9B4D36] transition-colors">
+                    Nỗi buồn chiến tranh
+                  </h4>
+<div class="w-8 h-px bg-[#9B4D36] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Bảo Ninh</p>
+</div>
+<div class="text-xs font-mono text-center text-[#9B4D36] border-t border-[#DCDED0] pt-1">
+                  Đang lưu thông
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Văn học Đương đại</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/40 rounded-full">
+                    Đang mượn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Tác phẩm chân thực về vết thương chiến tranh và thân phận con người thời hậu chiến.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết</span>
+</a>
+</div>
+</article>
+<!-- BOOK 5: Cơ học lý thuyết & ứng dụng -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-KT-003</span>
+<span>GIÁO TRÌNH</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Kỹ thuật Bách Khoa</span>
+<h4 class="font-headline text-lg font-bold text-[#35483C] leading-snug group-hover:text-[#365E4B] transition-colors">
+                    Cơ học lý thuyết &amp; ứng dụng
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Bộ môn Cơ học BK</p>
+</div>
+<div class="text-xs font-mono text-center text-[#64705C] border-t border-[#DCDED0] pt-1">
+                  NXB Bách Khoa Hà Nội
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Kỹ thuật Chuyên ngành</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Tài liệu học tập gối đầu giường của các kỹ sư tương lai qua nhiều thế hệ sinh viên.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 6: Nhà giả kim -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-KD-021</span>
+<span>TỦ TRIẾT HỌC</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Văn học Thế giới</span>
+<h4 class="font-headline text-2xl font-bold text-[#35483C] leading-tight group-hover:text-[#365E4B] transition-colors">
+                    Nhà giả kim
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Paulo Coelho</p>
+</div>
+<div class="text-xs font-mono text-center text-[#A87A4C] border-t border-[#DCDED0] pt-1">
+                  Khi bạn khao khát một điều gì...
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Triết lý Nhân sinh</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Hành trình theo đuổi vận mệnh của cậu bé chăn cừu Santiago qua sa mạc mênh mông.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 7: Búp sen xanh -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F8F5EC] border border-[#DCDED0] rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#64705C]">
+<span>YSBK-VH-114</span>
+<span>TIỂU THUYẾT LỊCH SỬ</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#64705C] block mb-1">Văn học Việt Nam</span>
+<h4 class="font-headline text-xl font-bold text-[#35483C] leading-snug group-hover:text-[#365E4B] transition-colors">
+                    Búp sen xanh
+                  </h4>
+<div class="w-8 h-px bg-[#365E4B] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Sơn Tùng</p>
+</div>
+<div class="text-xs font-mono text-center text-[#64705C] border-t border-[#DCDED0] pt-1">
+                  Tuổi thơ và thời thanh xuân
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Tiểu sử Nhân vật</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/40 rounded-full">
+                    Có sẵn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Tái hiện sinh động thời niên thiếu của Chủ tịch Hồ Chí Minh từ xứ Nghệ tới bến Nhà Rồng.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết &amp; Đặt</span>
+</a>
+</div>
+</article>
+<!-- BOOK 8: Chiếc thuyền ngoài xa -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] p-4 flex flex-col justify-between rounded-2xl soft-card-shadow hover:shadow-[0_8px_24px_rgba(53,72,60,0.08)] transition-all group">
+<div>
+<div class="relative w-full aspect-[3/4.2] bg-[#F7E7DB]/40 border border-[#9B4D36]/40 rounded p-4 flex flex-col justify-between mb-3.5 overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[#DCDED0] to-transparent border-r border-[#DCDED0]"></div>
+<div class="flex items-center justify-between text-xs font-mono text-[#9B4D36]">
+<span>YSBK-VH-067</span>
+<span>ĐANG MƯỢN</span>
+</div>
+<div class="my-auto text-center pl-2">
+<span class="text-xs uppercase font-mono tracking-widest text-[#9B4D36] block mb-1">Truyện ngắn</span>
+<h4 class="font-headline text-lg font-bold text-[#35483C] leading-snug group-hover:text-[#9B4D36] transition-colors">
+                    Chiếc thuyền ngoài xa
+                  </h4>
+<div class="w-8 h-px bg-[#9B4D36] mx-auto my-2"></div>
+<p class="text-sm italic font-headline text-[#64705C]">Nguyễn Minh Châu</p>
+</div>
+<div class="text-xs font-mono text-center text-[#9B4D36] border-t border-[#DCDED0] pt-1">
+                  Đang lưu thông
+                </div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono uppercase text-[#64705C]">Văn học Hiện đại</span>
+<span class="text-xs font-mono font-medium px-2 py-0.5 bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/40 rounded-full">
+                    Đang mượn
+                  </span>
+</div>
+<p class="text-sm text-[#64705C] line-clamp-2 leading-relaxed">
+                  Bức tranh nghệ thuật tuyệt mỹ đối lập với hiện thực gai góc của người đàn bà vùng biển.
+                </p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#DCDED0]">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FFFDF5] text-[#35483C] border border-[#35483C] text-sm font-medium rounded-xl btn-press-secondary hover:bg-[#E8EDDF]" href="#book-detail">
+<span>Xem chi tiết</span>
+</a>
+</div>
+</article></div>
+<!-- PAGINATION & CATALOGUE RECORD STATUS -->
+<div class="mt-8 pt-5 border-t border-[#DCDED0] flex flex-col sm:flex-row items-center justify-between gap-4"><div class="text-sm text-[#64705C] font-mono">
+            50 cuốn/trang • Trang 1 (minh họa)
+          </div>
+<div class="flex items-center gap-1.5 text-sm">
+<button class="px-3 py-1.5 border border-[#DCDED0] bg-[#FFFDF5] text-[#819079] rounded-xl cursor-not-allowed">
+<span class="material-symbols-outlined text-xs" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="px-3.5 py-1.5 border border-[#365E4B] bg-[#365E4B] text-[#FFFDF5] font-semibold rounded-xl btn-press">
+              1
+            </button>
+<button class="px-3.5 py-1.5 border border-[#DCDED0] bg-[#FFFDF5] text-[#35483C] hover:bg-[#E8EDDF] rounded-xl btn-press-secondary">
+              2
+            </button>
+<button class="px-3.5 py-1.5 border border-[#DCDED0] bg-[#FFFDF5] text-[#35483C] hover:bg-[#E8EDDF] rounded-xl btn-press-secondary">
+              3
+            </button>
+<button class="px-3 py-1.5 border border-[#35483C] bg-[#FFFDF5] text-[#35483C] hover:bg-[#E8EDDF] rounded-xl btn-press-secondary">
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+</button>
+</div></div>
+</section>
+</div>
+</main>
+<!-- NEXT-DUTY TICKET SECTION (Bảng Vé Trực Nhật & Nhận Sách Thể Thức Thẻ Thư Viện Cổ) -->
+<section class="max-w-[1440px] mx-auto px-10 pb-12"><div class="relative bg-[#FFFDF5] border border-[#DCDED0] p-7 rounded-3xl soft-card-shadow"><div class="h-2 w-full border-b border-dashed border-[#DCDED0] mb-5"></div>
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+<div class="flex items-start gap-4">
+<div class="w-14 h-14 bg-[#E8EDDF] border border-[#365E4B]/40 flex flex-col items-center justify-center p-1 text-[#365E4B] flex-shrink-0 rounded-2xl shadow-sm">
+<span class="material-symbols-outlined text-xl" data-icon="event_note">event_note</span>
+<span class="text-[10px] font-mono tracking-tighter uppercase font-semibold">LỊCH TRỰC</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-mono uppercase bg-[#F4EAD2] text-[#A87A4C] px-3 py-0.5 border border-[#A87A4C]/30 font-semibold rounded-full">
+                PHIẾU TIẾP NHẬN BẠN ĐỌC
+              </span>
+</div>
+<h3 class="font-headline text-xl md:text-2xl font-bold text-[#35483C] mt-1">
+              Lịch trực nhận sách &amp; trả sách
+            </h3>
+<p class="text-sm text-[#64705C] mt-1 max-w-2xl leading-relaxed">
+              CLB mở quầy trực vào <strong class="text-[#35483C] font-semibold">Thứ Ba &amp; Thứ Năm</strong> hàng tuần. Sách được giữ đến hết buổi trực đã chọn.
+            </p>
+</div>
+</div>
+<div class="flex-shrink-0">
+<a class="inline-flex items-center gap-2 px-6 py-2.5 bg-[#365E4B] text-[#FFFDF5] text-sm font-medium rounded-xl btn-press hover:bg-[#294C3A]" href="#duty">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_month">calendar_month</span>
+<span>Xem lịch trực</span>
+</a>
+</div>
+</div>
+<div class="border-t border-[#DCDED0] my-4 pt-3 flex flex-wrap items-center justify-between text-sm text-[#64705C]">
+<div class="flex items-center gap-6">
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#365E4B]"></span>
+<span>Buổi trực định kỳ: <strong>Thứ Ba &amp; Thứ Năm</strong></span>
+</span>
+</div>
+<a class="text-sm font-medium text-[#365E4B] underline underline-offset-4 hover:text-[#294C3A] mt-2 sm:mt-0" href="#duty">
+          Xem lịch trực chi tiết →
+        </a>
+</div>
+</div></section>
+<!-- SUBTLE BORROWING GUIDE STRIP (3 Tactile Physical Steps) -->
+<section class="max-w-[1440px] mx-auto px-10 pb-16"><div class="border-y border-[#DCDED0] py-8"><div class="text-center mb-8">
+<span class="text-xs font-mono uppercase tracking-widest text-[#64705C]">HƯỚNG DẪN BẠN ĐỌC MỚI</span>
+<h4 class="font-headline text-2xl font-bold text-[#35483C] mt-1">3 bước mượn sách giản dị cùng YSBK</h4>
+<p class="text-sm text-[#64705C] italic mt-1.5 max-w-2xl mx-auto">“Đặt một cuốn sách, chọn buổi trực. Giữ sách đến hết buổi trực đã chọn; khi nhận, đọc họ tên và số điện thoại.”</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Step 1 -->
+<div class="bg-[#FFFDF5] border border-[#DCDED0] p-6 flex items-start gap-4 rounded-2xl soft-card-shadow">
+<span class="font-headline font-bold text-3xl text-[#365E4B] leading-none">01</span>
+<div>
+<h5 class="font-headline font-semibold text-base text-[#35483C]">Tra cứu &amp; Đặt sách</h5>
+<p class="text-sm text-[#64705C] mt-1.5 leading-relaxed">
+              Tìm tác phẩm yêu thích trên hệ thống tủ sách và tiến hành đặt sách.
+            </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-[#FFFDF5] border border-[#DCDED0] p-6 flex items-start gap-4 rounded-2xl soft-card-shadow">
+<span class="font-headline font-bold text-3xl text-[#365E4B] leading-none">02</span>
+<div>
+<h5 class="font-headline font-semibold text-base text-[#35483C]">Chọn buổi trực</h5>
+<p class="text-sm text-[#64705C] mt-1.5 leading-relaxed">
+              Đặt một cuốn sách, chọn buổi trực (Thứ Ba hoặc Thứ Năm). Sách được giữ đến hết buổi trực đã chọn.
+            </p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-[#FFFDF5] border border-[#DCDED0] p-6 flex items-start gap-4 rounded-2xl soft-card-shadow">
+<span class="font-headline font-bold text-3xl text-[#365E4B] leading-none">03</span>
+<div>
+<h5 class="font-headline font-semibold text-base text-[#35483C]">Nhận sách tại ca trực</h5>
+<p class="text-sm text-[#64705C] mt-1.5 leading-relaxed">
+              Khi đến nhận sách tại ca trực đã chọn, bạn chỉ cần đọc họ tên và số điện thoại.
+            </p>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-6 mt-8 pt-4 border-t border-[#DCDED0] text-sm font-medium text-[#64705C]">
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#duty">Lịch trực</a>
+<span class="text-[#DCDED0]">•</span>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#review">Góc cảm nhận bạn đọc</a>
+<span class="text-[#DCDED0]">•</span>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#recruitment">Tuyển thành viên</a>
+<span class="text-[#DCDED0]">•</span>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#rules">Quy chế mượn &amp; gìn giữ sách</a>
+</div>
+</div></section>
+<!-- FOOTER (Vintage Colophon from Shared Components) -->
+<footer class="w-full bg-[#F6F3EA] border-t border-[#DCDED0] text-xs text-[#64705C]"><div class="max-w-[1440px] mx-auto px-10 py-10 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex flex-col items-center md:items-start text-center md:text-left">
+<div class="flex items-center gap-2 mb-1.5">
+<span class="font-headline text-lg font-bold text-[#365E4B] tracking-tight">YSBK</span>
+<span class="text-sm text-[#64705C]">— Tủ sách Thư viện Ký ức</span>
+</div>
+<p class="font-body text-sm text-[#35483C] max-w-xl leading-relaxed">
+          Câu lạc bộ Yêu Sách Bách Khoa Hà Nội (YSBK). Mở sách, đọc tương lai.
+        </p>
+<p class="text-xs text-[#64705C] mt-1 font-mono">
+          Bản concept • Nội dung minh họa
+        </p>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-6 text-sm text-[#35483C]">
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#policy">Quy chế mượn trả</a>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#duty">Lịch trực</a>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#contribute">Góp ý kho sách</a>
+<a class="hover:text-[#365E4B] underline underline-offset-4 transition-colors" href="#contact">Liên hệ CLB</a>
+</div>
+</div></footer>
+</body></html>

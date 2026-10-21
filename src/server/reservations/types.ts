@@ -16,6 +16,7 @@ export interface CreateReservationInput {
 }
 
 export interface ReservationRequestContext {
+  readerAccountId?: string;
   clientIp: string;
   idempotencyKey?: string;
   captchaToken: string;
@@ -74,10 +75,12 @@ export interface ExpireReservationsResult {
 }
 
 export interface PublicReservationBookDto {
+  isBookmarked?: boolean;
   coverPrice?: number | null;
   titleId: string;
   title: string;
   author: string;
+  description?: string;
   category: string;
   coverImageUrl?: string;
   standardDeposit: number;

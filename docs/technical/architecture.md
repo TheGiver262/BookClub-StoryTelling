@@ -1,5 +1,11 @@
 # YSBK — Thiết Kế Kiến Trúc Phần Mềm & Phân Rã Module (architecture.md)
 
+## Bổ sung kiến trúc hiện hành 21/10/2026
+
+Stack ưu tiên đã chốt Supabase + Cloudflare Free cho beta, local Docker trước. [Publishing/CTV](public-portal-publishing.md) bổ sung quản trị nội dung và vòng đời nhân sự, không tạo vai trò nội bộ mới từ khách. Cổng `/sach/` chung sáu tab, landing `/` và nội bộ theo session.
+
+Tài khoản bạn đọc cho quản lý giữ chỗ đang [nghiên cứu](public-reservation-ux-research-2026-10-21.md), chưa là một bounded context/API mới được duyệt. Không gắn quyền/lịch sử theo email hoặc SĐT tự khai. [Trạng thái hiện hành](../CURRENT-STATE.md) ưu tiên mô tả stack còn đề xuất ở snapshot cũ.
+
 Tài liệu đặc tả kiến trúc mức hệ thống, ranh giới module nghiệp vụ, công nghệ đề xuất và các quyết định kỹ thuật cốt lõi.  
 Ngày lập: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.
 

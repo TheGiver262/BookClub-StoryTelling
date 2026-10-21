@@ -1,5 +1,13 @@
 # Triển khai beta YSBK: Supabase Free + Cloudflare Free
 
+## Cập nhật trước beta 21/10/2026
+
+**Thay đổi chat tiếp nối:** tài khoản bạn đọc Google bắt buộc và subdomain nội bộ riêng + Cloudflare Access đã được chọn. Dùng [runbook mới](reader-accounts-local-and-access.md) cho cấu hình host/provider. URL workers.dev ở kế hoạch cũ bên dưới đã bị thay thế: `workers_dev=false`, Worker phải chạy trước toàn bộ assets. Migration mới là 21, cần cùng 19–20 và backup; không tự chạy bootstrap trên DB có dữ liệu.
+
+Quyết định mới nhất là hoàn chỉnh local trước rồi mới beta; chưa deploy hoặc cấu hình dashboard thật trong lượt bàn giao. Dùng [session handoff](../SESSION-HANDOFF.md) và [trạng thái hiện hành](../CURRENT-STATE.md) trước khi áp dụng các bước bên dưới. Giá/quota/provider phải kiểm tra lại lúc triển khai.
+
+Nguồn dữ liệu có thêm publishing/CTV theo [tài liệu chức năng](public-portal-publishing.md). Tài khoản Google đã được duyệt; email/mật khẩu bạn đọc, đổi sách và đổi guard IP vẫn chưa duyệt. Báo cáo UI/HTTP local không đóng gate Google/Turnstile thật, cloud cookie, cron, concurrency hoặc restore.
+
 > **Tạm hoãn triển khai theo quyết định 20/10/2026.** Hiện ưu tiên [test local](local-development.md). Chỉ thực hiện phần triển khai thật sau khi local đủ chức năng và được nghiệm thu; không dùng hướng dẫn này làm bằng chứng đã được phép deploy ngay.
 
 Ngày đối chiếu tài liệu: 20/10/2026. Đây là hướng dẫn triển khai; các thao tác dashboard bên dưới chưa được thực hiện trên tài khoản thật.

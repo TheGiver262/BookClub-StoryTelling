@@ -1,5 +1,9 @@
 # Prompt giao Antigravity: khảo sát nhận diện → design.md → UI YSBK
 
+## Thiết kế thay thế đã duyệt 21/10/2026
+
+Đây là prompt khám phá ban đầu. Bộ nguồn mới là [Stitch HANDOFF](../mockups/stitch-ui-2026-10-21/HANDOFF.md), [prompt UI](../mockups/stitch-ui-2026-10-21/ANTIGRAVITY-PROMPT.md) và [session handoff](../SESSION-HANDOFF.md). Không tạo lại nhận diện hoặc thay landing cuốn sách đã duyệt; kiểm tra UI source/QA đang có trước khi thực hiện phần còn thiếu. Ý tưởng tài khoản/đổi sách/IP chưa được chốt.
+
 Sao chép toàn bộ phần dưới vào Antigravity đang mở workspace `F:\Codex Project\YSBK`. Đây là giao việc thiết kế và UI prototype; chưa giao xây toàn bộ backend hoặc triển khai thật.
 
 ---

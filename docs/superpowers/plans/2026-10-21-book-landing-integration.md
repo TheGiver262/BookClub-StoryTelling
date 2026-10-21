@@ -1,5 +1,9 @@
 # Đưa cuốn sách vào web local
 
+## Trạng thái sau tích hợp và handoff
+
+Landing cuốn sách đã tích hợp local và được chỉnh nhiều vòng; xem [bằng chứng landing](../../technical/book-landing-local.md), [publishing/CTV](../../technical/public-portal-publishing.md) và [session handoff](../../SESSION-HANDOFF.md). Đây là kế hoạch gốc, không yêu cầu tích hợp lại. Workspace còn có UI mềm/ảnh QA sau concept Stitch; cần kiểm tra phần đã có trước khi sửa.
+
 Phạm vi đã duyệt: landing cuốn sách, phần hướng dẫn tiếp sau chương 10, trang tra cứu riêng và giao diện đồng bộ cả công khai/nội bộ. Chưa deploy, commit hoặc push.
 
 Đã thực hiện trên local. Kết quả và giới hạn kiểm chứng: [book-landing-local.md](../../technical/book-landing-local.md).

@@ -163,7 +163,7 @@ export async function loginInternalMember(
       try {
         const pool = getDatabasePool(env);
         const queryRes = await pool.query(
-          `SELECT m.id, m.full_name, m.team, m.is_admin, m.is_alumni, m.is_active, m.token_version, ii.username
+          `SELECT m.id, m.full_name, m.team, m.is_admin, m.is_alumni, m.is_active, m.is_collaborator, m.token_version, ii.username
            FROM internal_identities ii
            JOIN members m ON ii.member_id = m.id
            WHERE ii.provider_subject = $1 AND ii.normalized_username = $2`,
@@ -200,6 +200,7 @@ export async function loginInternalMember(
       team: memberRow.team,
       isActive: Boolean(memberRow.is_active),
       isAlumni,
+      isCollaborator: Boolean(memberRow.is_collaborator),
       tokenVersion: memberRow.token_version ?? 1,
     };
 

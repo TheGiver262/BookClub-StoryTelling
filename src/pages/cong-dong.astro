@@ -1,5 +1,5 @@
 ---
-import PublicPortal from '../components/PublicPortal';
+
 import '../styles/global.css';
 ---
 <!doctype html>
@@ -10,5 +10,5 @@ import '../styles/global.css';
     <link rel="icon" type="image/svg+xml" href="/book/assets/club-logo-v8.svg" />
     <title>Hoạt động & cộng đồng — Yêu Sách Bách Khoa Hà Nội</title>
   </head>
-  <body><PublicPortal client:load /></body>
+  <body><p>Đang mở không gian bạn đọc… <a href="/sach/">Tiếp tục</a></p><script is:inline>window.location.replace('/sach/' + window.location.search + window.location.hash);</script></body>
 </html>

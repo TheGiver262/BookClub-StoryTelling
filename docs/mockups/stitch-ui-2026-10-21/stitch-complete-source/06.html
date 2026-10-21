@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>06 — Sổ trực · Điện thoại | YSBK</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary-fixed-variant": "#633f16",
+            "on-error-container": "#93000a",
+            "background": "#fcf9f0",
+            "surface-container-high": "#ebe8df",
+            "surface-bright": "#fcf9f0",
+            "surface": "#fcf9f0",
+            "primary": "#1e4635",
+            "inverse-on-surface": "#f4f1e8",
+            "error-container": "#ffdad6",
+            "error": "#ba1a1a",
+            "surface-container": "#f1eee5",
+            "tertiary-fixed-dim": "#f2bc89",
+            "tertiary-container": "#754e24",
+            "tertiary": "#5a370f",
+            "surface-container-low": "#f6f3ea",
+            "on-primary-fixed-variant": "#264e3c",
+            "primary-fixed-dim": "#a5d0b8",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#3e6653",
+            "surface-dim": "#dddad1",
+            "surface-container-highest": "#e5e2da",
+            "secondary-fixed": "#ffdbd1",
+            "on-secondary-container": "#78321d",
+            "on-primary": "#ffffff",
+            "primary-container": "#365e4b",
+            "surface-variant": "#e5e2da",
+            "outline": "#717973",
+            "primary-fixed": "#c0edd4",
+            "on-secondary-fixed": "#3b0a00",
+            "on-secondary-fixed-variant": "#77311d",
+            "tertiary-fixed": "#ffdcbe",
+            "secondary-fixed-dim": "#ffb5a0",
+            "secondary": "#954832",
+            "on-secondary": "#ffffff",
+            "on-surface": "#1c1c17",
+            "on-primary-container": "#aad6bd",
+            "on-background": "#1c1c17",
+            "on-surface-variant": "#414944",
+            "on-error": "#ffffff",
+            "inverse-primary": "#a5d0b8",
+            "surface-container-lowest": "#ffffff",
+            "outline-variant": "#c1c8c2",
+            "on-tertiary-container": "#f8c28e",
+            "on-primary-fixed": "#002114",
+            "secondary-container": "#fe9d80",
+            "on-tertiary-fixed": "#2c1600",
+            "inverse-surface": "#31312b"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          fontFamily: {
+            "headline": ["Newsreader", "serif"],
+            "display": ["Newsreader", "serif"],
+            "body": ["Be Vietnam Pro", "sans-serif"],
+            "label": ["Be Vietnam Pro", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Exact locked brand palette classes & physical paper shadows */
+    :root {
+      --ysbk-page: #F8F5EC;
+      --ysbk-paper: #FFFDF5;
+      --ysbk-ink: #35483C;
+      --ysbk-muted-ink: #64705C;
+      --ysbk-border: #DCDED0;
+      --ysbk-primary: #365E4B;
+      --ysbk-primary-hover: #294C3A;
+      --ysbk-primary-pale: #E8EDDF;
+      --ysbk-terracotta: #9B4D36;
+      --ysbk-terracotta-pale: #F7E7DB;
+      --ysbk-gold: #A87A4C;
+      --ysbk-gold-pale: #F4EAD2;
+      --ysbk-sage: #819079;
+    }
+    
+    body {
+      background-color: var(--ysbk-page);
+      color: var(--ysbk-ink);
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-feature-settings: "tnum" 1, "cv01" 1;
+    }
+
+    .tnum {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Paper pressed tactile button & card styling */
+    .paper-card {
+      background-color: var(--ysbk-paper);
+      border: 1px solid var(--ysbk-border);
+      box-shadow: 0 2px 0 var(--ysbk-border), 0 6px 16px rgba(53, 72, 60, 0.05);
+    }
+
+    .paper-btn-primary {
+      background-color: var(--ysbk-primary);
+      color: #FFFDF5;
+      border: 1px solid #234233;
+      box-shadow: 0 2px 0 #1b3327;
+      transition: all 0.15s ease-out;
+    }
+    .paper-btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #1b3327;
+    }
+
+    .paper-btn-secondary {
+      background-color: var(--ysbk-paper);
+      color: var(--ysbk-primary);
+      border: 1px solid var(--ysbk-primary);
+      box-shadow: 0 2px 0 var(--ysbk-border);
+      transition: all 0.15s ease-out;
+    }
+    .paper-btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 var(--ysbk-border);
+    }
+
+    /* Double rules */
+    .double-rule {
+      border-top: 1px solid var(--ysbk-border);
+      border-bottom: 1px solid var(--ysbk-border);
+      height: 4px;
+    }
+
+    .library-tab {
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center selection:bg-[#E8EDDF] selection:text-[#365E4B]">
+<!-- Mobile Simulator Frame (Target width 390px) -->
+<div class="w-full max-w-[390px] min-h-screen flex flex-col bg-[#F8F5EC] border-x border-[#DCDED0] relative pb-24 shadow-xl">
+<!-- 1. Mobile Header (Internal desk context) -->
+<header class="sticky top-0 z-30 bg-[#FFFDF5]/95 backdrop-blur-sm border-b border-[#DCDED0] px-4 py-2.5">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2.5">
+<!-- Monogram Logo Badge -->
+<div class="w-9 h-9 rounded bg-[#365E4B] flex items-center justify-center text-[#FFFDF5] font-headline font-bold text-base shadow-[0_1px_2px_rgba(0,0,0,0.15)] flex-shrink-0">
+            YS
+          </div>
+<div>
+<h1 class="text-[13px] font-bold leading-tight text-[#35483C] tracking-tight line-clamp-1">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</h1>
+<p class="text-[11px] text-[#64705C] font-normal tracking-normal">
+              Bàn làm việc ca trực · Hà Nội
+            </p>
+</div>
+</div>
+<button aria-label="Mở danh mục nội bộ" class="w-10 h-10 flex items-center justify-center text-[#35483C] hover:bg-[#E8EDDF] rounded active:translate-y-px transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+</div>
+<!-- Session Status Banner Pill -->
+<div class="mt-2.5 pt-2 border-t border-[#DCDED0]/60 flex items-center justify-between">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E8EDDF] border border-[#DCDED0] rounded-full text-[12px] font-medium text-[#365E4B]"><span class="w-2 h-2 rounded-full bg-[#365E4B] animate-pulse"></span><span>Ca trực đang mở • Dữ liệu minh họa</span></div>
+<span class="text-[12px] tnum text-[#64705C] font-medium">Thứ Ba (Minh họa)</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-4 pt-4 pb-6 flex-1 flex flex-col gap-4">
+<!-- 2. Page Title & Search Bar -->
+<section class="flex flex-col gap-3">
+<div class="flex items-baseline justify-between">
+<h2 class="font-headline text-[30px] font-semibold text-[#35483C] tracking-tight leading-none">
+            Sổ trực hôm nay
+          </h2>
+<span class="text-[12px] text-[#64705C] uppercase tracking-wider font-semibold">Tủ sách YSBK</span>
+</div>
+<!-- Search Input with Barcode Action -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-[#64705C] text-[20px] pointer-events-none">
+            search
+          </span>
+<input class="w-full h-12 pl-10 pr-12 bg-[#FFFDF5] border border-[#DCDED0] text-[14px] text-[#35483C] placeholder:text-[#64705C]/70 focus:outline-none focus:border-[#365E4B] focus:ring-1 focus:ring-[#365E4B] shadow-[0_1px_2px_rgba(53,72,60,0.03)]" placeholder="Tìm SĐT bạn đọc, mã phiếu..." style="border-radius: 14px;" type="text" value=""/>
+<button class="absolute right-1.5 w-9 h-9 flex items-center justify-center text-[#365E4B] bg-[#E8EDDF] hover:bg-[#365E4B] hover:text-[#FFFDF5] rounded transition-colors" title="Quét mã vạch" type="button">
+<span class="material-symbols-outlined text-[20px]">barcode_scanner</span>
+</button>
+</div>
+<!-- Segmented Library Card Tabs -->
+<div class="flex items-end border-b border-[#DCDED0] pt-1 gap-1">
+<!-- Active Tab: Chờ nhận -->
+<button class="library-tab px-3.5 py-2 bg-[#FFFDF5] border-t border-x border-[#DCDED0] text-[#365E4B] font-semibold text-[13px] flex items-center gap-1.5 -mb-px z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.02)]">
+<span>Chờ nhận</span>
+<span class="px-1.5 py-0.2 bg-[#365E4B] text-[#FFFDF5] text-[11px] font-bold rounded-full tnum">4</span>
+</button>
+<!-- Tab: Đang mượn -->
+<button class="library-tab px-3 py-2 bg-[#F1EEE5] text-[#64705C] hover:text-[#35483C] text-[13px] font-medium flex items-center gap-1.5 transition-colors">
+<span>Đang mượn</span>
+<span class="text-[12px] tnum text-[#64705C] font-semibold">12</span>
+</button>
+<!-- Tab: Cần xử lý -->
+<button class="library-tab px-3 py-2 bg-[#F1EEE5] text-[#64705C] hover:text-[#35483C] text-[13px] font-medium flex items-center gap-1.5 transition-colors">
+<span>Cần xử lý</span>
+<span class="px-1 py-0.2 bg-[#F7E7DB] text-[#9B4D36] text-[11px] font-bold rounded-full tnum">2</span>
+</button>
+</div>
+</section>
+<!-- 3. Operational Alert Box (Terracotta Accent) -->
+<section class="bg-[#F7E7DB] border border-[#9B4D36]/40 rounded p-3 text-[#9B4D36] shadow-sm relative overflow-hidden" style="border-radius: 22px; box-shadow: 0 5px 18px rgba(53, 72, 60, 0.08);">
+<div class="flex gap-2.5 items-start">
+<span class="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">
+            warning
+          </span>
+<div class="text-[13px] leading-relaxed">
+<p class="font-bold tracking-tight">Bản sách cần kiểm tra</p>
+<p class="text-[12px] text-[#813C2A] mt-0.5">
+              Bản lưu ‘Nỗi buồn chiến tranh’ bị rách mép gáy. Vui lòng gọi bạn đọc trước khi hủy đơn.
+            </p>
+</div>
+</div>
+</section>
+<!-- 4. Stacked Loan Slips (Card Reflow Pattern) -->
+<section class="flex flex-col gap-3.5">
+<!-- CARD 1 -->
+<article class="paper-card rounded p-3.5 flex flex-col gap-3 relative" style="border-radius: 22px; box-shadow: 0 5px 18px rgba(53, 72, 60, 0.08);">
+<!-- Notch detail on top edge mimicking catalogue slip -->
+<div class="absolute -top-[1px] right-6 w-5 h-1.5 bg-[#F8F5EC] border-b border-x border-[#DCDED0] rounded-b-sm" style="border-radius: 14px;"></div>
+<!-- Top row -->
+<div class="flex items-center justify-between border-b border-[#DCDED0]/70 pb-2">
+<div class="flex items-center gap-2">
+<span class="text-[11px] text-[#64705C] tracking-wide font-medium uppercase">Phiếu mượn</span>
+<span class="font-mono text-[14px] font-bold text-[#35483C] tnum tracking-tight">#BK-701</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[12px] font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+              Hẹn hôm nay
+            </span>
+</div>
+<!-- Book & Metadata -->
+<div class="flex flex-col gap-0.5">
+<h3 class="font-headline text-[18px] font-semibold text-[#35483C] leading-snug">
+              Dế Mèn phiêu lưu ký
+            </h3>
+<p class="text-[13px] text-[#64705C] font-normal">
+              Mã bản: <span class="font-mono font-medium text-[#35483C]">VH-012</span> · Vị trí: <span class="font-semibold text-[#35483C]">Kệ A2</span>
+</p>
+</div>
+<!-- Reader Information -->
+<div class="bg-[#F8F5EC] border border-[#DCDED0]/80 rounded p-2.5 flex items-center justify-between text-[13px]" style="border-radius: 14px;">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-[#64705C]">person</span>
+<span class="font-semibold text-[#35483C]">Nguyễn V* A*</span>
+</div>
+<span class="text-[#64705C] tnum font-mono text-[12px]">0988 ••• 214</span>
+</div>
+<!-- Deposit & Rules -->
+<div class="flex items-center justify-between text-[13px] px-0.5">
+<span class="text-[#64705C]">Tiền cọc tạm giữ:</span>
+<div class="text-right">
+<span class="font-bold text-[#35483C] tnum">30.000đ</span>
+<span class="block text-[11px] text-[#64705C]">(Nhận cọc khi giao sách)</span>
+</div>
+</div>
+<!-- Action Button (min 48px height) -->
+<button class="paper-btn-primary w-full h-12 rounded flex items-center justify-center gap-2 font-medium text-[15px] cursor-pointer" style="border-radius: 14px;" type="button">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>Bàn giao sách</span>
+</button>
+</article>
+<!-- CARD 2 -->
+<article class="paper-card rounded p-3.5 flex flex-col gap-3 relative" style="border-radius: 22px; box-shadow: 0 5px 18px rgba(53, 72, 60, 0.08);">
+<div class="absolute -top-[1px] right-6 w-5 h-1.5 bg-[#F8F5EC] border-b border-x border-[#DCDED0] rounded-b-sm" style="border-radius: 14px;"></div>
+<!-- Top row -->
+<div class="flex items-center justify-between border-b border-[#DCDED0]/70 pb-2">
+<div class="flex items-center gap-2">
+<span class="text-[11px] text-[#64705C] tracking-wide font-medium uppercase">Phiếu mượn</span>
+<span class="font-mono text-[14px] font-bold text-[#35483C] tnum tracking-tight">#BK-702</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[12px] font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+              Hẹn hôm nay
+            </span>
+</div>
+<!-- Book & Metadata -->
+<div class="flex flex-col gap-0.5">
+<h3 class="font-headline text-[18px] font-semibold text-[#35483C] leading-snug">
+              Số đỏ
+            </h3>
+<p class="text-[13px] text-[#64705C] font-normal">
+              Mã bản: <span class="font-mono font-medium text-[#35483C]">VH-045</span> · Vị trí: <span class="font-semibold text-[#35483C]">Kệ A3</span>
+</p>
+</div>
+<!-- Reader Information -->
+<div class="bg-[#F8F5EC] border border-[#DCDED0]/80 rounded p-2.5 flex items-center justify-between text-[13px]" style="border-radius: 14px;">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-[#64705C]">person</span>
+<span class="font-semibold text-[#35483C]">Trần T* B*</span>
+</div>
+<span class="text-[#64705C] tnum font-mono text-[12px]">0912 ••• 589</span>
+</div>
+<!-- Deposit & Rules -->
+<div class="flex items-center justify-between text-[13px] px-0.5">
+<span class="text-[#64705C]">Tiền cọc tạm giữ:</span>
+<div class="text-right">
+<span class="font-bold text-[#35483C] tnum">30.000đ</span>
+<span class="block text-[11px] text-[#64705C]">(Nhận cọc khi giao sách)</span>
+</div>
+</div>
+<!-- Action Button -->
+<button class="paper-btn-primary w-full h-12 rounded flex items-center justify-center gap-2 font-medium text-[15px] cursor-pointer" style="border-radius: 14px;" type="button">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>Bàn giao sách</span>
+</button>
+</article>
+<!-- CARD 3 (Returning context) -->
+<article class="paper-card rounded p-3.5 flex flex-col gap-3 relative" style="border-radius: 22px; box-shadow: 0 5px 18px rgba(53, 72, 60, 0.08);">
+<div class="absolute -top-[1px] right-6 w-5 h-1.5 bg-[#F8F5EC] border-b border-x border-[#DCDED0] rounded-b-sm" style="border-radius: 14px;"></div>
+<!-- Top row -->
+<div class="flex items-center justify-between border-b border-[#DCDED0]/70 pb-2">
+<div class="flex items-center gap-2">
+<span class="text-[11px] text-[#64705C] tracking-wide font-medium uppercase">Phiếu mượn</span>
+<span class="font-mono text-[14px] font-bold text-[#35483C] tnum tracking-tight">#BK-698</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[12px] font-semibold bg-[#F4EAD2] text-[#A87A4C] border border-[#A87A4C]/25">
+              Đang mượn
+            </span>
+</div>
+<!-- Book & Metadata -->
+<div class="flex flex-col gap-0.5">
+<h3 class="font-headline text-[18px] font-semibold text-[#35483C] leading-snug">
+              Búp sen xanh
+            </h3>
+<p class="text-[13px] text-[#64705C] font-normal">
+              Mã bản: <span class="font-mono font-medium text-[#35483C]">VH-114</span> · Sách mượn từ 12/03
+            </p>
+</div>
+<!-- Reader Information -->
+<div class="bg-[#F8F5EC] border border-[#DCDED0]/80 rounded p-2.5 flex items-center justify-between text-[13px]" style="border-radius: 14px;">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-[#64705C]">person</span>
+<span class="font-semibold text-[#35483C]">Lê Q* C*</span>
+</div>
+<span class="text-[#64705C] tnum font-mono text-[12px]">0973 ••• 102</span>
+</div>
+<!-- Deposit & Rules -->
+<div class="flex flex-col gap-0.5 text-[13px] px-0.5">
+<div class="flex items-center justify-between">
+<span class="text-[#64705C]">Tiền cọc đang giữ:</span>
+<span class="font-bold text-[#35483C] tnum">30.000đ</span>
+</div>
+<span class="text-[11px] text-[#64705C] italic text-right">Hoàn trả theo tình trạng sách</span>
+</div>
+<!-- Action Button: Nhận trả sách & hoàn cọc -->
+<button class="paper-btn-secondary w-full h-12 rounded flex items-center justify-center gap-2 font-medium text-[15px] cursor-pointer" style="border-radius: 14px;" type="button">
+<span class="material-symbols-outlined text-[20px]">assignment_returned</span>
+<span>Nhận trả sách &amp; hoàn cọc</span>
+</button>
+</article>
+</section>
+<!-- 5. Operational Summary Note -->
+<section class="mt-2 p-3 bg-[#E8EDDF]/50 border border-[#DCDED0]" style="border-radius: 18px; box-shadow: 0 5px 18px rgba(53, 72, 60, 0.04);"><div class="flex items-start gap-2 text-[#35483C]"><span class="material-symbols-outlined text-[18px] text-[#365E4B] flex-shrink-0 mt-0.5">info</span><p class="text-[12px] leading-relaxed text-[#35483C]/90 font-normal"><strong class="font-semibold text-[#365E4B]">Lưu ý ca trực:</strong> Giữ sách đến hết buổi trực đã chọn. Tiền cọc được hoàn trả theo tình trạng khi trả sách.</p></div></section>
+<!-- 7. Footer -->
+<footer class="mt-4 pt-3 border-t border-[#DCDED0] text-center"><p class="text-[11px] text-[#64705C] font-mono tracking-tight">Bản concept • Nội dung minh họa</p><p class="text-[10px] text-[#64705C]/80 mt-0.5">Mở sách, đọc tương lai · Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</p></footer>
+</main>
+<!-- 6. Bottom Navigation Bar (Internal Desk Navigation) -->
+<!-- Prohibits borders; separated via subtle shadow and paper surface tonal shift -->
+<nav class="fixed bottom-0 w-full max-w-[390px] bg-[#FFFDF5] shadow-[0_-4px_16px_rgba(53,72,60,0.08)] z-40 px-2 py-1.5 flex items-center justify-around" style="border-top-left-radius: 18px; border-top-right-radius: 18px; border-top: 1px solid #DCDED0; box-shadow: 0 -4px 20px rgba(53, 72, 60, 0.08);">
+<!-- Nav Item 1: Quầy trực (ACTIVE) -->
+<button class="flex-1 py-1 flex flex-col items-center justify-center text-[#365E4B] transition-colors relative" type="button">
+<div class="w-8 h-8 rounded flex items-center justify-center bg-[#E8EDDF]">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">
+            countertops
+          </span>
+</div>
+<span class="text-[12px] font-bold mt-1 tracking-tight">Quầy trực</span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#365E4B] absolute -bottom-0.5"></span>
+</button>
+<!-- Nav Item 2: Kho sách -->
+<button class="flex-1 py-1 flex flex-col items-center justify-center text-[#64705C] hover:text-[#365E4B] transition-colors" type="button">
+<div class="w-8 h-8 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">
+            menu_book
+          </span>
+</div>
+<span class="text-[12px] font-medium mt-1 tracking-tight">Kho sách</span>
+</button>
+<!-- Nav Item 3: Lịch trực -->
+<button class="flex-1 py-1 flex flex-col items-center justify-center text-[#64705C] hover:text-[#365E4B] transition-colors" type="button">
+<div class="w-8 h-8 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">
+            calendar_today
+          </span>
+</div>
+<span class="text-[12px] font-medium mt-1 tracking-tight">Lịch trực</span>
+</button>
+<!-- Nav Item 4: Thêm (Menu) -->
+<button class="flex-1 py-1 flex flex-col items-center justify-center text-[#64705C] hover:text-[#365E4B] transition-colors" type="button">
+<div class="w-8 h-8 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">
+            more_horiz
+          </span>
+</div>
+<span class="text-[12px] font-medium mt-1 tracking-tight">Thêm</span>
+</button>
+</nav>
+</div>
+</body></html>

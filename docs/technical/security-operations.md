@@ -1,5 +1,11 @@
 # YSBK — Thiết Kế Bảo Mật, Quản Trị Danh Tính & Vận Hành Hạ Tầng (security-operations.md)
 
+## Cập nhật danh tính và vận hành 21/10/2026
+
+Giữ cơ chế token riêng cho quyền xem/hủy đơn khách, server-side guards, no-store và audit không chứa bí mật. Không đổi public signup hoặc cấp quyền nội bộ theo tài khoản bạn đọc chưa được duyệt. [Publishing/CTV](public-portal-publishing.md) bổ sung ADMIN-only, xóa mềm và thu hồi phiên.
+
+IP chung/NAT và khôi phục quyền khách là rủi ro được nêu trong [nghiên cứu UX](public-reservation-ux-research-2026-10-21.md); chưa đổi hạn mức. Chỉ dùng [beta guide](beta-deployment-guide.md) cho checklist hiện hành, giữ backup trước migration, test DB riêng, chủ sản phẩm sở hữu hạ tầng. Nguồn giá/quota và các guard dự kiến trong snapshot cũ phải đối chiếu runtime trước khi coi đã triển khai. [Session handoff](../SESSION-HANDOFF.md).
+
 Tài liệu đặc tả kiến trúc bảo mật, ma trận phân quyền, mô hình đe dọa (Threat Model), chính sách sao lưu và giới hạn hạn ngạch hạ tầng.  
 Ngày lập: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.
 

@@ -132,6 +132,9 @@ export async function convertPassedApplicantToMember(
           isEligibleMainDuty: Boolean(m.is_eligible_main_duty),
           hasPaidFee: Boolean(m.has_paid_fee),
           isAlumni: Boolean(m.is_alumni),
+          isCollaborator: Boolean(m.is_collaborator),
+          probationStartedOn: m.probation_started_on,
+          probationEndsOn: m.probation_ends_on,
           isAdmin: Boolean(m.is_admin),
           isActive: Boolean(m.is_active),
           createdAt: m.created_at,
@@ -288,9 +291,9 @@ export async function convertPassedApplicantToMember(
       `INSERT INTO members (
          id, full_name, username, gen, team, role_title, school_year,
          phone, is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active,
-         token_version, created_at
+         token_version, created_at, is_collaborator, probation_started_on, probation_ends_on
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, FALSE, FALSE, FALSE, TRUE, 1, NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE, FALSE, FALSE, FALSE, TRUE, 1, NOW(), TRUE, (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, ((NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date + INTERVAL '1 month')::date)
        RETURNING *`,
       [
         finalMemberId,
@@ -298,7 +301,7 @@ export async function convertPassedApplicantToMember(
         username,
         gen,
         team,
-        'Thành viên tập sự',
+        'Cộng tác viên',
         schoolYear,
         phone,
       ]
@@ -357,6 +360,9 @@ export async function convertPassedApplicantToMember(
       isEligibleMainDuty: Boolean(memberRecord.is_eligible_main_duty),
       hasPaidFee: Boolean(memberRecord.has_paid_fee),
       isAlumni: Boolean(memberRecord.is_alumni),
+      isCollaborator: Boolean(memberRecord.is_collaborator),
+      probationStartedOn: memberRecord.probation_started_on,
+      probationEndsOn: memberRecord.probation_ends_on,
       isAdmin: Boolean(memberRecord.is_admin),
       isActive: Boolean(memberRecord.is_active),
       createdAt: memberRecord.created_at,

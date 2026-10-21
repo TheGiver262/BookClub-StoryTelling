@@ -1,5 +1,11 @@
 # Phạm vi sản phẩm và mô hình nghiệp vụ v0.11
 
+## Cập nhật phạm vi 21/10/2026
+
+Bổ sung đã chốt: landing cuốn sách, cổng `/sach/` chung sáu tab, 50 đầu sách/trang, mô tả sách từ DB; ADMIN quản lý xuất bản; CTV thử thách một tháng lịch với quyền MEMBER, công nhận thủ công, xóa mềm chỉ bởi quản lý; thành viên chính thức rời chuyển cựu. Chi tiết ở [cổng công khai/CTV](technical/public-portal-publishing.md).
+
+[Đặt giữ chỗ](technical/public-reservation-design.md) không cần tài khoản, một quyển/đơn, giữ hết ca đã chọn, ba đơn/IP/24 giờ và ba suất/SĐT; không thay giới hạn hai quyển/phiếu mượn tại quầy. Tài khoản bạn đọc tùy chọn/đổi sách/thay IP còn [đang thảo luận](technical/public-reservation-ux-research-2026-10-21.md). [Trạng thái chung](CURRENT-STATE.md) ưu tiên hơn mô tả giai đoạn khám phá bên dưới.
+
 Ngày 18/10/2026. Đây là bản khám phá để phỏng vấn; mọi quy tắc ghi “đề xuất” cần được chủ sản phẩm xác nhận trước khi triển khai phụ thuộc.
 
 ## 1. Mục tiêu và ranh giới

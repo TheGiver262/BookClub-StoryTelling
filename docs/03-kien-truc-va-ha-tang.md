@@ -1,5 +1,11 @@
 # Kiến trúc và hạ tầng thử nghiệm v0.11
 
+## Cập nhật hạ tầng 21/10/2026
+
+Đã chọn Supabase + Cloudflare gói Free cho beta; trước mắt chạy local bằng Docker PostgreSQL/Auth và Worker tại 4321. Người dùng có tài khoản nhà cung cấp nhưng chưa nghiệm thu cấu hình cloud hoặc deploy. Dùng [local-development](technical/local-development.md), [beta-deployment-guide](technical/beta-deployment-guide.md) và [trạng thái hiện hành](CURRENT-STATE.md).
+
+Ước lượng hiện tại: vài nghìn sách, khoảng 30 người nội bộ và 100 bạn đọc; tải bàn sách tập trung thứ Ba/Năm. Đây là giả định lập kế hoạch, chưa là benchmark đồng thời. Vercel/Netlify là lựa chọn hosting cần đánh giá riêng, không tự thay vai trò database/Auth của Supabase; chưa chọn chuyển stack. Bảng giá/quota trong khảo sát cũ phải kiểm tra lại trước triển khai.
+
 Ngày đối chiếu nguồn: 18/10/2026. Tất cả lựa chọn dưới đây là đề xuất; chưa đo hiệu năng và chưa tạo tài khoản/hạ tầng. Hạn mức, giá và điều khoản phải kiểm tra lại lúc triển khai.
 
 ## 1. Ràng buộc đã xác nhận

@@ -1,5 +1,11 @@
 # Khảo sát nhận diện YSBK — đầu vào thiết kế
 
+## Nhận diện được duyệt bổ sung 21/10/2026
+
+Các đoạn chưa xác nhận bên dưới là snapshot khảo sát 18/10. Qua các vòng sau, chủ sản phẩm đã duyệt tên “Câu lạc bộ Yêu Sách Bách Khoa Hà Nội”, slogan “Mở sách, đọc tương lai”, ngày thành lập 16/09/2013, ảnh thật được cung cấp và hướng bìa minh họa đơn giản. Logo CLB hiện dùng `public/book/assets/club-logo-v8.svg`, màu tái tạo hiển thị #819079; không tuyên bố đó là mã màu gốc được đo tuyệt đối từ ảnh có ánh sáng.
+
+Bảng màu và hình dáng trong [đặc tả Stitch](mockups/stitch-ui-2026-10-21/HANDOFF.md) là nguồn thiết kế mới. Newsreader/Be Vietnam Pro cho UI, Dancing Script bìa/kết; phải hỗ trợ dấu Việt. Không lấy minh họa hoặc logo tự sinh trong HTML thô Stitch thay tài sản được duyệt. [Trạng thái hiện hành](CURRENT-STATE.md).
+
 Ngày khảo sát: 18/10/2026. Phạm vi: nguồn công khai và quan sát website; không đăng nhập Facebook, không thu dữ liệu cá nhân hoặc tải bộ ảnh thành viên. Chưa xác nhận logo hiện hành, mã màu thương hiệu hoặc font chính thức. Đây không phải brand guideline đã duyệt.
 
 ## 1. Nguồn và mức bằng chứng

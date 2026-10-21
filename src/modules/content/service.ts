@@ -10,7 +10,7 @@ import {
   NotFoundError,
   ForbiddenError,
 } from '../../server/errors.ts';
-import { requireAuthenticated, requireInternalMember } from '../../server/auth/policy.ts';
+import { requireAuthenticated, requireInternalMember, requireAdmin } from '../../server/auth/policy.ts';
 import type {
   BookReview,
   PublicPost,
@@ -75,8 +75,8 @@ export async function submitBookReview(
 
   const res = await db.query(
     `INSERT INTO book_reviews (
-      book_id, author_id, author_name, author_email, rating, content, status, version, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 1, NOW(), NOW())
+      book_id, author_id, author_name, author_email, rating, content, status, version, created_at, updated_at, is_club_review
+    ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 1, NOW(), NOW(), $7)
     RETURNING id, book_id, author_id, author_name, author_email, rating, content, status, version, created_at, updated_at`,
     [
       dto.bookId,
@@ -85,6 +85,7 @@ export async function submitBookReview(
       dto.authorEmail || null,
       rating,
       sanitizedContent,
+      !current.isAlumni && ['ADMIN','MEMBER'].includes(current.role),
     ]
   );
 
@@ -214,7 +215,7 @@ export async function moderateBookReview(
   reviewId: string,
   dto: ModerateReviewDto
 ): Promise<BookReview> {
-  const member = requireInternalMember(actor);
+  const member = requireAdmin(actor);
 
   if (!dto.decision || (dto.decision !== 'APPROVED' && dto.decision !== 'REJECTED')) {
     throw new BadRequestError("Quyết định kiểm duyệt phải là 'APPROVED' hoặc 'REJECTED'.", 'INVALID_DECISION');
@@ -310,10 +311,12 @@ export async function moderateBookReview(
  */
 export async function getPublicReviews(
   db: Queryable,
-  bookId?: string
+  bookId?: string,
+  page=1
 ): Promise<SafePublicReviewDto[]> {
+  if(!Number.isSafeInteger(page)||page<1||page>1000000) throw new BadRequestError('Trang đánh giá không hợp lệ.','INVALID_PAGE');
   let query = `
-    SELECT id, book_id, author_name, rating, content, version, moderated_at, created_at
+    SELECT id, book_id, author_name, rating, content, version, moderated_at, created_at, is_club_review
     FROM book_reviews
     WHERE status = 'APPROVED'
   `;
@@ -324,11 +327,13 @@ export async function getPublicReviews(
     query += ` AND book_id = $1`;
   }
 
-  query += ` ORDER BY created_at DESC LIMIT 50`;
+  params.push((page-1)*50);
+  query += ` ORDER BY is_club_review DESC, created_at DESC, id DESC LIMIT 50 OFFSET $${params.length}`;
 
   const res = await db.query(query, params);
 
   return res.rows.map((row: any) => ({
+    isClubReview: !!row.is_club_review,
     id: row.id,
     bookId: row.book_id,
     readerName: row.author_name,

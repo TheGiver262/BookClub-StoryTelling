@@ -1,5 +1,13 @@
 # Roadmap tới bản dùng đầu đủ chức năng
 
+## Cập nhật roadmap 21/10/2026
+
+Thứ tự hiện tại: hoàn chỉnh/review local → chốt các câu hỏi UX đặt sách → cập nhật kế hoạch/contract nếu có quyết định mới → nghiệm thu beta cloud. Chưa tự deploy từ kế hoạch D1–D30.
+
+[Bộ UI](mockups/stitch-ui-2026-10-21/HANDOFF.md) có 14 mẫu đại diện và ma trận đủ module; [kế hoạch triển khai](superpowers/plans/2026-10-21-ysbk-soft-ui.md) gồm sáu bước. Workspace đã có thay đổi UI và ảnh QA sau concept; phải review trạng thái thực tế, không tích lại từ đầu. Chưa nâng mọi checkbox thành hoàn thành chỉ từ ảnh.
+
+Nghiệm thu bổ sung: publishing chỉ ADMIN; CTV một tháng/đánh giá/xóa mềm; tra cứu bằng quyền đơn; một quyển/đơn; quota và hết hạn cuối ca. Tài khoản bạn đọc/đổi sách/điều chỉnh IP chưa được chốt nên chưa là ca tính năng bắt buộc. [Session handoff](SESSION-HANDOFF.md) ghi bằng chứng và gate còn mở.
+
 Ngày 18/10/2026. **Đã xác nhận: bản đưa vào sử dụng đầu tiên phải đủ cả chín nhóm chức năng.** Các mốc dưới đây giúp xây và kiểm tra tuần tự, không thay thế yêu cầu bằng một bản chỉ mượn–trả.
 
 Đã có quy mô sơ bộ: vài nghìn sách dưới 5.000, hai kho, dưới 100 lượt mượn/trả mỗi buổi và tối đa 3–5 người ghi đồng thời; dữ liệu cũ giấy/Excel. Chủ sản phẩm đặt mục tiêu khoảng một tháng cho MVP, tự phát triển/bảo trì với AI code chính và yêu cầu chọn stack theo độ phù hợp/hiệu năng. Chưa có ngày bắt đầu hoặc số giờ làm mỗi tuần, nên dùng ngày D1–D30 tương đối. Một tháng là mục tiêu lịch, không phải số ngày công hoặc cam kết AI sẽ hoàn thành. Vẫn giữ yêu cầu đủ chín nhóm chức năng của D02.

@@ -1,0 +1,53 @@
+/* Only the outside landscape changes; the book keeps its original artwork. */
+@media screen {
+  .book-landing-page,
+  .book-landing-page * {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  html.book-landing-page {
+    --backdrop-trim: 18px;
+    background: #fef7d4;
+    scrollbar-width: none;
+  }
+
+  html.book-landing-page::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+  .stage,
+  .stage[data-bg="grass"] {
+    --ui-text: #365e4b;
+    --ui-text-muted: #59674a;
+    --ui-shadow: #fff8dc99;
+    --ui-border: #59704c80;
+    background: #fef7d4 !important;
+  }
+
+  .stage::before,
+  .stage[data-bg="grass"]::before {
+    inset: -25% 0;
+    opacity: 1;
+    mix-blend-mode: normal;
+    background: url('/book/assets/meadow-cover-matched.png') center / cover no-repeat;
+    filter: brightness(1.012) saturate(.96);
+    transform: translateY(var(--backdrop-trim)) matrix(1, var(--backdrop-slope, 0), 0, 1, 0, var(--backdrop-shift, 0));
+  }
+
+  .stage .desk-ring { display: none; }
+  .stage .book-shell::before { content: none; }
+  .stage .book-area { transform: translateY(-12px); }
+
+  .stage .bottom-bar {
+    --ui-text: #fffbea;
+    --ui-text-muted: #fff3cc;
+    --ui-shadow: #183524;
+    --ui-border: #fff9e799;
+  }
+
+  .stage .bottom-bar .chapter-dot { font-size: clamp(15px, 1.1vw, 16px); }
+
+  .stage .bottom-bar .reading-status :is(.eyebrow, .status-title, .status-caption) {
+    text-shadow: 0 1px 3px #183524, 0 0 8px #183524cc;
+  }
+
+}

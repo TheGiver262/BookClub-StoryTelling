@@ -4,7 +4,10 @@
  * Tuân thủ bảo mật HttpOnly cookie, Idempotency-Key, and Fail-Closed error handling.
  */
 
+export interface ReaderProfile {id:string;email:string;fullName:string;phone:string|null;}
+
 export interface AuthenticatedActor {
+  isCollaborator?: boolean;
   userId: string;
   username: string;
   fullName: string;
@@ -150,10 +153,9 @@ export interface RenewalRecordDto {
 }
 
 export interface CalendarHolidayDto {
-  id: string;
   holidayDate: string;
-  holidayName: string;
-  isRecurringYearly: boolean;
+  name: string;
+  description: string | null;
 }
 
 export interface LoanQuoteDto {
@@ -232,6 +234,10 @@ export interface AlumniActivityDto {
 }
 
 export interface MemberDto {
+  isCollaborator?: boolean;
+  probationStartedOn?: string | null;
+  probationEndsOn?: string | null;
+  collaboratorDeletedAt?: string | null;
   id: string;
   fullName: string;
   username: string;
@@ -1475,8 +1481,8 @@ export const apiClient = {
 
   async addCalendarHoliday(params: {
     holidayDate: string;
-    holidayName: string;
-    isRecurringYearly?: boolean;
+    name: string;
+    description?: string;
   }): Promise<CalendarHolidayDto> {
     return requestJson<CalendarHolidayDto>('/api/v1/circulation/calendar/holidays', {
       method: 'POST',
@@ -2294,8 +2300,8 @@ export const apiClient = {
   },
 
   // --- Content & Moderation (Stage 20 - FR-08) ---
-  async getPublicReviews(bookId?: string): Promise<SafePublicReviewDto[]> {
-    const url = bookId ? `/api/v1/public/books/${encodeURIComponent(bookId)}/reviews` : '/api/v1/public/reviews';
+  async getPublicReviews(bookId?: string,page=1): Promise<SafePublicReviewDto[]> {
+    const url = (bookId ? `/api/v1/public/books/${encodeURIComponent(bookId)}/reviews` : '/api/v1/public/reviews')+`?page=${page}`;
     const res = await requestJson<any>(url, { method: 'GET' });
     return unwrapData<SafePublicReviewDto[]>(res) || [];
   },
@@ -2307,10 +2313,11 @@ export const apiClient = {
     content: string;
     authorEmail?: string;
   }): Promise<{ data: BookReviewDto; message: string }> {
-    return requestJson<{ data: BookReviewDto; message: string }>('/api/v1/content/reviews', {
+    const data=await requestJson<BookReviewDto>('/api/v1/content/reviews', {
       method: 'POST',
       body: JSON.stringify(params),
     });
+    return {data,message:'Nhận xét đã được gửi và đang chờ quản trị viên duyệt.'};
   },
 
   async editBookReview(
@@ -2464,6 +2471,45 @@ export const apiClient = {
   },
 
   // 14. Public & Staff Book Reservations
+  async getReaderAuthStatus():Promise<{googleEnabled:boolean}> {
+    return unwrapData(await requestJson('/api/v1/readers/auth/status',{cache:'no-store'}));
+  },
+  async getReaderProfile():Promise<ReaderProfile> {
+    return unwrapData(await requestJson('/api/v1/readers/me',{cache:'no-store'}));
+  },
+  async updateReaderProfile(input:{fullName:string;phone:string}):Promise<ReaderProfile> {
+    return unwrapData(await requestJson('/api/v1/readers/me',{method:'PATCH',body:JSON.stringify(input)}));
+  },
+  async logoutReader():Promise<void> {
+    await requestJson('/api/v1/readers/logout',{method:'POST'});
+  },
+  async listReaderReservations():Promise<import('../server/reservations/types').PublicReservationDto[]> {
+    return unwrapData(await requestJson('/api/v1/readers/reservations',{cache:'no-store'}));
+  },
+  async listReaderBookmarks():Promise<{titleId:string;createdAt:string}[]> {
+    return requestJson('/api/v1/readers/bookmarks',{cache:'no-store'});
+  },
+  async setReaderBookmark(titleId:string,bookmarked:boolean):Promise<{titleId:string;bookmarked:boolean}> {
+    return requestJson('/api/v1/readers/bookmarks/'+encodeURIComponent(titleId),{method:bookmarked?'PUT':'DELETE'});
+  },
+  async cancelReaderReservation(id:string):Promise<import('../server/reservations/types').PublicReservationDto> {
+    return unwrapData(await requestJson('/api/v1/readers/reservations/'+encodeURIComponent(id)+'/cancel',{method:'POST'}));
+  },
+  async getPublishingOverview(): Promise<any> {
+    return unwrapData(await requestJson('/api/v1/admin/publishing',{method:'GET'}));
+  },
+  async changeMembership(id:string,input:Record<string,unknown>):Promise<MemberDto> {
+    return unwrapData(await requestJson('/api/v1/members/'+encodeURIComponent(id)+'/membership',{method:'POST',body:JSON.stringify(input)}));
+  },
+  async savePublishing(section: 'books'|'schedules'|'recruitment', input: Record<string,unknown>): Promise<any> {
+    return unwrapData(await requestJson('/api/v1/admin/publishing/'+section,{method:'POST',body:JSON.stringify(input)}));
+  },
+  async getPublicRecruitmentNotice(): Promise<any> {
+    return unwrapData(await requestJson('/api/v1/public/recruitment-notice',{method:'GET',cache:'no-store'}));
+  },
+  async getPublicBook(id: string): Promise<any> {
+    return unwrapData(await requestJson('/api/v1/books/'+encodeURIComponent(id),{method:'GET'}));
+  },
   async listPublicReservationBooks(params?: { search?: string; category?: string; page?: number; limit?: number; includeUnavailable?: boolean; onlyAvailable?: boolean }): Promise<{ items: any[]; total: number; page: number; limit: number; categories?: string[] }> {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
@@ -2570,6 +2616,7 @@ export const apiClient = {
 };
 
 export interface SafePublicReviewDto {
+  isClubReview: boolean;
   id: string;
   bookId: string;
   readerName: string;

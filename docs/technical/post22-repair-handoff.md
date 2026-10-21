@@ -1,5 +1,9 @@
 # YSBK — Handoff & Tiến Độ Sửa Lỗi Hậu Chặng 22 (post22-repair-handoff.md)
 
+## Tiếp nối sau các đợt sửa local
+
+Bảng finding bên dưới là snapshot sửa lỗi hậu chặng 22, không phải kết luận mới cho toàn bộ workspace. Đọc [session handoff 21/10](../SESSION-HANDOFF.md), [trạng thái hiện hành](../CURRENT-STATE.md) và [bàn giao giữ chỗ](public-reservation-handoff.md). Các gate DB/local đã có bằng chứng theo từng chuyên đề; không tự đóng cloud/provider/restore hoặc xác nhận diff UI mới từ báo cáo cũ.
+
 Tài liệu bàn giao và theo dõi tiến độ sửa lỗi toàn diện sau đợt Review 19/10/2026 và Review Theo Dõi 20/10/2026 (`docs/reviews/2026-10-20-post22-repair-followup.md`).  
 Duy trì trạng thái liên tục qua các phiên làm việc, không đổi tên hoặc mô tả gốc của các findings.
 

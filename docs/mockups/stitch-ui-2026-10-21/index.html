@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>YSBK · Bộ concept UI — Thư viện ký ức</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#F8F5EC;color:#35483C;font:16px/1.65 system-ui,sans-serif}header{padding:24px 4vw 18px;border-bottom:1px solid #DCDED0;background:#FFFDF5}.eyebrow{font-size:13px;letter-spacing:.12em;color:#64705C}h1{font:500 clamp(28px,4vw,46px)/1.2 Georgia,serif;margin:8px 0}p{margin:8px 0}.intro{max-width:980px}a{color:#365E4B;text-underline-offset:4px}main{padding:24px 4vw 48px}.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.toolbar label{font-weight:600}select,button,.open{font:inherit;min-height:46px;padding:9px 14px;border:1px solid #365E4B;border-radius:14px;background:#FFFDF5;color:#365E4B;box-shadow:0 4px 16px #35483c14}select{max-width:100%}.open{display:inline-block;text-decoration:none}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #9B4D36;outline-offset:3px}button{cursor:pointer}button:active{transform:translateY(2px);box-shadow:none}.meta{font-size:14px;color:#64705C}.palette{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.swatch{font-size:13px;display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid #DCDED0;background:#FFFDF5}.swatch i{width:18px;height:18px;background:var(--c);border:1px solid #DCDED0}.preview-area{margin:22px 0;border-top:3px double #819079;padding-top:20px}.stage{overflow:auto;max-width:100%;background:#E8EDDF;padding:20px;border:1px solid #DCDED0;border-radius:24px}.device{margin:0 auto;background:#FFFDF5;box-shadow:0 3px 0 #C2C9B6,0 12px 30px #35483c14}.device iframe{display:block;border:0;width:100%;height:100%}.details{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:28px}.details section{border-top:1px solid #819079;padding-top:14px}.details h2{font:500 25px Georgia,serif;margin:0 0 10px}.notice{padding:12px 16px;background:#F4EAD2;border-left:3px solid #A87A4C;font-size:14px}.legend{display:flex;gap:24px;flex-wrap:wrap;font-size:14px}.status{font-size:14px;color:#9B4D36}footer{border-top:1px solid #DCDED0;margin-top:28px;padding-top:16px;font-size:14px;color:#64705C}@media(max-width:700px){.details{grid-template-columns:1fr}.stage{padding:8px}.toolbar{align-items:stretch;flex-direction:column}main{padding:18px}.device{margin-left:0}}
+</style></head><body>
+<header><div class="eyebrow">GOOGLE STITCH · CONCEPT 21/10/2026</div><h1>Thư viện ký ức</h1><p class="intro">Bộ UI dành cho <strong>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</strong>. Bản mềm hơn: thẻ giấy bo thoáng, nút tròn nhẹ và nhịp chữ tạp chí; giữ nguyên bảng màu đã chốt.</p><p class="meta">Bản xem thiết kế riêng • Chưa tích hợp vào website đang chạy.</p></header>
+<main>
+<div class="palette"><span class="swatch"><i style="--c:#365E4B"></i>Xanh #365E4B</span><span class="swatch"><i style="--c:#9B4D36"></i>Đất nung #9B4D36</span><span class="swatch"><i style="--c:#A87A4C"></i>Vàng cổ #A87A4C</span><span class="swatch"><i style="--c:#819079"></i>Logo #819079</span><span class="swatch"><i style="--c:#F8F5EC"></i>Nền #F8F5EC</span><span class="swatch"><i style="--c:#FFFDF5"></i>Giấy #FFFDF5</span><span class="swatch"><i style="--c:#35483C"></i>Mực #35483C</span></div>
+<p class="meta"><a href="HANDOFF.md">Đặc tả hoàn chỉnh</a> · <a href="ANTIGRAVITY-PROMPT.md">Prompt cho Antigravity</a> · <a href="http://localhost:4321/?public=1" target="_blank" rel="noopener">Web dev đang chạy ↗</a></p>
+<div class="toolbar"><label for="screen">Màn hình</label><select id="screen"></select><button id="fit">Xem kích thước thật</button><a class="open" id="raw" target="_blank" rel="noopener">Mở bản đầy đủ ↗</a><a href="https://stitch.withgoogle.com/projects/18002116813589247564" target="_blank" rel="noopener">Mở project Stitch ↗</a></div>
+<p id="screen-note" class="meta"></p><p id="status" class="status"></p>
+<div class="preview-area"><div class="stage" id="stage"><div class="device" id="device"><iframe id="preview" title="Màn hình concept Stitch" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe></div></div></div>
+<div class="notice">Nội dung và số liệu là minh họa. Các nút bên trong màn hình thể hiện thiết kế; chưa nối tới dữ liệu, đặt sách hay tài khoản thật. Bìa và hiệu ứng cuốn sách đã duyệt được giữ trong ứng dụng.</div>
+<div class="details">
+<section><h2>Nút & chiều sâu</h2><p>Nút bo 14px, thẻ bo 22px, viền mảnh và bóng giấy tản nhẹ. Ba mức: phẳng, giấy xếp lớp, hộp nổi. Tách rõ thao tác chính, phụ và hủy/xóa.</p></section>
+<section><h2>Chữ & nhịp đọc</h2><p>Thử <strong>Newsreader</strong> ở tiêu đề và trích dẫn. <strong>Be Vietnam Pro</strong> cho biểu mẫu, thông tin sách, thao tác và bảng quản lý. Chữ nghệ thuật dùng tiết chế.</p></section>
+<section><h2>PC & điện thoại</h2><p>PC có cột bộ lọc và bảng thao tác. Mobile xếp dọc, nút chạm lớn và phiếu mượn thay cho bảng ngang. Bộ lọc không chen hết vào đầu trang.</p></section>
+</div>
+<footer><a href="README.md">Tài liệu bộ concept</a> · <a href="DESIGN.md">Brief màu sắc và UI</a> · Logo, bìa sách và ảnh ở màn hình là minh họa, sẽ dùng tài sản thật khi triển khai.</footer>
+</main>
+<script>
+const screens=[
+{file:'01-catalog-desktop.html',name:'01 · Tủ sách — PC',width:1440,note:'Bộ lọc bên trái, thẻ mục lục 6 mục, 4 cột sách và phân trang.'},
+{file:'02-catalog-mobile.html',name:'02 · Tủ sách — Điện thoại',width:390,note:'Bố cục 2 cột sách, bộ lọc gọn và điều hướng dùng ngón tay.'},
+{file:'03-reservation-desktop.html',name:'03 · Chi tiết & giữ chỗ — PC',width:1440,note:'Chi tiết sách cạnh phiếu giữ chỗ; không yêu cầu đăng nhập.'},
+{file:'04-reservation-mobile.html',name:'04 · Phiếu giữ chỗ — Điện thoại',width:390,note:'Biểu mẫu xếp dọc và hành động rõ ở cuối màn hình.'},
+{file:'05-desk-desktop.html',name:'05 · Quầy mượn–trả — PC',width:1440,note:'Bảng công việc, tra cứu nhanh và cảnh báo nội bộ.'},
+{file:'06-desk-mobile.html',name:'06 · Sổ trực — Điện thoại',width:390,note:'Phiếu giao/nhận sách thay bảng nhiều cột.'},
+{file:'07-community-desktop.html',name:'07 · Bản tin CLB — PC',width:1440,note:'Bố cục tạp chí cho lịch trực, sự kiện, review và tuyển thành viên.'},
+{file:'08-components.html',name:'08 · Bộ thành phần & trạng thái',width:1440,note:'Nút, ô nhập, tab, thẻ sách, badge và các mức bóng giấy.'},
+{"file": "09-login-desktop.html", "name": "09 · Đăng nhập nội bộ — PC", "width": 1440, "note": "Bố cục chào đón và form đăng nhập; mobile xếp dọc."},
+{"file": "10-order-mobile.html", "name": "10 · Tra cứu đơn — Điện thoại", "width": 390, "note": "Phiếu riêng tư, các trạng thái và xác nhận hủy."},
+{"file": "11-publishing-desktop.html", "name": "11 · Quản lý nội dung — PC", "width": 1440, "note": "Form sách/ảnh và các tab lịch-nghỉ, sự kiện, tuyển."},
+{"file": "12-members-desktop.html", "name": "12 · Thành viên & CTV — PC", "width": 1440, "note": "Danh sách, đánh giá thử thách và các hành động quản lý."},
+{"file": "13-finance-desktop.html", "name": "13 · Quỹ, cọc & báo cáo — PC", "width": 1440, "note": "Các nhóm tiền tách biệt, chứng từ và bộ lọc báo cáo."},
+{"file": "14-duty-mobile.html", "name": "14 · Lịch trực & công việc — Điện thoại", "width": 390, "note": "Lịch dạng danh sách và trạng thái chặn sửa buổi có đơn."}];
+const sel=document.querySelector('#screen'),frame=document.querySelector('#preview'),device=document.querySelector('#device'),stage=document.querySelector('#stage');
+screens.forEach((s,i)=>{let o=new Option(s.name,i);sel.add(o)});
+let fit=true;
+function size(){let s=screens[+sel.value],w=s.width,h=s.width===390?880:1000,k=fit?Math.min(1,(stage.clientWidth-40)/w):1;device.style.width=w+'px';device.style.height=h+'px';device.style.transformOrigin='top left';device.style.zoom=k;}
+function show(){let s=screens[+sel.value];frame.src=s.file;document.querySelector('#raw').href=s.file;document.querySelector('#screen-note').textContent=s.note+' • Khung thiết kế '+s.width+'px';size();history.replaceState(null,'','#'+(+sel.value+1))}
+sel.onchange=show;document.querySelector('#fit').onclick=()=>{fit=!fit;document.querySelector('#fit').textContent=fit?'Xem kích thước thật':'Vừa khung xem';size()};window.addEventListener('resize',size);
+let initial=parseInt(location.hash.slice(1))-1;if(Number.isInteger(initial)&&initial>=0&&initial<screens.length)sel.value=initial;show();
+</script></body></html>

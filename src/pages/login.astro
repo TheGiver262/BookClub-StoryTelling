@@ -10,23 +10,23 @@ import '../styles/global.css';
     <link rel="icon" type="image/svg+xml" href="/book/assets/club-logo-v8.svg" />
     <title>Đăng Nhập — CLB Yêu Sách Bách Khoa Hà Nội</title>
   </head>
-  <body class="bg-slate-50 flex items-center justify-center min-h-screen p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-      <div class="p-6 text-center border-b border-slate-100 bg-slate-50/50">
-        <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" class="h-12 w-auto mx-auto mb-2" />
-        <h1 class="text-xl font-bold text-brand-navy">Đăng Nhập Hệ Thống YSBK</h1>
-        <p class="text-xs text-slate-500 mt-1">Dành cho thành viên có tài khoản do CLB cấp</p>
+  <body class="bg-[#F8F3E7] flex items-center justify-center min-h-screen p-4 font-sans text-[#35483C]">
+    <div class="max-w-md w-full bg-[#FFFDF5] rounded-[22px] shadow-[0_5px_18px_rgba(53,72,60,0.08)] border border-[#DCDED0] overflow-hidden">
+      <div class="p-6 sm:p-8 text-center border-b border-[#DCDED0] bg-[#F8F3E7]/50">
+        <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" class="h-12 w-auto mx-auto mb-3 object-contain" />
+        <h1 class="font-serif text-2xl font-bold text-[#365E4B]">Đăng Nhập Không Gian Nội Bộ</h1>
+        <p class="text-xs text-[#64705C] mt-1.5 font-medium">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội · Mở sách, đọc tương lai</p>
       </div>
 
-      <div class="p-6 space-y-6">
+      <div class="p-6 sm:p-8 space-y-6">
         <!-- Form 1: Thành viên nội bộ -->
         <form id="formInternal" class="space-y-4 text-xs">
-          <div id="internalError" class="hidden p-3 bg-rose-50 rounded-lg border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
+          <div id="internalError" class="hidden p-3 bg-[#F7E7DB] rounded-[14px] border border-[#9B4D36]/30 text-[#9B4D36] text-xs font-medium space-y-1">
             <div id="internalErrorText"></div>
           </div>
 
           <div>
-            <label for="internalUsername" class="block font-semibold text-slate-700 mb-1">Tên đăng nhập nội bộ (Do CLB cấp):</label>
+            <label for="internalUsername" class="block font-semibold text-[#35483C] mb-1.5">Tên đăng nhập nội bộ (Do CLB cấp):</label>
             <input 
               id="internalUsername"
               name="username"
@@ -34,11 +34,11 @@ import '../styles/global.css';
               required
               placeholder="Ví dụ: dung.bcn, anh.haucan, admin_bcn..." 
               autocomplete="username"
-              class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-navy focus:outline-none"
+              class="w-full px-3.5 py-3 border border-[#DCDED0] rounded-[14px] bg-[#F8F3E7] text-[#35483C] text-sm focus:bg-[#FFFDF5] focus:border-[#365E4B] focus:outline-none min-h-[44px]"
             />
           </div>
           <div>
-            <label for="internalPassword" class="block font-semibold text-slate-700 mb-1">Mật khẩu:</label>
+            <label for="internalPassword" class="block font-semibold text-[#35483C] mb-1.5">Mật khẩu:</label>
             <input 
               id="internalPassword"
               name="password"
@@ -46,23 +46,23 @@ import '../styles/global.css';
               required
               placeholder="Nhập mật khẩu nội bộ..."
               autocomplete="current-password"
-              class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-navy focus:outline-none"
+              class="w-full px-3.5 py-3 border border-[#DCDED0] rounded-[14px] bg-[#F8F3E7] text-[#35483C] text-sm focus:bg-[#FFFDF5] focus:border-[#365E4B] focus:outline-none min-h-[44px]"
             />
           </div>
-          <div class="p-3 bg-blue-50 rounded-lg border border-blue-200 text-blue-900 text-[11px] leading-relaxed">
-            <strong>Quy tắc danh tính nội bộ:</strong> Thành viên và Cựu thành viên dùng username riêng được admin cấp. Bạn đọc đặt sách tại trang công khai, không cần đăng nhập.
+          <div class="p-3 bg-[#E8EDDF] rounded-[14px] border border-[#365E4B]/20 text-[#365E4B] text-[11px] leading-relaxed">
+            Bạn cần tài khoản do CLB cấp để vào không gian nội bộ. Chưa có tài khoản? Hãy liên hệ Ban chủ nhiệm.
           </div>
           <button 
             type="submit"
             id="btnLoginSubmit"
-            class="block w-full text-center py-2.5 rounded-lg bg-brand-navy text-white font-bold hover:bg-brand-navy-hover transition shadow-sm text-sm disabled:opacity-50"
+            class="ui-btn ui-btn-primary w-full text-center py-3 rounded-[14px] font-bold text-sm min-h-[44px]"
           >
             Đăng Nhập Không Gian Nội Bộ
           </button>
         </form>
 
-        <div class="pt-4 border-t border-slate-100 text-center">
-          <a href="/?public=1" class="text-xs text-slate-500 hover:text-brand-navy">← Quay lại trang chủ công khai</a>
+        <div class="pt-4 border-t border-[#DCDED0] text-center">
+          <a href="/?public=1" class="text-xs text-[#64705C] hover:text-[#365E4B] font-medium transition">← Quay lại trang chủ công khai</a>
         </div>
       </div>
     </div>

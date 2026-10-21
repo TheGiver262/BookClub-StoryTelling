@@ -2,9 +2,12 @@ import { handleRequest } from './router.ts';
 import type { Env } from './types.ts';
 import { getDatabasePool, closeDatabasePool, withTransaction } from './db/client.ts';
 import { expireReservations } from './reservations/service.ts';
+import {enforceInternalAccess} from './auth/internal-access.ts';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const denied=await enforceInternalAccess(request,env);
+    if(denied) return denied;
     const path = new URL(request.url).pathname;
     if (env.ASSETS && !path.startsWith('/api/') && path !== '/api' && path !== '/health' && !path.startsWith('/health/')) {
       return env.ASSETS.fetch(request);

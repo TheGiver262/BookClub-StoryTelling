@@ -1,5 +1,9 @@
 # Khảo sát phần mềm và khả năng tái sử dụng
 
+## Cập nhật khảo sát 21/10/2026
+
+Có thêm [nghiên cứu UX đặt, quản lý và hủy giữ chỗ](technical/public-reservation-ux-research-2026-10-21.md), dùng nguồn chính thức Koha, LibCal tại Illinois, Acuity và Cloudflare. So sánh mô hình tài khoản bạn đọc, liên kết email và tài khoản tùy chọn; chưa thử giao dịch thật trên các dịch vụ. Không biến đề xuất thành quyết định thay luồng YSBK. Xem [trạng thái hiện hành](CURRENT-STATE.md).
+
 Ngày kiểm tra: 18/10/2026. Phạm vi: website chính thức, tài liệu và trang kho mã nguồn. Chưa cài demo, chạy giao dịch, kiểm tra tải, rà soát lỗ hổng hay khóa phiên bản/commit của ứng viên. Không sử dụng số sao GitHub làm bằng chứng chất lượng hoặc bảo mật.
 
 ## 1. Kết luận sơ bộ

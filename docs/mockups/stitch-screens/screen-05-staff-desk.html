@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1440, initial-scale=1.0"/>
+<title>05 — Quầy mượn–trả & Sổ trực · PC | Thư Quán Bách Khoa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'ysbk-bg': '#F8F5EC', 'ysbk-paper': '#FFFDF5', 'ysbk-ink': '#35483C', 'ysbk-muted': '#64705C',
+        'ysbk-border': '#DCDED0', 'ysbk-primary': '#365E4B', 'ysbk-primary-hover': '#294C3A', 'ysbk-primary-pale': '#E8EDDF',
+        'ysbk-terracotta': '#9B4D36', 'ysbk-terracotta-pale': '#F7E7DB', 'ysbk-gold': '#A87A4C', 'ysbk-gold-pale': '#F4EAD2'
+      },
+      fontFamily: { serif: ['Newsreader', 'Lora', 'serif'], sans: ['Be Vietnam Pro', 'sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+body { background-color: #F8F5EC; color: #35483C; font-family: 'Be Vietnam Pro', sans-serif; }
+.btn-press { box-shadow: 0 2px 0 #35483C; transition: all 0.15s ease; }
+.btn-press:active { transform: translateY(2px); box-shadow: 0 0 0 #35483C; }
+.btn-press-primary { background-color: #365E4B; color: #FFFDF5; box-shadow: 0 2px 0 #294C3A; }
+.btn-press-primary:hover { background-color: #294C3A; }
+.btn-press-primary:active { transform: translateY(2px); box-shadow: 0 0 0 #294C3A; }
+.btn-press-terracotta { background-color: #9B4D36; color: #FFFDF5; box-shadow: 0 2px 0 #813C2A; }
+.btn-press-terracotta:hover { background-color: #813C2A; }
+.btn-press-terracotta:active { transform: translateY(2px); box-shadow: 0 0 0 #813C2A; }
+.table-vintage th { font-family: 'Newsreader', serif; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+</head>
+<body class="min-h-screen bg-[#F8F5EC] text-[#35483C] antialiased flex">
+
+<!-- LEFT SIDEBAR: INTERNAL NAVIGATION -->
+<aside class="w-64 bg-[#FFFDF5] border-r border-[#DCDED0] min-h-screen flex flex-col justify-between shrink-0 p-5">
+  <div>
+    <!-- Club Logo & Internal System Title -->
+    <div class="flex items-center gap-3 pb-5 border-b border-[#DCDED0]">
+      <div class="w-10 h-10 rounded bg-[#365E4B] flex items-center justify-center text-[#FFFDF5] font-serif font-bold text-lg shadow-[0_2px_0_#294C3A]">
+        Y
+      </div>
+      <div>
+        <h1 class="font-serif font-bold text-sm text-[#35483C] leading-tight">Yêu Sách Bách Khoa</h1>
+        <span class="text-[10px] font-mono text-[#9B4D36] font-bold uppercase tracking-wider block">Cổng Thủ Thư Nội Bộ</span>
+      </div>
+    </div>
+
+    <!-- Nav List -->
+    <nav class="mt-6 space-y-1.5 text-xs font-medium">
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4 text-[#64705C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        Tổng Quan Hoạt Động
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded bg-[#365E4B] text-[#FFFDF5] font-semibold shadow-[0_2px_0_#294C3A]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+        Quầy Mượn – Trả (Sổ Trực)
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        Kho Sách & Kệ Tủ (87 Bản)
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Lịch Trực & Phân Ca
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Thành Viên & Cộng Tác Viên
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        Sổ Quỹ Tiền Cọc & Báo Cáo
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+        Quản Trị & Nội Dung
+      </a>
+    </nav>
+  </div>
+
+  <!-- Bottom Staff Identity Card -->
+  <div class="pt-4 border-t border-[#DCDED0] text-xs">
+    <div class="flex items-center gap-2.5 mb-2">
+      <div class="w-8 h-8 rounded-full bg-[#E8EDDF] text-[#365E4B] flex items-center justify-center font-bold text-xs">
+        VA
+      </div>
+      <div>
+        <p class="font-semibold text-[#35483C] leading-none">Nguyễn Văn An</p>
+        <span class="text-[10px] text-[#64705C] font-mono">Chủ nhiệm · K65</span>
+      </div>
+    </div>
+    <a href="#" class="text-[11px] text-[#9B4D36] hover:underline font-semibold block">Đăng xuất ca trực →</a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT AREA -->
+<div class="flex-1 min-w-0 flex flex-col">
+
+  <!-- TOP WORKBENCH HEADER -->
+  <header class="bg-[#FFFDF5] border-b border-[#DCDED0] px-8 py-4 flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-3">
+        <h2 class="font-serif font-bold text-2xl text-[#35483C]">Sổ Trực Hôm Nay</h2>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/30">
+          <span class="w-2 h-2 rounded-full bg-[#365E4B] animate-pulse"></span>
+          Ca Chiều Thứ Ba (14:00 – 17:30)
+        </span>
+        <span class="text-xs text-[#64705C] font-mono">P.202 KTX B7</span>
+      </div>
+      <p class="text-xs text-[#64705C] mt-1">
+        Thủ thư trực bàn: <strong>Nguyễn Văn An (K65)</strong> & <strong>Lê Mai Chi (K66)</strong>
+      </p>
+    </div>
+
+    <!-- Actions & Cash Summary Box -->
+    <div class="flex items-center gap-4">
+      <div class="px-4 py-2 bg-[#F8F5EC] border border-[#DCDED0] rounded text-right">
+        <span class="text-[10px] text-[#64705C] uppercase tracking-wider block">Tiền Cọc Bàn Trực</span>
+        <strong class="font-serif text-lg text-[#365E4B] leading-none">1.250.000 đ</strong>
+      </div>
+      <button class="px-4 py-2 rounded bg-[#9B4D36] text-[#FFFDF5] text-xs font-semibold btn-press-terracotta">
+        Kết Ca & Chốt Sổ
+      </button>
+    </div>
+  </header>
+
+  <!-- WORKBENCH BODY: TABLE & SIDE STATS -->
+  <div class="p-8 space-y-6 flex-1">
+
+    <!-- SEARCH & FILTER TABS -->
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- Search Input -->
+      <div class="relative w-full md:w-96">
+        <svg class="w-4 h-4 text-[#64705C] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" placeholder="Quét mã vạch, nhập SĐT hoặc tên bạn đọc..." class="w-full pl-9 pr-4 py-2 bg-[#FFFDF5] border border-[#DCDED0] rounded text-xs text-[#35483C] focus:outline-none focus:border-[#365E4B]">
+      </div>
+
+      <!-- Segmented Tabs -->
+      <div class="flex items-center gap-1.5 p-1 bg-[#FFFDF5] border border-[#DCDED0] rounded text-xs">
+        <button class="px-3.5 py-1.5 rounded bg-[#365E4B] text-white font-semibold shadow-sm">
+          Chờ Nhận Sách (4)
+        </button>
+        <button class="px-3.5 py-1.5 rounded text-[#64705C] hover:text-[#35483C] font-medium">
+          Đang Mượn (18)
+        </button>
+        <button class="px-3.5 py-1.5 rounded text-[#9B4D36] hover:bg-[#F7E7DB] font-medium">
+          Cần Gọi Xử Lý (2)
+        </button>
+        <button class="px-3.5 py-1.5 rounded text-[#64705C] hover:text-[#35483C] font-medium">
+          Đã Hoàn Tất Hôm Nay (7)
+        </button>
+      </div>
+    </div>
+
+    <!-- OPERATIONAL DATA TABLE -->
+    <div class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl overflow-hidden shadow-sm">
+      <table class="w-full text-left border-collapse table-vintage">
+        <thead>
+          <tr class="bg-[#F8F5EC] border-b border-[#DCDED0] text-[#64705C]">
+            <th class="py-3 px-4">Mã Phiếu</th>
+            <th class="py-3 px-4">Bạn Đọc & SĐT</th>
+            <th class="py-3 px-4">Tác Phẩm & Mã Sách</th>
+            <th class="py-3 px-4">Kệ Sách</th>
+            <th class="py-3 px-4">Ca Hẹn / Thời Hạn</th>
+            <th class="py-3 px-4">Tiền Cọc</th>
+            <th class="py-3 px-4">Trạng Thái</th>
+            <th class="py-3 px-4 text-right">Thao Tác Bàn Trực</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#DCDED0] text-xs font-sans">
+          
+          <!-- ROW 1: HOLD QUEUE -->
+          <tr class="hover:bg-[#F8F5EC]/70 transition">
+            <td class="py-3.5 px-4 font-mono font-bold text-[#365E4B]">#HLD-089</td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-[#35483C]">Nguyễn Hải Đăng</div>
+              <span class="text-[11px] text-[#64705C] font-mono">0984***456 · K67</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-serif font-bold text-[#35483C] text-sm">Dế Mèn Phiêu Lưu Ký</div>
+              <span class="text-[10px] text-[#64705C] font-mono">#YSBK-VH-042</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-[#35483C] font-semibold">Kệ A3 · N2</td>
+            <td class="py-3.5 px-4">
+              <span class="text-[#365E4B] font-semibold">Hôm nay (14:00 - 17:30)</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#9B4D36]">50.000 đ</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E8EDDF] text-[#365E4B]">Chờ Nhận</span>
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <button class="px-3 py-1.5 rounded bg-[#365E4B] text-white font-semibold btn-press-primary text-xs">
+                Bàn Giao & Nhận Cọc
+              </button>
+            </td>
+          </tr>
+
+          <!-- ROW 2: HOLD QUEUE -->
+          <tr class="hover:bg-[#F8F5EC]/70 transition">
+            <td class="py-3.5 px-4 font-mono font-bold text-[#365E4B]">#HLD-088</td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-[#35483C]">Lê Phương Thảo</div>
+              <span class="text-[11px] text-[#64705C] font-mono">0912***789 · K66</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-serif font-bold text-[#35483C] text-sm">Đắc Nhân Tâm</div>
+              <span class="text-[10px] text-[#64705C] font-mono">#YSBK-KN-015</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-[#35483C] font-semibold">Kệ B1 · N1</td>
+            <td class="py-3.5 px-4">
+              <span class="text-[#365E4B] font-semibold">Hôm nay (Hẹn sau 16h)</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#9B4D36]">50.000 đ</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E8EDDF] text-[#365E4B]">Chờ Nhận</span>
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <button class="px-3 py-1.5 rounded bg-[#365E4B] text-white font-semibold btn-press-primary text-xs">
+                Bàn Giao & Nhận Cọc
+              </button>
+            </td>
+          </tr>
+
+          <!-- ROW 3: DUE TODAY -->
+          <tr class="hover:bg-[#F8F5EC]/70 transition bg-[#F7E7DB]/20">
+            <td class="py-3.5 px-4 font-mono font-bold text-[#A87A4C]">#LOAN-042</td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-[#35483C]">Trần Quốc Bảo</div>
+              <span class="text-[11px] text-[#64705C] font-mono">0978***222 · K65</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-serif font-bold text-[#35483C] text-sm">Tôi Tự Học</div>
+              <span class="text-[10px] text-[#64705C] font-mono">#YSBK-TD-003</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-[#35483C] font-semibold">Kệ C2 · N3</td>
+            <td class="py-3.5 px-4">
+              <span class="text-[#9B4D36] font-semibold">Hạn trả: 22/10 (Hôm nay)</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#35483C]">50.000 đ</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F7E7DB] text-[#9B4D36]">Đến Hạn Trả</span>
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <button class="px-3 py-1.5 rounded bg-[#9B4D36] text-white font-semibold btn-press-terracotta text-xs">
+                Nhận Trả & Hoàn Cọc
+              </button>
+            </td>
+          </tr>
+
+          <!-- ROW 4: ACTIVE LOAN -->
+          <tr class="hover:bg-[#F8F5EC]/70 transition">
+            <td class="py-3.5 px-4 font-mono font-bold text-[#64705C]">#LOAN-039</td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-[#35483C]">Phạm Minh Đức</div>
+              <span class="text-[11px] text-[#64705C] font-mono">0904***111 · K68</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-serif font-bold text-[#35483C] text-sm">Nhà Giả Kim</div>
+              <span class="text-[10px] text-[#64705C] font-mono">#YSBK-VH-012</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-[#35483C] font-semibold">Kệ A1 · N4</td>
+            <td class="py-3.5 px-4">
+              <span class="text-[#64705C]">Hạn trả: 29/10 (Còn 7 ngày)</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#35483C]">50.000 đ</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F4EAD2] text-[#A87A4C]">Đang Mượn</span>
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <button class="px-3 py-1.5 rounded border border-[#DCDED0] bg-[#FFFDF5] text-[#35483C] hover:border-[#365E4B] font-semibold text-xs">
+                Gia Hạn 7 Ngày
+              </button>
+            </td>
+          </tr>
+
+          <!-- ROW 5: SPECIAL ATTENTION -->
+          <tr class="hover:bg-[#F8F5EC]/70 transition bg-[#F7E7DB]/40">
+            <td class="py-3.5 px-4 font-mono font-bold text-[#9B4D36]">#ALERT-012</td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-[#35483C]">Đỗ Thành Long</div>
+              <span class="text-[11px] text-[#64705C] font-mono">0936***999 · K66</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-serif font-bold text-[#35483C] text-sm">Sapiens - Lược Sử Loài Người</div>
+              <span class="text-[10px] text-[#64705C] font-mono">#YSBK-LS-008</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-[#35483C] font-semibold">Kệ D1 · N1</td>
+            <td class="py-3.5 px-4">
+              <span class="text-[#9B4D36] font-bold">Quá hạn 3 ngày</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-[#9B4D36]">100.000 đ</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#9B4D36] text-white">Cần Gọi Nhắc</span>
+            </td>
+            <td class="py-3.5 px-4 text-right flex items-center justify-end gap-2">
+              <button class="px-3 py-1.5 rounded border border-[#9B4D36] text-[#9B4D36] font-semibold text-xs hover:bg-[#F7E7DB]">
+                Gọi Điện
+              </button>
+              <button class="px-3 py-1.5 rounded bg-[#9B4D36] text-white font-semibold btn-press-terracotta text-xs">
+                Thu Hồi Sách
+              </button>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LOWER PANELS: SHIFT LOG & INCIDENT NOTES -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Panel 1: Sổ nhật ký ca trực -->
+      <div class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-5 shadow-sm">
+        <h3 class="font-serif font-bold text-sm text-[#35483C] mb-3 pb-2 border-b border-[#DCDED0] flex items-center justify-between">
+          <span>Nhật Ký Bàn Giao Ca</span>
+          <span class="text-[10px] font-mono text-[#64705C]">Hôm nay</span>
+        </h3>
+        <ul class="space-y-2.5 text-xs">
+          <li class="flex items-start gap-2">
+            <span class="font-mono text-[10px] text-[#A87A4C] mt-0.5">14:15</span>
+            <div>Bàn giao sách #YSBK-KN-002 cho bạn Lê Tuấn Minh, thu cọc 50.000 đ.</div>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="font-mono text-[10px] text-[#365E4B] mt-0.5">14:38</span>
+            <div>Nhận trả sách #YSBK-VH-019 nguyên vẹn từ bạn Mai Phương, hoàn cọc 50.000 đ.</div>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="font-mono text-[10px] text-[#9B4D36] mt-0.5">15:02</span>
+            <div>Bạn Nguyễn Đức Tùng gọi hẹn chuyển sang ca Thứ Năm do bận thi giữa kỳ.</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Panel 2: Bản sách cần kiểm tra -->
+      <div class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-5 shadow-sm">
+        <h3 class="font-serif font-bold text-sm text-[#35483C] mb-3 pb-2 border-b border-[#DCDED0] text-[#9B4D36] flex items-center gap-1.5">
+          <span>⚠️ Bản Sách Cần Kiểm Tra</span>
+        </h3>
+        <div class="p-3 bg-[#F7E7DB] rounded border border-[#9B4D36]/30 text-xs text-[#35483C] space-y-2">
+          <p class="font-semibold text-[#813C2A]">#YSBK-KH-005 · Vũ Trụ Trong Vỏ Hạt Dẻ</p>
+          <p class="text-[11px] text-[#64705C]">
+            Gáy sách bị sờn mép góc dưới. Đã dán băng keo gia cố lưu kho, không cho mượn mang về, chỉ đọc tại chỗ.
+          </p>
+          <div class="pt-1 flex items-center justify-between text-[11px]">
+            <span class="font-mono text-[#9B4D36]">Người kiểm tra: Chi (K66)</span>
+            <button class="text-[#365E4B] font-semibold hover:underline">Chuyển sang bảo dưỡng →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 3: Chốt quỹ ca trực -->
+      <div class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-5 shadow-sm">
+        <h3 class="font-serif font-bold text-sm text-[#35483C] mb-3 pb-2 border-b border-[#DCDED0]">
+          Chốt Quỹ Tiền Cọc Ca Trực
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-[#64705C]">Tiền mặt đầu ca trực:</span>
+            <span class="font-mono font-semibold">1.200.000 đ</span>
+          </div>
+          <div class="flex justify-between text-[#365E4B]">
+            <span>(+) Thu cọc mới (2 cuốn):</span>
+            <span class="font-mono font-bold">+100.000 đ</span>
+          </div>
+          <div class="flex justify-between text-[#9B4D36]">
+            <span>(-) Hoàn cọc đã trả (1 cuốn):</span>
+            <span class="font-mono font-bold">-50.000 đ</span>
+          </div>
+          <div class="pt-2 border-t border-[#DCDED0] flex justify-between font-bold text-[#35483C]">
+            <span>Tiền mặt hiện có tại bàn:</span>
+            <span class="font-mono font-serif text-base text-[#365E4B]">1.250.000 đ</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER BAR -->
+  <footer class="bg-[#FFFDF5] border-t border-[#DCDED0] px-8 py-3 text-xs text-[#64705C] flex items-center justify-between">
+    <span>Hệ thống quản lý thư viện sinh viên YSBK · Dữ liệu minh họa phiên làm việc</span>
+    <span class="font-mono text-[11px]">Bản Concept · Thư Quán Bách Khoa</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

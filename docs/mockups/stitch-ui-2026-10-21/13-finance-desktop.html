@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sổ quỹ, tiền cọc &amp; Báo cáo · YSBK Nội bộ</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Newsreader (Editorial serif) & Be Vietnam Pro (Clarity & accurate VN diacritics) -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-low": "#F8F5EC",
+            "on-secondary-fixed": "#35483C",
+            "on-error": "#FFFDF5",
+            "secondary-fixed": "#F7E7DB",
+            "surface-variant": "#E8EDDF",
+            "primary-fixed": "#DCDED0",
+            "secondary-fixed-dim": "#DCDED0",
+            "error": "#9B4D36",
+            "tertiary-fixed-dim": "#DCDED0",
+            "surface-container-highest": "#E8EDDF",
+            "inverse-surface": "#35483C",
+            "on-primary-fixed": "#294C3A",
+            "inverse-on-surface": "#F8F5EC",
+            "surface-bright": "#F8F5EC",
+            "background": "#F8F5EC",
+            "tertiary": "#813C2A",
+            "secondary": "#9B4D36",
+            "on-tertiary": "#FFFDF5",
+            "on-tertiary-fixed": "#35483C",
+            "on-primary-container": "#DCDED0",
+            "error-container": "#F7E7DB",
+            "on-background": "#294C3A",
+            "tertiary-container": "#813C2A",
+            "primary": "#294C3A",
+            "on-secondary": "#FFFDF5",
+            "on-tertiary-fixed-variant": "#813C2A",
+            "on-primary": "#FFFDF5",
+            "surface-container-high": "#E8EDDF",
+            "primary-fixed-dim": "#DCDED0",
+            "on-primary-fixed-variant": "#294C3A",
+            "surface-dim": "#DCDED0",
+            "on-secondary-container": "#813C2A",
+            "surface": "#F8F5EC",
+            "on-error-container": "#813C2A",
+            "on-surface": "#294C3A",
+            "surface-tint": "#365E4B",
+            "surface-container": "#E8EDDF",
+            "secondary-container": "#A87A4C",
+            "inverse-primary": "#DCDED0",
+            "outline-variant": "#DCDED0",
+            "on-tertiary-container": "#DCDED0",
+            "on-secondary-fixed-variant": "#813C2A",
+            "outline": "#64705C",
+            "tertiary-fixed": "#F4EAD2",
+            "surface-container-lowest": "#FFFDF5",
+            "primary-container": "#365E4B",
+            "on-surface-variant": "#35483C"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem",
+            "ui-btn": "14px",
+            "ui-card": "22px",
+            "ui-overlay": "24px"
+          },
+          fontFamily: {
+            "headline": ["Newsreader", "serif"],
+            "display": ["Newsreader", "serif"],
+            "body": ["Be Vietnam Pro", "sans-serif"],
+            "label": ["Be Vietnam Pro", "sans-serif"]
+          },
+          boxShadow: {
+            'paper': '0 5px 18px rgba(53, 72, 60, 0.08)',
+            'paper-lift': '0 8px 24px rgba(53, 72, 60, 0.12)',
+            'paper-stamp': '0 2px 0 #DCDED0, 0 5px 18px rgba(53,72,60,0.08)'
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Tabular figures for ledger precision */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Vintage Paper Texture & Subtle Ruling */
+    .bg-paper-texture {
+      background-color: #F8F5EC;
+      background-image: radial-gradient(#DCDED0 0.75px, transparent 0.75px);
+      background-size: 24px 24px;
+    }
+
+    /* Editorial double line */
+    .double-rule-bottom {
+      border-bottom: 3px double #DCDED0;
+    }
+
+    .double-rule-top {
+      border-top: 3px double #DCDED0;
+    }
+
+    /* Tactile library catalogue card tabs */
+    .catalogue-tab-active {
+      background: #FFFDF5;
+      border: 1px solid #DCDED0;
+      border-bottom: 2px solid #FFFDF5;
+      border-radius: 6px 6px 0 0;
+    }
+  </style>
+<style>small,.text-xs,[class*="text-[10px]"],[class*="text-[11px]"],[class*="text-[12px]"],[class*="text-[13px]"]{font-size:14px!important;line-height:1.5}button{min-height:44px}@media(max-width:767px){button{min-height:48px}}</style><link rel="stylesheet" href="soft-ui.css?v=3">
+</head>
+<body class="bg-[#F8F5EC] text-[#35483C] font-body text-base antialiased min-h-screen selection:bg-[#E8EDDF] selection:text-[#294C3A] flex flex-col">
+<!-- TOP CONTEXT BAR (Internal Notification / Editorial Badge) -->
+<aside aria-label="Thông báo chế độ dữ liệu nội bộ" class="w-full bg-[#E8EDDF] border-b border-[#DCDED0] px-6 py-2 text-xs font-medium text-[#35483C] flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#365E4B] text-[#FFFDF5] font-semibold text-[11px] tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-[#DCDED0] animate-pulse"></span>
+        HỆ THỐNG NỘI BỘ YSBK
+      </span>
+<span class="text-[#64705C]">Bản thiết kế • Dữ liệu minh họa thủ thư</span>
+<span class="hidden md:inline text-[#DCDED0]">|</span>
+<span class="hidden md:inline text-[#64705C]">Ca trực: Thứ Ba &amp; Thứ Năm (Giờ trực minh họa) • Bàn trực Sảnh C1 Bách Khoa</span>
+</div>
+<div class="flex items-center space-x-4 text-[#64705C] text-xs">
+<span class="font-mono">Phiên làm việc: #YSBK-OP-2409</span>
+<a class="text-[#9B4D36] hover:text-[#813C2A] font-semibold underline underline-offset-2 flex items-center gap-1" href="#logout">
+<span class="material-symbols-outlined text-[15px]" data-icon="logout">logout</span>
+        Đăng xuất
+      </a>
+</div>
+</aside>
+<!-- MAIN WRAPPER (Fixed 1440px target container layout) -->
+<div class="w-full max-w-[1440px] mx-auto flex-1 flex flex-row">
+<!-- 1. SIDEBAR NỘI BỘ (240px wide, vintage bookclub ledger aesthetics) -->
+<aside class="w-[240px] shrink-0 bg-[#FFFDF5] border-r border-[#DCDED0] flex flex-col justify-between py-6 min-h-[calc(100vh-37px)]">
+<div>
+<!-- Brand Stamp -->
+<div class="px-5 mb-8 pb-5 border-b border-[#DCDED0]/80">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#365E4B] text-[#FFFDF5] flex items-center justify-center shadow-inner font-headline font-bold text-lg border border-[#294C3A]">
+              BK
+            </div>
+<div>
+<h1 class="font-headline font-bold text-lg leading-tight text-[#294C3A] tracking-tight">YSBK · Sổ Quỹ</h1>
+<p class="text-[11px] text-[#64705C] font-normal leading-none mt-1">Mở sách, đọc tương lai</p>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-dashed border-[#DCDED0] flex items-center justify-between text-[12px] text-[#64705C]">
+<span>Thủ thư ca trực:</span>
+<span class="font-semibold text-[#35483C]">Minh Trang (K66)</span>
+</div>
+</div>
+<!-- Navigation Menu -->
+<nav aria-label="Điều hướng nội bộ CLB" class="px-3 space-y-1">
+<p class="px-3 text-[11px] font-bold text-[#819079] tracking-wider uppercase mb-2">Quản trị quầy &amp; sách</p>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="dashboard">dashboard</span>
+<span>Tổng quan</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="sync_alt">sync_alt</span>
+<span>Quầy mượn–trả</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="menu_book">menu_book</span>
+<span>Kho sách thư viện</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="calendar_month">calendar_month</span>
+<span>Lịch trực tuần</span>
+</a>
+<p class="px-3 text-[11px] font-bold text-[#819079] tracking-wider uppercase mt-6 mb-2">Tài chính &amp; Pháp chế</p>
+<!-- ACTIVE ITEM: Quỹ & báo cáo -->
+<a aria-current="page" class="flex items-center justify-between px-3 py-2.5 rounded-[14px] text-sm font-semibold bg-[#365E4B] text-[#FFFDF5] shadow-[0_2px_4px_rgba(54,94,75,0.2)]" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[19px]" data-icon="account_balance_wallet" data-weight="fill">account_balance_wallet</span>
+<span>Quỹ &amp; báo cáo</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-[#F4EAD2]"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="receipt_long">receipt_long</span>
+<span>Lịch sử hoàn cọc</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="group">group</span>
+<span>Thành viên &amp; Quỹ</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm font-medium text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#294C3A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="policy">policy</span>
+<span>Quy chế mượn trả</span>
+</a>
+</nav>
+</div>
+<!-- Footer Stamp in Sidebar -->
+<div class="px-5 pt-4 border-t border-[#DCDED0] text-[#64705C]">
+<div class="p-3 bg-[#F8F5EC] border border-[#DCDED0] rounded-[14px] text-xs">
+<div class="flex items-center gap-2 text-[#365E4B] font-semibold mb-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="lock">lock</span>
+<span>Hòm quỹ tại bàn</span>
+</div>
+<p class="text-[11px] text-[#64705C] leading-relaxed">Khóa niêm phong ca trực #09. Bàn giao cuối ca theo lịch đã công bố.</p>
+</div>
+<p class="text-[10px] text-center text-[#819079] mt-3">Thành lập Ngày minh họa • YSBK</p>
+</div>
+</aside>
+<!-- CONTENT CANVAS (Editorial, spacious, paper panel style) -->
+<main class="flex-1 min-w-0 bg-paper-texture p-8 flex flex-col justify-between">
+<div>
+<!-- 2. TIÊU ĐỀ TRANG & BỘ LỌC KỲ (Header Cluster) -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-[#DCDED0]">
+<div>
+<div class="flex items-center gap-2 text-xs font-semibold text-[#819079] uppercase tracking-wider mb-1.5">
+<span>Hạch toán nội bộ</span>
+<span class="text-[#DCDED0]">•</span>
+<span>Kỳ đối soát tháng 10/MẪU</span>
+</div>
+<h2 class="font-headline font-bold text-3xl md:text-4xl text-[#294C3A] tracking-tight">Sổ quỹ &amp; Đối soát tiền cọc</h2>
+<p class="text-sm md:text-base text-[#64705C] mt-1.5 max-w-2xl font-normal leading-relaxed">
+              Không gian ghi chép quỹ hoạt động và hoàn cọc bạn đọc phi lợi nhuận của YSBK. Mọi khoản cọc được bảo lưu nguyên trạng, không hòa lẫn vào ngân quỹ hoạt động.
+            </p>
+</div>
+<!-- 3. Bộ lọc kỳ & Trạng thái ca trực -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Period Selector Dropdown -->
+<div class="relative">
+<label class="sr-only" for="filter-period">Lọc theo kỳ</label>
+<select class="appearance-none bg-[#FFFDF5] border border-[#DCDED0] text-[#35483C] text-sm font-medium py-2.5 pl-3.5 pr-9 rounded-[14px] shadow-[0_2px_0_#DCDED0] focus:outline-none focus:border-[#365E4B] cursor-pointer" id="filter-period">
+<option selected="">Ca trực tuần hiện tại (Tuần 42)</option>
+<option>Tuần 41 (10/10 – Ngày minh họa)</option>
+<option>Tháng 10/MẪU (Toàn kỳ)</option>
+<option>Tháng 09/MẪU (Lưu trữ)</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[#64705C]" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Action: Kiểm đếm tiền mặt -->
+<button class="inline-flex items-center gap-2 bg-[#FFFDF5] text-[#365E4B] border border-[#365E4B] hover:bg-[#E8EDDF] px-4 py-2.5 rounded-[14px] text-sm font-medium shadow-[0_2px_0_#365E4B] active:translate-y-px transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="inventory">inventory</span>
+<span>Kiểm đếm hòm quỹ</span>
+</button>
+<!-- Action: Xuất báo cáo sổ sách -->
+<button class="inline-flex items-center gap-2 bg-[#365E4B] text-[#FFFDF5] hover:bg-[#294C3A] border border-[#294C3A] px-4 py-2.5 rounded-[14px] text-sm font-medium shadow-[0_2px_0_#294C3A] active:translate-y-px transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="print">print</span>
+<span>Xuất báo cáo sổ sách</span>
+</button>
+</div>
+</div>
+<!-- 4. 3 THẺ TÓM TẮT TÀI CHÍNH (3 Summary Cards bo 22px) -->
+<section aria-label="Tóm tắt tài chính" class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+<!-- Thẻ 1: Quỹ hoạt động CLB -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 shadow-paper relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#64705C]">
+<span class="w-2 h-2 rounded-full bg-[#819079]"></span>
+                  Quỹ hoạt động CLB
+                </span>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-headline font-bold text-3xl md:text-4xl text-[#294C3A] tabular-nums tracking-tight">1.850.000</span>
+<span class="text-sm font-medium text-[#64705C]">VNĐ</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-[14px] bg-[#E8EDDF] border border-[#DCDED0] text-[#365E4B] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]" data-icon="savings">savings</span>
+</div>
+</div>
+<div class="mt-5 pt-3 border-t border-[#DCDED0]/80 flex items-center justify-between text-xs text-[#64705C]">
+<span>Nguồn: Quỹ đóng góp nội bộ &amp; màng bọc</span>
+<span class="text-[#365E4B] font-medium bg-[#E8EDDF] px-2 py-0.5 rounded-full">An toàn</span>
+</div>
+</article>
+<!-- Thẻ 2: Tiền cọc sách đang giữ (Riêng biệt, trách nhiệm pháp lý với bạn đọc) -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 shadow-paper relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#9B4D36]">
+<span class="w-2 h-2 rounded-full bg-[#9B4D36]"></span>
+                  Tiền cọc sách đang giữ
+                </span>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-headline font-bold text-3xl md:text-4xl text-[#9B4D36] tabular-nums tracking-tight">240.000</span>
+<span class="text-sm font-medium text-[#64705C]">VNĐ</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-[14px] bg-[#F7E7DB] border border-[#secondary-fixed-dim] text-[#9B4D36] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]" data-icon="lock_clock">lock_clock</span>
+</div>
+</div>
+<div class="mt-5 pt-3 border-t border-[#DCDED0]/80 flex items-center justify-between text-xs text-[#64705C]">
+<span>Tạm giữ của: <strong class="text-[#35483C]">08 bạn đọc</strong> mượn</span>
+<span class="text-[#9B4D36] font-semibold bg-[#F7E7DB] px-2 py-0.5 rounded-full">Tách riêng 100%</span>
+</div>
+</article>
+<!-- Thẻ 3: Chênh lệch đối soát ca trực -->
+<article class="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 shadow-paper relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#365E4B]">
+<span class="w-2 h-2 rounded-full bg-[#365E4B]"></span>
+                  Chênh lệch đối soát ca trực
+                </span>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-headline font-bold text-3xl md:text-4xl text-[#365E4B] tabular-nums tracking-tight">0</span>
+<span class="text-sm font-medium text-[#64705C]">VNĐ</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-[14px] bg-[#E8EDDF] border border-[#DCDED0] text-[#365E4B] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]" data-icon="verified" data-weight="fill">verified</span>
+</div>
+</div>
+<div class="mt-5 pt-3 border-t border-[#DCDED0]/80 flex items-center justify-between text-xs text-[#64705C]">
+<span>Kết quả đối soát minh họa</span>
+<span class="text-[#365E4B] font-semibold">Khớp tuyệt đối</span>
+</div>
+</article>
+</section>
+<!-- 5. BẢNG KÊ THU CHI & HOÀN CỌC (Readable Ledger Table) -->
+<section aria-labelledby="ledger-heading" class="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] shadow-paper overflow-hidden mb-8">
+<!-- Ledger Table Header Bar -->
+<div class="px-6 py-4 border-b border-[#DCDED0] flex flex-wrap items-center justify-between gap-4 bg-[#F8F5EC]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#365E4B] text-[22px]" data-icon="history_edu">history_edu</span>
+<h3 class="font-headline font-bold text-xl text-[#294C3A]" id="ledger-heading">Nhật ký sổ quỹ &amp; lưu chuyển tiền cọc</h3>
+<span class="text-xs text-[#64705C] bg-[#FFFDF5] px-2.5 py-0.5 rounded-full border border-[#DCDED0]">Ca trực thứ Năm, Ngày minh họa</span>
+</div>
+<!-- Fast Filter / Search in ledger -->
+<div class="flex items-center gap-2">
+<div class="relative">
+<input class="bg-[#FFFDF5] text-xs border border-[#DCDED0] rounded-[14px] pl-8 pr-3 py-1.5 focus:outline-none focus:border-[#365E4B] placeholder:text-[#819079] w-48" placeholder="Tìm theo mã phiếu (#BK-…)" type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[15px] text-[#64705C]" data-icon="search">search</span>
+</div>
+<span class="text-xs text-[#64705C] pl-2 border-l border-[#DCDED0]">5 giao dịch ca hiện tại</span>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm border-collapse">
+<thead>
+<tr class="border-b border-[#DCDED0] bg-[#FFFDF5] text-[#64705C] text-xs font-semibold tracking-wide">
+<th class="py-3.5 px-6" scope="col">Thời gian ca trực</th>
+<th class="py-3.5 px-4" scope="col">Loại giao dịch</th>
+<th class="py-3.5 px-4" scope="col">Mã chứng từ / Phiếu</th>
+<th class="py-3.5 px-4" scope="col">Đối tượng liên quan</th>
+<th class="py-3.5 px-4 text-right" scope="col">Thu (+)</th>
+<th class="py-3.5 px-4 text-right" scope="col">Chi (-)</th>
+<th class="py-3.5 px-6 text-right" scope="col">Tồn hòm quỹ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#DCDED0]/70 text-[#35483C]">
+<!-- Row 1: Hoàn cọc (Trọng tâm minh họa) -->
+<tr class="hover:bg-[#F8F5EC]/80 transition-colors bg-[#FFFDF5]">
+<td class="py-4 px-6 text-xs text-[#64705C] tabular-nums whitespace-nowrap">
+                    19:15 · Ngày minh họa
+                  </td>
+<td class="py-4 px-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[14px] text-xs font-medium bg-[#F7E7DB] text-[#9B4D36] border border-[#secondary-fixed-dim]">
+<span class="material-symbols-outlined text-[14px]" data-icon="keyboard_return">keyboard_return</span>
+                      Hoàn cọc trả sách
+                    </span>
+</td>
+<td class="py-4 px-4 font-mono font-medium text-xs text-[#294C3A] whitespace-nowrap">
+<a class="hover:underline flex items-center gap-1 font-semibold" href="#modal-doc">
+                      #BK-701
+                      <span class="material-symbols-outlined text-[13px] text-[#64705C]" data-icon="open_in_new">open_in_new</span>
+</a>
+</td>
+<td class="py-4 px-4 text-xs whitespace-nowrap">
+<span class="font-medium text-[#35483C]">Nguyễn V* A*</span>
+<span class="text-[#819079] block text-[11px]">(Mượn: Rừng Na Uy)</span>
+</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs text-[#819079]">—</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs font-semibold text-[#9B4D36] whitespace-nowrap">
+                    -30.000 đ
+                  </td>
+<td class="py-4 px-6 text-right tabular-nums text-xs font-semibold text-[#294C3A] whitespace-nowrap">
+                    2.090.000 đ
+                  </td>
+</tr>
+<!-- Row 2: Nhận cọc -->
+<tr class="hover:bg-[#F8F5EC]/80 transition-colors">
+<td class="py-4 px-6 text-xs text-[#64705C] tabular-nums whitespace-nowrap">
+                    18:42 · Ngày minh họa
+                  </td>
+<td class="py-4 px-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[14px] text-xs font-medium bg-[#E8EDDF] text-[#365E4B] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]" data-icon="download">download</span>
+                      Nhận cọc mượn sách
+                    </span>
+</td>
+<td class="py-4 px-4 font-mono font-medium text-xs text-[#294C3A] whitespace-nowrap">
+                    #BK-698
+                  </td>
+<td class="py-4 px-4 text-xs whitespace-nowrap">
+<span class="font-medium text-[#35483C]">Trần T* H*</span>
+<span class="text-[#819079] block text-[11px]">(Mượn: Bách Khoa Tri Thức)</span>
+</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs font-semibold text-[#365E4B] whitespace-nowrap">
+                    +40.000 đ
+                  </td>
+<td class="py-4 px-4 text-right tabular-nums text-xs text-[#819079]">—</td>
+<td class="py-4 px-6 text-right tabular-nums text-xs font-semibold text-[#294C3A] whitespace-nowrap">
+                    2.120.000 đ
+                  </td>
+</tr>
+<!-- Row 3: Chi mua vật tư màng bọc bảo quản -->
+<tr class="hover:bg-[#F8F5EC]/80 transition-colors">
+<td class="py-4 px-6 text-xs text-[#64705C] tabular-nums whitespace-nowrap">
+                    18:10 · Ngày minh họa
+                  </td>
+<td class="py-4 px-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[14px] text-xs font-medium bg-[#F8F5EC] text-[#64705C] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]" data-icon="shopping_bag">shopping_bag</span>
+                      Chi màng bọc &amp; dán gáy
+                    </span>
+</td>
+<td class="py-4 px-4 font-mono font-medium text-xs text-[#294C3A] whitespace-nowrap">
+                    PC-012
+                  </td>
+<td class="py-4 px-4 text-xs whitespace-nowrap">
+<span class="font-medium text-[#35483C]">Thủ thư Trang (K66)</span>
+<span class="text-[#819079] block text-[11px]">(Hóa đơn hiệu sách Cung VH)</span>
+</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs text-[#819079]">—</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs font-semibold text-[#9B4D36] whitespace-nowrap">
+                    -45.000 đ
+                  </td>
+<td class="py-4 px-6 text-right tabular-nums text-xs font-semibold text-[#294C3A] whitespace-nowrap">
+                    2.080.000 đ
+                  </td>
+</tr>
+<!-- Row 4: Thu quỹ thành viên định kỳ -->
+<tr class="hover:bg-[#F8F5EC]/80 transition-colors">
+<td class="py-4 px-6 text-xs text-[#64705C] tabular-nums whitespace-nowrap">
+                    17:50 · Ngày minh họa
+                  </td>
+<td class="py-4 px-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[14px] text-xs font-medium bg-[#E8EDDF] text-[#365E4B] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]" data-icon="volunteer_activism">volunteer_activism</span>
+                      Thu quỹ thành viên tháng 10
+                    </span>
+</td>
+<td class="py-4 px-4 font-mono font-medium text-xs text-[#294C3A] whitespace-nowrap">
+                    PT-044
+                  </td>
+<td class="py-4 px-4 text-xs whitespace-nowrap">
+<span class="font-medium text-[#35483C]">05 Cộng tác viên Ban Sách</span>
+<span class="text-[#819079] block text-[11px]">(Đóng trực tiếp tại bàn trực)</span>
+</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs font-semibold text-[#365E4B] whitespace-nowrap">
+                    +100.000 đ
+                  </td>
+<td class="py-4 px-4 text-right tabular-nums text-xs text-[#819079]">—</td>
+<td class="py-4 px-6 text-right tabular-nums text-xs font-semibold text-[#294C3A] whitespace-nowrap">
+                    2.125.000 đ
+                  </td>
+</tr>
+<!-- Row 5: Nhận cọc sách đầu ca -->
+<tr class="hover:bg-[#F8F5EC]/80 transition-colors">
+<td class="py-4 px-6 text-xs text-[#64705C] tabular-nums whitespace-nowrap">
+                    17:35 · Ngày minh họa
+                  </td>
+<td class="py-4 px-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[14px] text-xs font-medium bg-[#E8EDDF] text-[#365E4B] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]" data-icon="download">download</span>
+                      Nhận cọc mượn sách
+                    </span>
+</td>
+<td class="py-4 px-4 font-mono font-medium text-xs text-[#294C3A] whitespace-nowrap">
+                    #BK-695
+                  </td>
+<td class="py-4 px-4 text-xs whitespace-nowrap">
+<span class="font-medium text-[#35483C]">Lê Q* B*</span>
+<span class="text-[#819079] block text-[11px]">(Mượn: Khảo luận về Tự do)</span>
+</td>
+<td class="py-4 px-4 text-right tabular-nums text-xs font-semibold text-[#365E4B] whitespace-nowrap">
+                    +30.000 đ
+                  </td>
+<td class="py-4 px-4 text-right tabular-nums text-xs text-[#819079]">—</td>
+<td class="py-4 px-6 text-right tabular-nums text-xs font-semibold text-[#294C3A] whitespace-nowrap">
+                    2.025.000 đ
+                  </td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Colophon/Footer bar -->
+<div class="px-6 py-3 bg-[#F8F5EC] border-t border-[#DCDED0] flex items-center justify-between text-xs text-[#64705C]">
+<span>Tổng cộng lượt hoàn/nhận trong ca: <strong class="text-[#35483C]">04 lượt bạn đọc</strong></span>
+<span class="font-medium">Tiền mặt kiểm kê cuối ca: <strong class="text-[#294C3A]">2.090.000 đ</strong> (Đã niêm phong hòm)</span>
+</div>
+</section>
+<!-- 6. KHU VỰC KIỂM TRA CHỨNG TỪ & LƯU Ý KẾ TOÁN (Đặt bên dưới bảng, bố cục 2 cột thoáng đãng) -->
+<section aria-label="Chi tiết chứng từ và kỷ luật quỹ" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Thẻ xác nhận chứng từ mẫu (Chiếm 7 cột) -->
+<article class="lg:col-span-7 bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 shadow-paper">
+<div class="flex items-center justify-between pb-4 border-b border-[#DCDED0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#9B4D36] text-[20px]" data-icon="receipt">receipt</span>
+<h4 class="font-headline font-bold text-lg text-[#294C3A]">Chi tiết phiếu hoàn cọc gần nhất · #BK-701</h4>
+</div>
+<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#9B4D36] border border-[#secondary-fixed-dim]">
+                Đã giải ngân tiền mặt
+              </span>
+</div>
+<!-- Content of Voucher -->
+<div class="py-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+<div>
+<span class="text-[#64705C] block mb-1">Số tiền hoàn cọc</span>
+<span class="font-headline font-bold text-lg text-[#9B4D36] tabular-nums">30.000 đ</span>
+</div>
+<div>
+<span class="text-[#64705C] block mb-1">Người nhận tiền</span>
+<span class="font-semibold text-[#35483C]">Nguyễn V* A*</span>
+<span class="text-[11px] text-[#819079] block">MSSV: 2021****</span>
+</div>
+<div>
+<span class="text-[#64705C] block mb-1">Phương thức</span>
+<span class="font-medium text-[#35483C]">Tiền mặt tại bàn trực</span>
+<span class="text-[11px] text-[#819079] block">Bàn giao tận tay</span>
+</div>
+<div>
+<span class="text-[#64705C] block mb-1">Mã phiếu giữ chỗ</span>
+<span class="font-mono font-medium text-[#294C3A]">YSBK-HOLD-882</span>
+<span class="text-[11px] text-[#365E4B] block">Sách nguyên vẹn</span>
+</div>
+</div>
+<div class="pt-3 border-t border-dashed border-[#DCDED0] flex flex-wrap items-center justify-between gap-3">
+<span class="text-xs text-[#64705C] italic">Thủ thư tiếp nhận: Minh Trang (K66) · Ký sổ lúc 19:15</span>
+<div class="flex items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] text-xs font-medium bg-[#F8F5EC] border border-[#DCDED0] text-[#35483C] hover:bg-[#E8EDDF] transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]" data-icon="image">image</span>
+                  Xem ảnh phiếu giấy
+                </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] text-xs font-semibold bg-[#365E4B] text-[#FFFDF5] hover:bg-[#294C3A] transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]" data-icon="check_circle">check_circle</span>
+                  Xác nhận đã khớp số
+                </button>
+</div>
+</div>
+</article>
+<!-- Thẻ quy định kỷ luật quỹ CLB (Chiếm 5 cột) -->
+<article class="lg:col-span-5 bg-[#FFFDF5] border border-[#A87A4C]/40 rounded-[22px] p-6 shadow-paper relative">
+<div class="flex items-center gap-2 text-[#A87A4C] mb-3">
+<span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span>
+<h4 class="font-headline font-bold text-base text-[#294C3A]">Kỷ luật ngân quỹ &amp; Hoàn cọc tự quản</h4>
+</div>
+<p class="text-xs text-[#35483C] leading-relaxed mb-3 font-normal">
+              YSBK hoạt động trên tinh thần tin cậy và minh bạch sinh viên. Mọi thủ thư trong ca trực tuân thủ nguyên tắc:
+            </p>
+<ul class="space-y-2 text-xs text-[#64705C] list-disc list-inside">
+<li><strong>Đối soát:</strong> Giữ nguyên phương thức thanh toán và quy trình xác nhận hiện có; không thêm thanh toán trực tuyến.</li>
+<li><strong class="text-[#35483C]">Bảo toàn tiền cọc:</strong> Tiền cọc sách không phải là doanh thu; hoàn trả theo tình trạng sách và quy tắc nghiệp vụ hiện có.</li>
+<li><strong class="text-[#35483C]">Bàn giao hai người:</strong> Cuối ca trực, 02 thủ thư cùng ký biên bản kiểm đếm và khóa niêm phong hòm quỹ.</li>
+</ul>
+<div class="mt-4 pt-3 border-t border-[#DCDED0] text-[11px] text-[#819079] flex items-center justify-between">
+<span>Quy chế tài chính sửa đổi: Ngày minh họa</span>
+<a class="text-[#365E4B] font-semibold underline underline-offset-2" href="#">Đọc quy chế CLB</a>
+</div>
+</article>
+</section>
+</div>
+<!-- FOOTER NOTE (Editorial Colophon stamp) -->
+<footer class="mt-12 pt-6 border-t border-[#DCDED0] text-center text-xs text-[#64705C] flex flex-col sm:flex-row items-center justify-between gap-2">
+<p>Bản thiết kế • Dữ liệu minh họa — Sổ quỹ CLB Yêu Sách Bách Khoa (YSBK)</p>
+<p class="font-mono text-[11px] text-[#819079]">Cơ sở Thư viện Ký ức Bách Khoa Hà Nội · 2013</p>
+</footer>
+</main>
+</div>
+</body></html>

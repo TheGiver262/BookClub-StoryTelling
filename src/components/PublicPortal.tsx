@@ -1,637 +1,328 @@
-import { useState, useEffect } from 'react';
-import { 
-  BookOpen, Search, Filter, Calendar, MapPin, Star,
-  ArrowRight, MessageSquare, CheckCircle,
-  X, AlertCircle
-} from 'lucide-react';
-import { formatVND, type Book } from '../data/mockData';
-import { apiClient, type PublicApprovedResultDto, type SafePublicActivityDto, type SafePublicReviewDto } from '../lib/api-client';
-import ReservationSection from './ReservationSection';
-import { startAvailabilityRefresh } from '../lib/availability-refresh';
+import {useEffect,useRef,useState} from 'react';
+import {BookOpen,Bookmark,Search,Calendar,MapPin,MessageSquare,AlertCircle,ArrowRight,Star} from 'lucide-react';
+import {apiClient,type PublicApprovedResultDto,type SafePublicActivityDto,type SafePublicReviewDto} from '../lib/api-client';
+import type {PublicReservationBookDto} from '../server/reservations/types';
+import {formatVND} from '../data/mockData';
+import {startAvailabilityRefresh} from '../lib/availability-refresh';
+import {bookIntent,readerLocation,type ReaderTab,type BookPanel} from '../lib/reader-library-navigation';
+import {ReaderSessionProvider,useReaderSession} from './ReaderSession';
+import ReaderDialog from './ReaderDialog';
+import ReaderWorkspace from './ReaderWorkspace';
+import '../styles/reader-library.css';
 
-const BOOKS_PER_PAGE = 50;
+const BOOKS_PER_PAGE=50;
+const tabs:{id:ReaderTab;label:string}[]=[{id:'sach',label:'Tủ sách'},{id:'tra-don',label:'Sách của tôi'},{id:'hoat-dong',label:'Lịch trực & sự kiện'},{id:'review',label:'Góc review'},{id:'tuyen',label:'Tuyển thành viên'}];
+function ReviewCard({review}:{review:SafePublicReviewDto}){
+  return <article className={'reader-review ui-card '+(review.isClubReview?'reader-review-club':'')}>
+    <header><strong>{review.readerName}</strong>{review.isClubReview&&<span className="reader-chip"><Bookmark size={14} aria-hidden="true"/>Review CLB · Ghim</span>}<span aria-label={`${review.rating} trên 5 sao`}><Star size={15} aria-hidden="true"/>{review.rating}/5</span></header>
+    <p>{review.content}</p><small>{new Date(review.createdAt).toLocaleDateString('vi-VN')} · Đã duyệt</small>
+  </article>;
+}
+export default function PublicPortal(){return <ReaderSessionProvider><LibraryPortal/></ReaderSessionProvider>;}
+function LibraryPortal(){
+  const {reader,loading:sessionLoading,error:sessionError,requireReader,requestSignIn,refresh:refreshSession}=useReaderSession();
+  const [activeTab,setActiveTab]=useState<ReaderTab>('sach');
+  const [searchQuery,setSearchQuery]=useState(''),[selectedCategory,setSelectedCategory]=useState(''),[onlyAvailable,setOnlyAvailable]=useState(false),[bookPage,setBookPage]=useState(1);
+  const [books,setBooks]=useState<PublicReservationBookDto[]>([]),[bookTotal,setBookTotal]=useState(0),[categories,setCategories]=useState<string[]>([]),[booksLoading,setBooksLoading]=useState(true),[bookError,setBookError]=useState('');
+  const [bookmarks,setBookmarks]=useState<Set<string>>(new Set()),[bookmarkBusy,setBookmarkBusy]=useState(''),[revision,setRevision]=useState(0);
+  const [focusedBook,setFocusedBook]=useState<PublicReservationBookDto|null>(null),[panel,setPanel]=useState<Exclude<BookPanel,'bookmark'>|null>(null);
+  const [bookReviews,setBookReviews]=useState<SafePublicReviewDto[]>([]),[reviewPage,setReviewPage]=useState(1),[reviewsLoading,setReviewsLoading]=useState(false),[reviewsMore,setReviewsMore]=useState(false),[reviewsError,setReviewsError]=useState('');
+  const [reviewRating,setReviewRating]=useState(5),[reviewContent,setReviewContent]=useState(''),[reviewSubmitting,setReviewSubmitting]=useState(false),[reviewSubmitted,setReviewSubmitted]=useState(false);
+  const [publicSchedules,setPublicSchedules]=useState<any[]>([]),[publicHolidays,setPublicHolidays]=useState<Awaited<ReturnType<typeof apiClient.getCalendarHolidays>>>([]);
+  const [publicActivities,setPublicActivities]=useState<SafePublicActivityDto[]>([]),[publicReviews,setPublicReviews]=useState<SafePublicReviewDto[]>([]),[publicResults,setPublicResults]=useState<PublicApprovedResultDto[]>([]);
+  const [recruitmentNotice,setRecruitmentNotice]=useState<any>(null),[publicError,setPublicError]=useState(''),[candidateQuery,setCandidateQuery]=useState('');
+  const [publicReviewPage,setPublicReviewPage]=useState(1),[publicReviewMore,setPublicReviewMore]=useState(false);
+  const [publicReviewBusy,setPublicReviewBusy]=useState(false);
+  const locationInitialized=useRef(false);
+  const focusedBookRef=useRef(focusedBook);focusedBookRef.current=focusedBook;
+  const panelRef=useRef(panel);panelRef.current=panel;
+  const reviewSessionRef=useRef(0);
+  const bookLookupRef=useRef(0);
+  const filteredCandidates=publicResults.filter(c=>c.candidateCode.toLowerCase().includes(candidateQuery.toLowerCase()));
 
-export default function PublicPortal({ catalogOnly = false }: { catalogOnly?: boolean }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('TẤT CẢ');
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [activeTab, setActiveTab] = useState<'sach' | 'hoat-dong' | 'review' | 'tuyen' | 'dat-sach' | 'tra-don'>('sach');
-  const [reservationBookId, setReservationBookId] = useState<string>('');
-  const [publicBooks, setPublicBooks] = useState<Book[]>([]);
-  const [bookPage, setBookPage] = useState(1);
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
-  const [catalogCategories, setCatalogCategories] = useState<string[]>([]);
-  const [bookTotal, setBookTotal] = useState(0);
-  const [booksUpdatedAt, setBooksUpdatedAt] = useState('');
-  const [bookAvailability, setBookAvailability] = useState<Record<string, number>>({});
-  const [bookDeposits, setBookDeposits] = useState<Record<string, number>>({});
-  const [publicSchedules, setPublicSchedules] = useState<any[]>([]);
-  const [publicActivities, setPublicActivities] = useState<SafePublicActivityDto[]>([]);
-  const [publicReviews, setPublicReviews] = useState<SafePublicReviewDto[]>([]);
-  const [publicResults, setPublicResults] = useState<PublicApprovedResultDto[]>([]);
-  const [publicError, setPublicError] = useState('');
-  const [bookError, setBookError] = useState('');
-  useEffect(() => {
-    if (activeTab !== 'sach') return;
-    let active = true;
-    let busy = false;
-    const refresh = async () => {
-      if (busy) return;
-      busy = true;
-      try {
-        const result = await apiClient.listPublicReservationBooks({ search: searchQuery,
-          category: selectedCategory === 'TẤT CẢ' ? undefined : selectedCategory, page: bookPage, limit: BOOKS_PER_PAGE, includeUnavailable: true, onlyAvailable });
-        if (!active) return;
-        setPublicBooks(result.items.map(b => ({ id: b.titleId, title: b.title, authors: [b.author], categories: b.category.split(', '), coverImage: b.coverImageUrl,
-          publisher: '', publishYear: 0, description: '', coverPrice: b.coverPrice ?? null, copies: [] })));
-        setBookAvailability(Object.fromEntries(result.items.map(b => [b.titleId, b.availableCopiesCount])));
-        setBookDeposits(Object.fromEntries(result.items.map(b => [b.titleId, b.standardDeposit])));
-        setBookTotal(result.total);
-        setCatalogCategories(result.categories || []);
-        setBookError('');
-        if (bookPage > Math.max(1, Math.ceil(result.total / BOOKS_PER_PAGE))) setBookPage(1);
-        setBooksUpdatedAt(new Date().toLocaleTimeString('vi-VN'));
-      } catch {
-        if (active) { setPublicBooks([]); setBookAvailability({}); setBooksUpdatedAt(''); setBookError('Không tải được danh mục sách. Vui lòng thử lại.'); }
-      } finally { busy = false; }
+  useEffect(()=>{
+    let active=true;setBookmarks(new Set());
+    if(reader) void apiClient.listReaderBookmarks().then(rows=>{if(active) setBookmarks(new Set(rows.map(row=>row.titleId)));}).catch(e=>{if(active) setBookError(e.message);});
+    return()=>{active=false;};
+  },[reader?.id]);
+  useEffect(()=>{
+    if(activeTab!=='sach') return;
+    let active=true,busy=false;
+    const refresh=async()=>{if(busy) return;busy=true;try{
+      const result=await apiClient.listPublicReservationBooks({search:searchQuery,category:selectedCategory||undefined,page:bookPage,limit:BOOKS_PER_PAGE,includeUnavailable:true,onlyAvailable});
+      if(!active) return;setBooks(result.items);setBookTotal(result.total);setCategories(result.categories||[]);setBookError('');
+      if(bookPage>Math.max(1,Math.ceil(result.total/BOOKS_PER_PAGE))) setBookPage(1);
+    }catch(e:any){if(active){setBooks([]);setBookError(e.message||'Không tải được Tủ sách.');}}
+    finally{busy=false;if(active) setBooksLoading(false);}};
+    setBooksLoading(true);const timeout=window.setTimeout(()=>void refresh(),200),stop=startAvailabilityRefresh(refresh);
+    return()=>{active=false;window.clearTimeout(timeout);stop();};
+  },[activeTab,searchQuery,selectedCategory,onlyAvailable,bookPage,reader?.id,revision]);
+  useEffect(()=>{
+    let active=true;
+    void Promise.allSettled([apiClient.listPublicPickupSchedules(),apiClient.listPublicActivities(),apiClient.getPublicReviews(),apiClient.getPublicApprovedResults(),apiClient.getPublicRecruitmentNotice(),apiClient.getCalendarHolidays()]).then(results=>{
+      if(!active) return;
+      if(results[0].status==='fulfilled') setPublicSchedules(results[0].value);
+      if(results[1].status==='fulfilled') setPublicActivities(results[1].value);
+      if(results[2].status==='fulfilled'){setPublicReviews(results[2].value);setPublicReviewMore(results[2].value.length===50);}
+      if(results[3].status==='fulfilled') setPublicResults(results[3].value);
+      if(results[4].status==='fulfilled') setRecruitmentNotice(results[4].value);
+      if(results[5].status==='fulfilled') setPublicHolidays(results[5].value);
+      if(results.some(result=>result.status==='rejected')) setPublicError('Một số nội dung chưa tải được. Vui lòng thử tải lại.');
+    });return()=>{active=false;};
+  },[]);
+  useEffect(()=>{
+    if(sessionLoading) return;
+    let active=true;
+    const sync=async()=>{
+      const lookup=++bookLookupRef.current;
+      reviewSessionRef.current++;
+      const location=readerLocation(new URL(window.location.href));setActiveTab(location.tab);setPanel(null);
+      if(!location.bookId||location.tab!=='sach') return;
+      try{
+        const result=await apiClient.listPublicReservationBooks({search:location.bookId,includeUnavailable:true,limit:1});
+        const book=result.items.find(book=>book.titleId===location.bookId);if(!active||lookup!==bookLookupRef.current) return;
+        if(book) openPanel(book,location.panel,false);else setBookError('Không tìm thấy cuốn sách từ liên kết.');
+      }catch(e:any){if(active&&lookup===bookLookupRef.current) setBookError(e.message);}
     };
-    setPublicBooks([]);
-    setBooksUpdatedAt('');
-    const task = window.setTimeout(() => void refresh(), 200);
-    const stop = startAvailabilityRefresh(refresh);
-    return () => { active = false; window.clearTimeout(task); stop(); };
-  }, [searchQuery, selectedCategory, bookPage, activeTab, onlyAvailable]);
-  useEffect(() => {
-    if (catalogOnly) return;
-    let active = true;
-    const load = async () => {
-      const results = await Promise.allSettled([apiClient.listPublicPickupSchedules(), apiClient.listPublicActivities(), apiClient.getPublicReviews(), apiClient.getPublicApprovedResults()]);
-      if (!active) return;
-      if (results[0].status === 'fulfilled') setPublicSchedules(results[0].value);
-      if (results[1].status === 'fulfilled') setPublicActivities(results[1].value);
-      if (results[2].status === 'fulfilled') setPublicReviews(results[2].value);
-      if (results[3].status === 'fulfilled') setPublicResults(results[3].value);
-      if (results.some(r => r.status === 'rejected')) setPublicError('Một số nội dung chưa tải được. Vui lòng tải lại trang để thử lại.');
-    };
-    void load();
-    return () => { active = false; };
-  }, [catalogOnly]);
-
-  useEffect(() => {
-    if (catalogOnly) return;
-    if (new URLSearchParams(window.location.search).get('public') === '1') return;
-    let active = true;
-    apiClient.getMe().then(actor => {
-      if (active && actor.isActive && (actor.role === 'MEMBER' || actor.role === 'ADMIN') && !actor.isAlumni) window.location.replace('/noi-bo');
-    }).catch(() => {});
-    return () => { active = false; };
-  }, [catalogOnly]);
-  
-  // Real Review submission states (Fixed R10)
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewBookId, setReviewBookId] = useState<string>('');
-  const [reviewName, setReviewName] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewContent, setReviewContent] = useState('');
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewErrorMessage, setReviewErrorMessage] = useState('');
-  const [reviewSuccessDetail, setReviewSuccessDetail] = useState<{ id: string; message: string } | null>(null);
-
-  // Candidate lookup
-  const [candidateQuery, setCandidateQuery] = useState('');
-
-  // Deep linking and URL preservation on mount & refresh
-  useEffect(() => {
-    const syncLocation = () => {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab');
-      if (tabParam === 'sach' || tabParam === 'dat-sach' || tabParam === 'tra-don' || !catalogOnly && (tabParam === 'hoat-dong' || tabParam === 'review' || tabParam === 'tuyen')) {
-        setActiveTab(tabParam);
-      } else setActiveTab('sach');
-      setReservationBookId(params.get('sach') || '');
-      setSelectedBook(null);
-      if (window.location.hash.startsWith('#token=')) {
-        setActiveTab('tra-don');
+    // Chỉ khôi phục ý định URL khi vào trang, tránh mở lại dialog phía dưới lúc phiên vừa hết.
+    if(!locationInitialized.current) void sync().then(()=>{if(active) locationInitialized.current=true;});
+    window.addEventListener('popstate',sync);
+    return()=>{active=false;bookLookupRef.current++;window.removeEventListener('popstate',sync);};
+  },[sessionLoading,reader?.id]);
+  useEffect(()=>{
+    if(!reader&&(panel==='reserve'||panel==='write')) setPanel(null);
+  },[reader?.id,panel]);
+  useEffect(()=>{
+    if(!focusedBook||!panel) return;
+    let active=true;const id=focusedBook.titleId;
+    const stop=startAvailabilityRefresh(async()=>{try{const result=await apiClient.listPublicReservationBooks({search:id,includeUnavailable:true,limit:1});const book=result.items.find(book=>book.titleId===id);if(active&&book) setFocusedBook(book);}catch{/* Existing stock remains indicative; reservation always rechecks on server. */}});
+    return()=>{active=false;stop();};
+  },[focusedBook?.titleId,!!panel]);
+  useEffect(()=>{
+    if(panel!=='reviews'||!focusedBook) return;
+    const session=++reviewSessionRef.current;
+    let active=true;setReviewsLoading(true);setReviewsError('');
+    const id=focusedBook.titleId;
+    void apiClient.getPublicReviews(id,1).then(rows=>{
+      if(active&&reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id){
+        setBookReviews(rows);
+        setReviewPage(1);
+        setReviewsMore(rows.length===50);
       }
-    };
-    syncLocation();
-    window.addEventListener('popstate', syncLocation);
-    return () => window.removeEventListener('popstate', syncLocation);
-  }, [catalogOnly]);
-
-  useEffect(() => {
-    if (activeTab !== 'sach') return;
-    const bookId = new URLSearchParams(window.location.search).get('sach');
-    const found = publicBooks.find(book => book.id === bookId);
-    if (found) { setSelectedBook(found); setReviewBookId(found.id); }
-  }, [publicBooks, activeTab, reservationBookId]);
-
-  const switchTab = (tab: 'sach' | 'hoat-dong' | 'review' | 'tuyen' | 'dat-sach' | 'tra-don', bookId?: string) => {
-    setActiveTab(tab);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', tab);
-      if (bookId) url.searchParams.set('sach', bookId);
-      window.history.pushState(null, '', url.toString());
+    }).catch(e=>{
+      if(active&&reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id) setReviewsError(e.message);
+    }).finally(()=>{
+      if(active&&reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id) setReviewsLoading(false);
+    });
+    return()=>{active=false;reviewSessionRef.current++;};
+  },[panel,focusedBook?.titleId]);
+  function switchTab(tab:ReaderTab){
+    bookLookupRef.current++;
+    if(tab==='tra-don'&&!requireReader('/sach/?tab=tra-don')) return;
+    reviewSessionRef.current++;
+    setActiveTab(tab);setPanel(null);window.history.pushState(null,'','/sach/?tab='+tab);
+  }
+  function openPanel(book:PublicReservationBookDto,target:BookPanel,history=true){
+    bookLookupRef.current++;
+    reviewSessionRef.current++;
+    setFocusedBook(book);setReviewSubmitted(false);setReviewsError('');
+    if((target==='reserve'||target==='write'||target==='bookmark')&&!requireReader(bookIntent(target,book.titleId))){setPanel(null);return;}
+    if(target==='bookmark'){
+      void toggleBookmark(book,true);window.history.replaceState(null,'',bookIntent('detail',book.titleId));return;
     }
-  };
-
-  const openBookModal = (book: Book) => {
-    setSelectedBook(book);
-    setReviewBookId(book.id);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('sach', book.id);
-      window.history.pushState(null, '', url.toString());
-    }
-  };
-
-  const closeBookModal = () => {
-    setSelectedBook(null);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('sach');
-      window.history.pushState(null, '', url.toString());
-    }
-  };
-
-  const handleReviewSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    setReviewErrorMessage('');
-    setReviewSubmitting(true);
-    try {
-      const res = await apiClient.submitBookReview({
-        bookId: reviewBookId,
-        authorName: reviewName,
-        rating: reviewRating,
-        content: reviewContent,
-      });
-      setReviewSuccessDetail({
-        id: res.data.id,
-        message: res.message || 'Đánh giá đã được gửi và đang chờ Ban Quản Trị duyệt.',
-      });
-      setReviewSubmitted(true);
-    } catch (err: any) {
-      if (err.message && err.message.includes('đăng nhập')) {
-        setReviewErrorMessage('Bạn cần có tài khoản/phiên đăng nhập để gửi cảm nhận sách. Vui lòng bấm "Không Gian Nội Bộ" hoặc đăng nhập tài khoản.');
-      } else {
-        setReviewErrorMessage(err.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.');
+    if(target==='reviews'){setReviewPage(1);setBookReviews([]);}
+    if(target==='write'){setReviewContent('');setReviewRating(5);}
+    setPanel(target);if(history) window.history.pushState(null,'',bookIntent(target,book.titleId));
+  }
+  function closePanel(){
+    bookLookupRef.current++;
+    reviewSessionRef.current++;
+    setPanel(null);window.history.replaceState(null,'','/sach/?tab='+activeTab);
+  }
+  async function toggleBookmark(book:PublicReservationBookDto,force?:boolean){
+    if(!requireReader(bookIntent('bookmark',book.titleId))) return;
+    setBookmarkBusy(book.titleId);setBookError('');
+    try{
+      const result=await apiClient.setReaderBookmark(book.titleId,force??!bookmarks.has(book.titleId));
+      setBookmarks(previous=>{const copy=new Set(previous);if(result.bookmarked) copy.add(book.titleId);else copy.delete(book.titleId);return copy;});if(!selectedCategory) setBookPage(1);setRevision(value=>value+1);
+    }catch(e:any){setBookError(e.message);if(e.status===401){void refreshSession();requestSignIn(bookIntent('bookmark',book.titleId));}}
+    finally{setBookmarkBusy('');}
+  }
+  async function openReviewBook(id:string){
+    const lookup=++bookLookupRef.current;
+    try{
+      const result=await apiClient.listPublicReservationBooks({search:id,includeUnavailable:true,limit:1});
+      if(lookup!==bookLookupRef.current) return;
+      const book=result.items.find(book=>book.titleId===id);
+      if(book) openPanel(book,'reviews');else setPublicError('Không tìm thấy sách.');
+    }catch(e:any){if(lookup===bookLookupRef.current) setPublicError(e.message);}
+  }
+  async function submitReview(event:React.SubmitEvent){
+    event.preventDefault();if(!focusedBook||!reader||!requireReader(bookIntent('write',focusedBook.titleId))) return;
+    setReviewSubmitting(true);setReviewsError('');
+    try{await apiClient.submitBookReview({bookId:focusedBook.titleId,authorName:reader.fullName,rating:reviewRating,content:reviewContent});setReviewSubmitted(true);}
+    catch(e:any){setReviewsError(e.message);if(e.status===401){setPanel(null);void refreshSession();requestSignIn(bookIntent('write',focusedBook.titleId));}}
+    finally{setReviewSubmitting(false);}
+  }
+  async function morePublicReviews(){
+    if(publicReviewBusy) return;setPublicReviewBusy(true);
+    try{const rows=await apiClient.getPublicReviews(undefined,publicReviewPage+1);setPublicReviews(previous=>[...previous,...rows.filter(row=>!previous.some(old=>old.id===row.id))]);setPublicReviewPage(value=>value+1);setPublicReviewMore(rows.length===50);}catch(e:any){setPublicError(e.message);}finally{setPublicReviewBusy(false);}
+  }
+  async function moreBookReviews(){
+    if(!focusedBook||reviewsLoading||panel!=='reviews') return;
+    const session=reviewSessionRef.current;
+    const id=focusedBook.titleId;
+    const targetPage=bookReviews.length===0?1:reviewPage+1;
+    setReviewsLoading(true);setReviewsError('');
+    try{
+      const rows=await apiClient.getPublicReviews(id,targetPage);
+      if(reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id){
+        setBookReviews(previous=>targetPage===1?rows:[...previous,...rows.filter(row=>!previous.some(old=>old.id===row.id))]);
+        setReviewPage(targetPage);
+        setReviewsMore(rows.length===50);
       }
-    } finally {
-      setReviewSubmitting(false);
+    }catch(e:any){
+      if(reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id) setReviewsError(e.message);
+    }finally{
+      if(reviewSessionRef.current===session&&panelRef.current==='reviews'&&focusedBookRef.current?.titleId===id) setReviewsLoading(false);
     }
-  };
-
-  const categories = ['TẤT CẢ', ...catalogCategories];
-
-  const filteredBooks = publicBooks;
-
-  const filteredCandidates = publicResults.filter(c => c.candidateCode.toLowerCase().includes(candidateQuery.toLowerCase()));
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex flex-wrap lg:flex-nowrap gap-4 items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <img 
-              src="/book/assets/club-logo-v8.svg"
-              alt="Logo CLB Yêu Sách Bách Khoa Hà Nội" 
-              className="h-10 w-auto object-contain"
-            />
-            <div>
-              <div className="font-serif font-medium text-sm sm:text-base text-brand-navy leading-tight">
-                Câu lạc bộ Yêu Sách Bách Khoa Hà Nội
-              </div>
-              <div className="text-xs text-brand-red font-medium tracking-wide">
-                Mở sách, đọc tương lai
-              </div>
-            </div>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
-            <button 
-              onClick={() => switchTab('sach')}
-              className={`hover:text-brand-navy transition ${activeTab === 'sach' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              Tra Cứu Sách
-            </button>
-            <button 
-              onClick={() => switchTab('dat-sach')}
-              className={`hover:text-brand-navy transition flex items-center gap-1.5 ${activeTab === 'dat-sach' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Đặt Giữ Chỗ
-            </button>
-            <button 
-              onClick={() => switchTab('tra-don')}
-              className={`hover:text-brand-navy transition ${activeTab === 'tra-don' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              Tra Cứu Đơn
-            </button>
-            {!catalogOnly && (<button
-              onClick={() => switchTab('hoat-dong')}
-              className={`hover:text-brand-navy transition ${activeTab === 'hoat-dong' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              Lịch Trực & Sự Kiện
-            </button>)}
-            {!catalogOnly && (<button
-              onClick={() => switchTab('review')}
-              className={`hover:text-brand-navy transition ${activeTab === 'review' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              Góc Review
-            </button>)}
-            {!catalogOnly && (<button
-              onClick={() => switchTab('tuyen')}
-              className={`hover:text-brand-navy transition ${activeTab === 'tuyen' ? 'text-brand-navy font-bold border-b-2 border-brand-navy py-5' : ''}`}
-            >
-              Kết Quả Tuyển Gen
-            </button>)}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <a href="/?public=1" className="text-sm text-brand-navy underline underline-offset-4">Về cuốn sách</a>
-            <a 
-              href="/noi-bo" 
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-md bg-brand-navy text-white hover:bg-brand-navy-hover transition shadow-sm"
-            >
-              <span>Không Gian Nội Bộ</span>
-              <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-
-        {/* Mobile Navigation bar */}
-        <div className="md:hidden flex overflow-x-auto border-t border-slate-100 px-4 py-2 gap-2 text-xs font-semibold bg-white">
-          <button 
-            onClick={() => switchTab('sach')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'sach' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Tra Cứu Sách
-          </button>
-          <button 
-            onClick={() => switchTab('dat-sach')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'dat-sach' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Đặt Giữ Chỗ
-          </button>
-          <button 
-            onClick={() => switchTab('tra-don')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'tra-don' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Tra Cứu Đơn
-          </button>
-          {!catalogOnly && (<button
-            onClick={() => switchTab('hoat-dong')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'hoat-dong' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Lịch Trực Bàn
-          </button>)}
-          {!catalogOnly && (<button
-            onClick={() => switchTab('review')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'review' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Góc Review
-          </button>)}
-          {!catalogOnly && (<button
-            onClick={() => switchTab('tuyen')}
-            className={`px-3 py-1.5 rounded-full whitespace-nowrap ${activeTab === 'tuyen' ? 'bg-brand-navy text-white' : 'bg-slate-100 text-slate-700'}`}
-          >
-            Kết Quả Tuyển
-          </button>)}
-        </div>
-      </header>
-
-      {/* Hero Banner Section */}
-      <section className="bg-gradient-to-b from-brand-navy-soft to-slate-50 border-b border-slate-200/60 pt-10 pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-red-soft text-brand-red mb-4">
-            <BookOpen className="w-3.5 h-3.5" />
-            Văn hóa đọc sinh viên Bách Khoa
-          </span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-slate-900 tracking-tight leading-tight">
-            {catalogOnly ? 'Một cuốn sách. Một hành trình mới.' : 'Mở sách, đọc tương lai'}
-          </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
-            {catalogOnly ? 'Khám phá tủ sách chung của CLB. Đặt một quyển, chọn buổi trực và hẹn gặp chúng mình — không cần tài khoản.' : 'Những hoạt động, chia sẻ và thông tin tuyển thành viên của CLB Yêu Sách Bách Khoa Hà Nội.'}
-          </p>
-
-          {/* Quick Search Bar */}
-          <div className="mt-8 max-w-2xl mx-auto relative shadow-md rounded-lg">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-5 h-5" />
-            </div>
-            <input 
-              type="text" 
-              aria-label="Tìm sách theo tên hoặc tác giả"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setBookPage(1);
-                if (activeTab !== 'sach') setActiveTab('sach');
-              }}
-              placeholder="Tìm theo tên sách, tác giả (ví dụ: Đắc Nhân Tâm, Clean Code...)"
-              className="w-full pl-11 pr-4 py-3.5 bg-white rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-navy focus:border-brand-navy"
-            />
-            {searchQuery && (
-              <button 
-                aria-label="Xóa từ khóa tìm sách"
-                onClick={() => { setSearchQuery(''); setBookPage(1); }}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {publicError && <p role="alert" className="mb-4 text-sm text-rose-700">{publicError}</p>}
-        {bookError && <p role="alert" className="mb-4 text-sm text-rose-700">{bookError}</p>}
-        
-        {/* TAB 1: TRA CỨU SÁCH */}
-        {activeTab === 'sach' && (
-          <div>
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 pl-1">
-                <Filter className="w-3.5 h-3.5" />
-                Thể loại:
-              </span>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => { setSelectedCategory(cat); setBookPage(1); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${
-                    selectedCategory === cat 
-                      ? 'bg-brand-navy text-white shadow-sm' 
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <label className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600">
-              <input type="checkbox" checked={onlyAvailable} onChange={e => { setOnlyAvailable(e.target.checked); setBookPage(1); }} className="accent-brand-navy" />
-              Chỉ hiện sách còn có thể giữ chỗ
-            </label>
-
-            {/* Book Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredBooks.map((book) => {
-                const availableCopies = bookAvailability[book.id] || 0;
-                const depositAmount = bookDeposits[book.id] || 50000;
-
-                return (
-                  <div 
-                    key={book.id}
-                    onClick={() => openBookModal(book)}
-                    className="bg-white rounded-xl border border-slate-200 hover:border-brand-navy/40 hover:shadow-lg transition cursor-pointer flex flex-col overflow-hidden group"
-                  >
-                    <div className="relative aspect-[3/4] bg-slate-100 overflow-hidden">
-                      <img 
-                        src={book.coverImage || '/book/assets/club-logo-v8.svg'}
-                        alt={book.title} 
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      />
-                      <div className="absolute top-2.5 right-2.5">
-                        {availableCopies > 0 ? (
-                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Còn {availableCopies} bản
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shadow-sm">
-                            Chưa còn bản để giữ chỗ
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="p-4 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex flex-wrap gap-1 mb-1.5">
-                          {book.categories.map((c, i) => (
-                            <span key={i} className="text-[10px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                        <h3 className="font-serif font-bold text-slate-900 text-base line-clamp-2 group-hover:text-brand-navy transition">
-                          <button type="button" className="text-left" onClick={event => { event.stopPropagation(); openBookModal(book); }}>{book.title}</button>
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {book.authors.join(', ')}{book.publishYear ? ` · ${book.publishYear}` : ''}
-                        </p>
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <div>
-                          <div className="text-[10px] text-slate-400">Tiền cọc quy định</div>
-                          <div className="font-bold text-brand-navy tnum">
-                            {formatVND(depositAmount)}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[10px] text-slate-400">Giá bìa</div>
-                          <div className="font-medium text-slate-700 tnum">
-                            {book.coverPrice ? formatVND(book.coverPrice) : 'Chưa có giá'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {availableCopies > 0 && (
-                        <div className="mt-3 pt-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setReservationBookId(book.id);
-                              switchTab('dat-sach', book.id);
-                            }}
-                            className="w-full py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
-                          >
-                            <BookOpen className="w-3.5 h-3.5" />
-                            Đặt Giữ Chỗ Bản Này
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {filteredBooks.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-                <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h4 className="font-semibold text-slate-700">{booksUpdatedAt || bookError ? 'Không tìm thấy sách phù hợp' : 'Đang tải danh mục sách...'}</h4>
-                <p className="text-sm text-slate-400 mt-1">{booksUpdatedAt || bookError ? 'Thử tìm kiếm với từ khóa khác hoặc bỏ chọn bộ lọc thể loại.' : 'Đang cập nhật tồn sách từ máy chủ.'}</p>
-              </div>
-            )}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
-              <span>{booksUpdatedAt ? `${bookTotal} đầu sách${onlyAvailable ? ' còn có thể giữ chỗ' : ''} · ${BOOKS_PER_PAGE} cuốn/trang · Cập nhật ${booksUpdatedAt}` : 'Đang cập nhật danh mục...'}</span>
-              <div className="flex items-center gap-3">
-                <button disabled={bookPage === 1} onClick={() => setBookPage(p => p - 1)} className="px-3 py-2 border rounded disabled:opacity-40">Trang trước</button>
-                <span>Trang {bookPage} / {Math.max(1, Math.ceil(bookTotal / BOOKS_PER_PAGE))}</span>
-                <button disabled={bookPage * BOOKS_PER_PAGE >= bookTotal} onClick={() => setBookPage(p => p + 1)} className="px-3 py-2 border rounded disabled:opacity-40">Trang sau</button>
-              </div>
-            </div>
-          </div>
-        )}
-
+  }
+  const actions=(book:PublicReservationBookDto)=><div className="reader-book-actions">
+    <button className="ui-btn ui-btn-primary" disabled={sessionLoading||book.availableCopiesCount===0} onClick={()=>openPanel(book,'reserve')}><BookOpen size={16} aria-hidden="true"/>{book.availableCopiesCount>0?'Đặt giữ chỗ':'Chưa có bản để đặt'}</button>
+    <button className="ui-btn ui-btn-secondary" aria-pressed={!!reader&&bookmarks.has(book.titleId)} disabled={sessionLoading||!!bookmarkBusy} onClick={()=>void toggleBookmark(book)}><Bookmark size={16} aria-hidden="true" fill={reader&&bookmarks.has(book.titleId)?'currentColor':'none'}/>{bookmarkBusy===book.titleId?'Đang lưu…':reader&&bookmarks.has(book.titleId)?'Bỏ đánh dấu':'Đánh dấu sách'}</button>
+  </div>;
+  return <div className="reader-portal">
+    <header className="reader-header"><a className="reader-brand" href="/"><img src="/book/assets/club-logo-v8.svg" alt="" width="52" height="52"/><span>Câu lạc bộ Yêu Sách<br/>Bách Khoa Hà Nội<small>Mở sách, đọc tương lai</small></span></a>
+      <button className="ui-btn ui-btn-primary reader-account-button" disabled={sessionLoading} onClick={()=>reader?switchTab('tra-don'):requestSignIn()}>{reader?'Tài khoản bạn đọc':'Đăng ký / Đăng nhập'}</button>
+    </header>
+    <nav className="reader-tabs" aria-label="Cổng bạn đọc">{tabs.map(tab=><button key={tab.id} disabled={tab.id==='tra-don'&&sessionLoading} aria-current={activeTab===tab.id?'page':undefined} onClick={()=>switchTab(tab.id)}>{tab.label}</button>)}</nav>
+    <main className="reader-main">
+      {(publicError||sessionError)&&<p role="alert" className="reader-notice">{publicError||sessionError}</p>}
+      {bookError&&<p role="alert" className="reader-notice">{bookError} <button className="ui-btn ui-btn-ghost" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></p>}
+      {activeTab==='sach'&&<>
+        <section className="reader-intro"><div><span className="reader-eyebrow">Tủ sách CLB · Phòng đọc mở</span><h1>Bạn muốn mang câu chuyện nào về nhà?</h1><p>Một cuốn sách hay, một người bạn mới. Tìm câu chuyện tiếp theo của bạn tại đây.</p></div><aside className="ui-card"><BookOpen size={28} aria-hidden="true"/><div><strong>Mượn sách miễn phí</strong><p>Tủ sách chung được sinh viên Bách Khoa gìn giữ. Đăng nhập để đặt trước và nhận sách tại buổi trực.</p><a href="/sach/?tab=hoat-dong" onClick={event=>{event.preventDefault();switchTab('hoat-dong');}}>Xem lịch trực <ArrowRight size={16} aria-hidden="true"/></a></div></aside></section>
+        <div className="reader-catalog-layout"><aside className="reader-category ui-card"><span className="reader-eyebrow">Mục lục kệ sách</span><h2>Phân loại tủ sách</h2><button aria-pressed={!selectedCategory} onClick={()=>{setSelectedCategory('');setBookPage(1);}}>Tất cả</button>{categories.map(category=><button key={category} aria-pressed={selectedCategory===category} onClick={()=>{setSelectedCategory(category);setBookPage(1);}}>{category}</button>)}<p>Sách bạn đánh dấu luôn ở đầu mục Tất cả.</p></aside>
+          <section className="reader-catalog" aria-label="Danh mục sách"><div className="reader-search ui-card"><label><Search size={20} aria-hidden="true"/><input aria-label="Tìm sách, tác giả" placeholder="Nhập tên sách hoặc tác giả…" value={searchQuery} onChange={event=>{setSearchQuery(event.target.value);setBookPage(1);}}/></label><div className="reader-filter-row"><label className="reader-mobile-category">Thể loại<select className="ui-input" value={selectedCategory} onChange={event=>{setSelectedCategory(event.target.value);setBookPage(1);}}><option value="">Tất cả</option>{categories.map(category=><option key={category}>{category}</option>)}</select></label><label><input type="checkbox" checked={onlyAvailable} onChange={event=>{setOnlyAvailable(event.target.checked);setBookPage(1);}}/>Chỉ sách còn có thể đặt</label><span>{bookTotal} đầu sách</span></div></div>
+            {booksLoading&&<p role="status" className="reader-loading">Đang cập nhật Tủ sách…</p>}
+            <div className="reader-book-grid" aria-busy={booksLoading}>{books.map(book=><article key={book.titleId} className="reader-book ui-card">
+              <button className="reader-book-cover" aria-label={'Xem tóm tắt '+book.title} onClick={()=>openPanel(book,'detail')}><img src={book.coverImageUrl||'/book/assets/club-logo-v8.svg'} alt={book.title} loading="lazy" decoding="async"/>{reader&&bookmarks.has(book.titleId)&&<span className={'reader-bookmark '+(book.availableCopiesCount>0?'is-available':'is-unavailable')} role="img" aria-label={'Đã đánh dấu · '+(book.availableCopiesCount>0?'Còn bản để đặt':'Hết bản để đặt')}><Bookmark fill="currentColor" strokeWidth={1.3} size={32}/></span>}</button>
+              <div className="reader-book-body"><span className="reader-book-category">{book.category||'Tủ sách CLB'}</span><h3><button onClick={()=>openPanel(book,'detail')}>{book.title}</button></h3><p>{book.author||'Đang bổ sung tác giả'}</p><span className={'reader-stock '+(book.availableCopiesCount>0?'is-available':'is-unavailable')}>{book.availableCopiesCount>0?`Còn ${book.availableCopiesCount} bản`:'Hết bản để đặt'}</span><div className="reader-deposit"><span>Cọc dự kiến</span><strong>{formatVND(book.standardDeposit)}</strong></div>{actions(book)}</div>
+            </article>)}</div>
+            {!booksLoading&&!books.length&&<div className="reader-empty ui-card"><BookOpen size={36}/><h2>{bookError?'Tủ sách chưa tải được':'Chưa tìm thấy cuốn sách phù hợp'}</h2><p>Thử một từ khóa khác hoặc bỏ bộ lọc.</p></div>}
+            <div className="reader-pagination"><button className="ui-btn ui-btn-secondary" disabled={bookPage===1||booksLoading} onClick={()=>setBookPage(value=>value-1)}>Trang trước</button><span>Trang {bookPage}/{Math.max(1,Math.ceil(bookTotal/BOOKS_PER_PAGE))}</span><button className="ui-btn ui-btn-secondary" disabled={bookPage*BOOKS_PER_PAGE>=bookTotal||booksLoading} onClick={()=>setBookPage(value=>value+1)}>Trang sau</button></div>
+          </section></div>
+      </>}
+      {activeTab==='tra-don'&&<ReaderWorkspace initialMode="lookup"/>}
         {/* TAB 2: LỊCH TRỰC BÀN & SỰ KIỆN */}
         {activeTab === 'hoat-dong' && (
           <div className="max-w-4xl mx-auto space-y-8">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)]">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#DCDED0]">
                 <div>
-                  <h2 className="text-xl font-bold text-brand-navy">Lịch Trực Bàn Sách Định Kỳ</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Thời gian đón bạn đọc: Thứ Ba và Thứ Năm, từ 14:00 đến 17:00</p>
+                  <h2 className="text-xl font-serif font-bold text-[#365E4B]">Lịch Trực Bàn Sách Định Kỳ</h2>
+                  <p className="text-xs text-[#64705C] mt-0.5">Thời gian đón bạn đọc: Thứ Ba và Thứ Năm, từ 14:00 đến 17:00</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/30">
                   Đang hoạt động
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {publicSchedules.map((shift) => (
-                  <div key={shift.id} className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                  <div key={shift.id} className="p-4 rounded-[14px] bg-[#F8F3E7] border border-[#DCDED0] flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between text-xs font-semibold text-brand-navy mb-2">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4 text-brand-red" />
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#365E4B] mb-2">
+                        <span className="flex items-center gap-1.5 font-bold">
+                          <Calendar className="w-4 h-4 text-[#9B4D36]" />
                           {shift.date}
                         </span>
-                        <span className="bg-brand-navy/10 px-2 py-0.5 rounded text-[11px]">
+                        <span className="bg-[#E8EDDF] text-[#365E4B] px-2.5 py-0.5 rounded-full text-[11px] font-mono">
                           {shift.timeRange}
                         </span>
                       </div>
-                      <div className="flex items-start gap-2 text-xs text-slate-600 mt-2">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                      <div className="flex items-start gap-2 text-xs text-[#35483C] mt-2">
+                        <MapPin className="w-3.5 h-3.5 text-[#64705C] mt-0.5 shrink-0" />
                         <span>{shift.location}</span>
                       </div>
-                      <div className="mt-3 text-xs text-slate-500">
-                        <span className="font-medium text-slate-700">Nhiệm vụ bàn sách:</span> Tiếp nhận mượn–trả, tư vấn đầu sách hay, hoàn tiền cọc trực tiếp.
+                      <div className="mt-3 text-xs text-[#64705C]">
+                        <span className="font-medium text-[#35483C]">Nhiệm vụ bàn sách:</span> Tiếp nhận mượn–trả, tư vấn đầu sách hay, hoàn tiền cọc trực tiếp.
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 p-3 bg-brand-gold-soft/50 rounded-lg border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
+              {publicHolidays.length>0 && <div className="mt-4 rounded-[14px] bg-[#F4EAD2]/80 border border-[#A87A4C]/30 p-4 text-sm text-[#35483C]"><h3 className="font-serif font-bold text-[#A87A4C] mb-2">Lịch nghỉ</h3>{publicHolidays.map(day=><p key={day.holidayDate} className="text-xs">{day.holidayDate} · {day.name}</p>)}</div>}
+
+              <div className="mt-4 p-3.5 bg-[#F4EAD2]/60 rounded-[14px] border border-[#A87A4C]/30 text-xs text-[#35483C] flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-[#A87A4C] mt-0.5 shrink-0" />
                 <div>
-                  <span className="font-bold">Lưu ý về ngày nghỉ lễ/Tết:</span> Nếu ngày đến hạn mượn rơi vào lịch nghỉ lễ/Tết của trường, hạn mượn sẽ được tự động dời tới buổi trực thực tế gần nhất tiếp theo mà không tính phạt bạn đọc.
+                  <span className="font-bold text-[#A87A4C]">Lưu ý về ngày nghỉ lễ/Tết:</span> Nếu ngày đến hạn mượn rơi vào lịch nghỉ lễ/Tết của trường, hạn mượn sẽ được tự động dời tới buổi trực thực tế gần nhất tiếp theo mà không tính phạt bạn đọc.
                 </div>
               </div>
             </div>
 
             {/* Upcoming Club Events */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-900 mb-4">Sự Kiện & Hoạt Động Lan Tỏa</h2>
+            <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)]">
+              <h2 className="text-xl font-serif font-bold text-[#35483C] mb-4">Sự Kiện & Hoạt Động Lan Tỏa</h2>
               <div className="space-y-4">
-                {publicActivities.length === 0 && <p className="text-sm text-slate-500">Chưa có hoạt động được công bố.</p>}
-                {publicActivities.map(activity => <article key={activity.id} className="p-4 rounded-lg border border-slate-200">
-                  <h3 className="font-bold">{activity.title}</h3><p className="text-xs text-slate-500">{activity.eventDate} · {activity.location}</p>
-                  <p className="text-sm mt-2">{activity.description}</p>
+                {publicActivities.length === 0 && <p className="text-sm text-[#64705C]">Chưa có hoạt động được công bố.</p>}
+                {publicActivities.map(activity => <article key={activity.id} className="p-4 rounded-[14px] border border-[#DCDED0] bg-[#F8F3E7]">
+                  <h3 className="font-serif font-bold text-[#35483C] text-base">{activity.title}</h3><p className="text-xs text-[#64705C] mt-0.5">{activity.eventDate} · {activity.location}</p>
+              <p className="text-sm text-[#35483C] mt-2 whitespace-pre-line leading-relaxed">{activity.description}</p>
                 </article>)}
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: GÓC REVIEW & CẢM NHẬN */}
-        {activeTab === 'review' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200">
-              <div>
-                <h2 className="text-lg font-bold text-brand-navy">Cảm Nhận Từ Bạn Đọc</h2>
-                <p className="text-xs text-slate-500">Các bài review đã được Ban Biên Tập duyệt và công khai</p>
-              </div>
-              <button 
-                onClick={() => setShowReviewModal(true)}
-                className="px-3.5 py-2 text-xs font-semibold rounded-md bg-brand-navy text-white hover:bg-brand-navy-hover transition shadow-sm flex items-center gap-1.5"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                Gửi Cảm Nhận Sách
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {publicReviews.map((rev) => (
-                <div key={rev.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-800">{rev.readerName}</span>
-                      <span>·</span>
-                      <span className="font-serif italic text-brand-navy">{publicBooks.find(b => b.id === rev.bookId)?.title || 'Cảm nhận sách'}</span>
-                    </div>
-                    <div className="flex items-center text-amber-500">
-                      {Array.from({ length: rev.rating }).map((_, i) => (
-                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-700 leading-relaxed font-serif">
-                    "{rev.content}"
-                  </p>
-                  <div className="mt-3 text-[11px] text-slate-400">
-                    Đăng ngày: {new Date(rev.createdAt).toLocaleDateString('vi-VN')} · Đã duyệt bởi Ban Nội Dung CLB
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+      {activeTab==='review'&&<section className="reader-community"><div className="reader-section-heading"><div><span className="reader-eyebrow">Những trang sách còn ở lại</span><h1>Góc review</h1><p>Cảm nhận đã được duyệt. Các bài viết của CLB được ghim lên đầu.</p></div><button className="ui-btn ui-btn-secondary" onClick={()=>switchTab('sach')}>Chọn sách để viết nhận xét</button></div>{publicReviews.length===0&&<p className="reader-empty ui-card">Chưa có review được công bố.</p>}{publicReviews.map(review=><div key={review.id}><button className="reader-review-book-link" onClick={()=>void openReviewBook(review.bookId)}>Xem cuốn sách & các đánh giá <ArrowRight size={16}/></button><ReviewCard review={review}/></div>)}{publicReviewMore&&<button className="ui-btn ui-btn-secondary" disabled={publicReviewBusy} onClick={()=>void morePublicReviews()}>Xem thêm review</button>}</section>}
         {/* TAB 4: KẾT QUẢ TUYỂN GEN */}
         {activeTab === 'tuyen' && (
           <div className="max-w-4xl mx-auto space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy mb-1">Tra Cứu Kết Quả Tuyển Thành Viên </h2>
-              <p className="text-xs text-slate-500 mb-6">
+            {recruitmentNotice && <article className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)] space-y-4">
+              {recruitmentNotice.image && <img src={recruitmentNotice.image} alt={recruitmentNotice.title} className="w-full max-h-96 object-contain rounded-[14px]"/>}
+              <h2 className="font-serif text-2xl font-bold text-[#365E4B]">{recruitmentNotice.title}</h2>
+              <p className="text-sm text-[#35483C] whitespace-pre-line leading-relaxed">{recruitmentNotice.description}</p>
+              {recruitmentNotice.status==='OPEN' && recruitmentNotice.formUrl ? <a href={recruitmentNotice.formUrl} target="_blank" rel="noopener noreferrer" className="ui-btn ui-btn-primary rounded-[14px] inline-flex text-white px-5 py-2.5 text-xs font-semibold">Đăng ký tham gia</a> : <p className="text-sm text-[#64705C]">Đợt tuyển đã đóng đơn.</p>}
+            </article>}
+            <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)]">
+              <h2 className="text-xl font-serif font-bold text-[#365E4B] mb-1">Tra Cứu Kết Quả Tuyển Thành Viên</h2>
+              <p className="text-xs text-[#64705C] mb-6">
                 Chỉ hiển thị các trường thông tin đã được Ban Chủ Nhiệm phê duyệt công khai. Dữ liệu điểm số và thông tin liên hệ được bảo mật nội bộ.
               </p>
 
               <div className="relative mb-6">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-[#64705C]" />
                 <input 
                   type="text" 
                   value={candidateQuery}
                   onChange={(e) => setCandidateQuery(e.target.value)}
                   placeholder="Nhập mã hồ sơ tuyển thành viên..."
-                  className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-navy"
+                  className="w-full pl-9 pr-4 py-2.5 text-xs bg-[#F8F3E7] rounded-[14px] border border-[#DCDED0] text-[#35483C] focus:outline-none focus:border-[#365E4B] min-h-[44px]"
                 />
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-[14px] border border-[#DCDED0]">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                  <thead className="bg-[#F8F3E7] border-b border-[#DCDED0] text-[#64705C] font-semibold uppercase">
                     <tr>
                       <th className="py-2.5 px-3">Mã hồ sơ</th>
                       <th className="py-2.5 px-3">Ban trúng tuyển</th>
                       <th className="py-2.5 px-3">Tình trạng</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[#DCDED0]">
                     {filteredCandidates.map((c) => (
-                      <tr key={c.candidateCode} className="hover:bg-slate-50/80">
-                        <td className="py-3 px-3 font-mono font-medium text-slate-700">{c.candidateCode}</td>
+                      <tr key={c.candidateCode} className="hover:bg-[#F8F3E7]/80">
+                        <td className="py-3 px-3 font-mono font-medium text-[#35483C]">{c.candidateCode}</td>
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-navy-soft text-brand-navy">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#365E4B]">
                             {c.passedDepartment}
                           </span>
                         </td>
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E8EDDF] text-[#365E4B]">
                             Trúng tuyển
                           </span>
                         </td>
@@ -644,264 +335,13 @@ export default function PublicPortal({ catalogOnly = false }: { catalogOnly?: bo
           </div>
         )}
 
-        {/* TAB 5 & 6: ĐẶT GIỮ CHỖ SÁCH VÀ TRA CỨU ĐƠN (PR-6) */}
-        {(activeTab === 'dat-sach' || activeTab === 'tra-don') && (
-          <ReservationSection
-            initialMode={activeTab === 'tra-don' ? 'lookup' : 'create'}
-            initialBookId={reservationBookId}
-            onNavigateToTab={(tab) => switchTab(tab as any)}
-          />
-        )}
-      </main>
-
-      {/* Book Detail Modal */}
-      {selectedBook && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
-            <div className="relative p-6 sm:p-8">
-              <button 
-                onClick={closeBookModal}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="flex flex-col sm:flex-row gap-6">
-                <div className="w-full sm:w-48 aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shrink-0 shadow">
-                  <img 
-                    src={selectedBook.coverImage} 
-                    alt={selectedBook.title} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {selectedBook.categories.map((c, i) => (
-                      <span key={i} className="text-xs font-semibold bg-brand-navy-soft text-brand-navy px-2 py-0.5 rounded-full">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                  <h2 className="text-2xl font-serif font-bold text-slate-900 leading-tight">
-                    {selectedBook.title}
-                  </h2>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Tác giả: <span className="font-semibold text-slate-800">{selectedBook.authors.join(', ')}</span>
-                  </p>
-                  {selectedBook.publisher && <p className="text-xs text-slate-500">
-                    Nhà xuất bản: {selectedBook.publisher} ({selectedBook.publishYear})
-                  </p>}
-
-                  <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <div className="text-slate-400">Giá bìa:</div>
-                      <div className="font-bold text-slate-800 tnum">
-                        {selectedBook.coverPrice ? formatVND(selectedBook.coverPrice) : 'Chưa có giá'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400">Tiền cọc quy định:</div>
-                      <div className="font-bold text-brand-navy tnum">
-                        {formatVND(bookDeposits[selectedBook.id] || 50000)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="mt-4 text-xs text-slate-600 leading-relaxed">
-                    {selectedBook.description}
-                  </p>
-                </div>
-              </div>
-
-              <p className="mt-6 text-sm text-slate-600">Còn {bookAvailability[selectedBook.id] || 0} bản có thể đặt. Chọn buổi trực ở bước xác nhận.</p>
-
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
-
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => {
-                      setReservationBookId(selectedBook.id);
-                      closeBookModal();
-                      switchTab('dat-sach', selectedBook.id);
-                    }}
-                    disabled={!bookAvailability[selectedBook.id]}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-sm"
-                  >
-                    <BookOpen className="w-3.5 h-3.5" />
-                    Đặt Mượn Giữ Chỗ
-                  </button>
-                  <button 
-                    onClick={closeBookModal}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
-                  >
-                    Đóng cửa sổ
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Review Submission Modal (Fixed R10: Real API submission with moderation pending state) */}
-      {showReviewModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-base text-brand-navy">Gửi Đánh Giá / Cảm Nhận Sách</h3>
-              <button onClick={() => setShowReviewModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {reviewSubmitted ? (
-              <div className="py-8 text-center">
-                <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                <h4 className="font-bold text-slate-800">Cảm nhận đã được tiếp nhận thành công!</h4>
-                <div className="my-2 p-2.5 bg-slate-50 border border-slate-200 rounded-lg inline-block text-xs font-mono text-slate-600">
-                  Mã ghi nhận: #{reviewSuccessDetail?.id}
-                </div>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
-                  {reviewSuccessDetail?.message || 'Đánh giá đã được lưu vào hàng đợi và sẽ xuất hiện công khai sau khi Ban Quản Trị Nội Dung CLB phê duyệt.'}
-                </p>
-                <button 
-                  onClick={() => {
-                    setShowReviewModal(false);
-                    setReviewSubmitted(false);
-                    setReviewContent('');
-                    setReviewSuccessDetail(null);
-                  }} 
-                  className="mt-6 px-4 py-2 text-xs font-semibold bg-brand-navy text-white rounded-lg hover:bg-brand-navy-hover transition"
-                >
-                  Hoàn tất
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleReviewSubmit} className="mt-4 space-y-4 text-xs">
-                {reviewErrorMessage && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-semibold">Lưu ý xác thực:</div>
-                      <div>{reviewErrorMessage}</div>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Cuốn sách bạn muốn đánh giá:</label>
-                  <select
-                    value={reviewBookId}
-                    onChange={(e) => setReviewBookId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-brand-navy focus:outline-none bg-white text-xs"
-                  >
-                    {publicBooks.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.title} — {b.authors.join(', ')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Họ tên bạn đọc:</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={reviewName}
-                    onChange={(e) => setReviewName(e.target.value)}
-                    placeholder="Ví dụ: Nguyễn Văn A (K68)..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-brand-navy focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Mức độ đánh giá:</label>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <button
-                        type="button"
-                        key={s}
-                        onClick={() => setReviewRating(s)}
-                        className={`p-1 text-amber-500 ${reviewRating >= s ? 'fill-current' : 'opacity-40'}`}
-                      >
-                        <Star className={`w-5 h-5 ${reviewRating >= s ? 'fill-amber-400' : ''}`} />
-                      </button>
-                    ))}
-                    <span className="text-xs text-slate-500 ml-2">({reviewRating}/5 sao)</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Nội dung cảm nhận:</label>
-                  <textarea 
-                    rows={4}
-                    required
-                    value={reviewContent}
-                    onChange={(e) => setReviewContent(e.target.value)}
-                    placeholder="Chia sẻ những góc nhìn tâm đắc hoặc bài học bạn rút ra từ cuốn sách (tối thiểu 10 ký tự)..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-brand-navy focus:outline-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-[11px] leading-relaxed">
-                  <span className="font-semibold">Chính sách kiểm duyệt:</span> Bạn đọc cần có phiên đăng nhập hợp lệ để gửi cảm nhận. Mọi nội dung sẽ được kiểm duyệt trước khi công khai nhằm đảm bảo văn hóa đọc văn minh.
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button 
-                    type="button"
-                    onClick={() => setShowReviewModal(false)}
-                    className="px-3 py-2 rounded-md bg-slate-100 text-slate-700 font-semibold"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={reviewSubmitting}
-                    className="px-4 py-2 rounded-md bg-brand-navy text-white font-semibold hover:bg-brand-navy-hover transition disabled:opacity-50"
-                  >
-                    {reviewSubmitting ? 'Đang gửi kiểm duyệt...' : 'Gửi duyệt cảm nhận'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 py-10 px-4 sm:px-6 lg:px-8 mt-16 border-t border-slate-800 text-xs">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" className="h-8 w-auto brightness-200" />
-              <span className="font-bold text-white text-sm">CLB Yêu Sách Bách Khoa Hà Nội</span>
-            </div>
-            <p className="text-slate-400 leading-relaxed">
-              Môi trường cho sinh viên hoàn thiện bản thân thông qua sách và các hoạt động văn hóa đọc. Thành lập và hoạt động phi lợi nhuận tại Đại học Bách Khoa Hà Nội.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-white mb-2 uppercase tracking-wider text-[11px]">Địa Điểm & Thời Gian</h4>
-            <ul className="space-y-1.5 text-slate-400">
-              <li>· Sảnh Thư viện Tạ Quang Bửu, ĐHBK Hà Nội</li>
-              <li>· Văn phòng Hội Sinh viên ĐHBK Hà Nội</li>
-              <li>· Trực bàn sách: Thứ Ba & Thứ Năm (14:00 – 17:00)</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-white mb-2 uppercase tracking-wider text-[11px]">Thông Tin Liên Hệ</h4>
-            <p className="text-slate-400 leading-relaxed">
-              Email: clbyeusachbachkhoahanoi@gmail.com<br />
-              Fanpage: fb.com/CLBYeuSachBachKhoaHaNoi<br />
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
+    </main>
+    <footer className="reader-footer"><span>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</span><a href="/">Về cuốn sách của chúng mình <ArrowRight size={16}/></a></footer>
+    {focusedBook&&panel&&<ReaderDialog title={panel==='reserve'?'Đặt giữ chỗ':panel==='reviews'?'Đánh giá sách':panel==='write'?'Viết nhận xét':'Một cuốn sách, một thế giới'} onClose={closePanel}>
+      {panel==='detail'?<><div className="reader-book-detail"><img src={focusedBook.coverImageUrl||'/book/assets/club-logo-v8.svg'} alt={focusedBook.title}/><div><span className="reader-eyebrow">{focusedBook.category||'Tủ sách CLB'}</span><h3>{focusedBook.title}</h3><p>{focusedBook.author||'Đang bổ sung tác giả'}</p><span className="reader-chip">{focusedBook.availableCopiesCount>0?`Còn ${focusedBook.availableCopiesCount} bản`:'Hết bản để đặt'}</span><p>Cọc dự kiến: <strong>{formatVND(focusedBook.standardDeposit)}</strong></p></div></div><div className="reader-summary"><h3>Tóm tắt cuốn sách</h3><p>{focusedBook.description||'CLB đang bổ sung phần tóm tắt cho cuốn sách này.'}</p></div>{actions(focusedBook)}<button className="ui-btn ui-btn-secondary reader-wide" onClick={()=>openPanel(focusedBook,'reviews')}><MessageSquare size={17}/>Đánh giá sách</button></>:
+      panel==='reserve'?<><p className="reader-eyebrow">Cuốn sách bạn chọn</p><h3 className="reader-modal-book-title">{focusedBook.title}</h3><ReaderWorkspace initialMode="create" initialBookId={focusedBook.titleId}/></>:
+      panel==='reviews'?<><div className="reader-book-review-heading"><img src={focusedBook.coverImageUrl||'/book/assets/club-logo-v8.svg'} alt=""/><div><h3>{focusedBook.title}</h3><p>{focusedBook.author}</p><button className="ui-btn ui-btn-primary" disabled={sessionLoading} onClick={()=>openPanel(focusedBook,'write')}>Viết nhận xét</button></div></div><p className="reader-review-rule">Review CLB ghim trước · Chỉ hiển thị nội dung đã duyệt.</p>{bookReviews.map(review=><ReviewCard key={review.id} review={review}/>)}{!reviewsLoading&&!reviewsError&&!bookReviews.length&&<p className="reader-empty">Chưa có review cho cuốn sách này. Hãy chia sẻ cảm nhận đầu tiên.</p>}{reviewsError&&<p role="alert" className="reader-notice">{reviewsError}</p>}{reviewsLoading?<p role="status">Đang tải review…</p>:(reviewsMore || (!bookReviews.length && reviewsError))&&<button className="ui-btn ui-btn-secondary" onClick={()=>void moreBookReviews()}>{!bookReviews.length && reviewsError ? 'Thử lại tải đánh giá' : 'Xem thêm đánh giá'}</button>}</>:
+      <><h3 className="reader-modal-book-title">{focusedBook.title}</h3>{reviewSubmitted?<div role="status" className="reader-empty"><BookOpen size={36}/><h3>Cảm ơn bạn đã chia sẻ</h3><p>Nhận xét đang chờ quản trị viên duyệt và chưa xuất hiện công khai.</p><button className="ui-btn ui-btn-secondary" onClick={()=>openPanel(focusedBook,'reviews')}>Về đánh giá cuốn sách</button></div>:<form className="reader-review-form" onSubmit={submitReview}><p>Viết dưới tên <strong>{reader?.fullName}</strong>. Chỉ chữ, không ảnh hay tệp đính kèm; nhận xét sẽ chờ duyệt.</p><label>Đánh giá của bạn<select className="ui-input" value={reviewRating} onChange={event=>setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map(rating=><option key={rating} value={rating}>{rating} sao</option>)}</select></label><label>Cảm nhận về cuốn sách<textarea className="ui-input" required minLength={10} maxLength={3000} rows={7} value={reviewContent} onChange={event=>setReviewContent(event.target.value)} placeholder="Điều gì ở cuốn sách khiến bạn nhớ mãi?"/></label><small>{reviewContent.length}/3000 ký tự</small>{reviewsError&&<p role="alert" className="reader-notice">{reviewsError}</p>}<button disabled={reviewSubmitting} className="ui-btn ui-btn-primary">{reviewSubmitting?'Đang gửi…':'Gửi nhận xét chờ duyệt'}</button></form>}</>}
+    </ReaderDialog>}
+  </div>;
 }

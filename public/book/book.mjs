@@ -237,7 +237,6 @@ addEventListener('pointerdown', cancelNavigation, { passive: true });
 addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', () => measure());
 document.fonts.ready.then(() => { key = ''; schedule(); });
-document.body.classList.remove('no-js');
 history.scrollRestoration = 'manual';
 scrollTo({ top: 0, behavior: 'instant' });
 measure(false); setReduced(reduced); render();

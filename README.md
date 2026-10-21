@@ -1,5 +1,19 @@
 # YSBK — Website quản lý câu lạc bộ sách
 
+## Cập nhật bàn giao 21/10/2026
+
+**Giao diện tiếp nối 22/10:** cổng bạn đọc đã đổi theo bố cục Stitch, giữ nguyên landing cuốn sách; Tủ sách đặt qua modal, bookmark ghim/xanh–đỏ, review từng cuốn chờ ADMIN duyệt. Không thêm thông báo theo quyết định mới nhất. [Thiết kế, file thay đổi và bằng chứng local](docs/technical/reader-library-design-2026-10-21.md). Google/cloud và nghiệm thu browser thật vẫn chưa hoàn tất.
+
+**Chat tiếp nối:** đã triển khai local tài khoản bạn đọc Google bắt buộc, phiên một trình duyệt tối đa 30 ngày, đăng nhập mới thu hồi phiên cũ; chọn subdomain riêng + Cloudflare Access cho nội bộ. Đọc [vận hành mới](docs/technical/reader-accounts-local-and-access.md). Người dùng xác nhận chưa có tên miền, Supabase cloud project và Google OAuth client; chưa bật provider/cloud. Local đang chặn đặt mới khi chưa có phiên Google, vẫn tra cứu được sách. Các đoạn bàn giao trước dưới đây giữ làm lịch sử; CURRENT-STATE là nguồn điều phối hiện hành.
+
+Đọc [session handoff](docs/SESSION-HANDOFF.md) và [trạng thái hiện hành](docs/CURRENT-STATE.md) trước khi tiếp tục. Repo đang ở `main`, HEAD `b9d568b`; có nhiều thay đổi chưa commit, gồm phần UI xuất hiện sau bộ concept. Lượt này chỉ đồng bộ tài liệu, chưa review toàn bộ diff UI hoặc đối chiếu GitHub.
+
+Local `http://localhost:4321/?public=1` và preview `http://127.0.0.1:4323/` trả HTTP 200 khi bàn giao; `/health/ready` báo DB/Auth connected. Số test trong các mục cũ là kết quả theo từng lần chạy, không phải vừa chạy lại. Supabase + Cloudflare Free đã chọn cho beta; hiện ưu tiên local, chưa deploy.
+
+[Bộ UI Stitch hoàn chỉnh](docs/mockups/stitch-ui-2026-10-21/HANDOFF.md) gồm 14 mẫu và kế hoạch. [Nghiên cứu đặt/hủy](docs/technical/public-reservation-ux-research-2026-10-21.md) đề xuất “Sách của tôi”, tài khoản tùy chọn, đổi sách và xem lại IP; tất cả còn đang thảo luận. Quy tắc hiện hành vẫn đặt khách/CAPTCHA, một quyển/đơn, ba đơn/IP/24 giờ và ba suất/SĐT.
+
+Các báo cáo chặng và lời mô tả trạng thái cũ bên dưới được giữ để truy vết; xem tài liệu chuyên đề mới trước khi diễn giải thành trạng thái hiện tại.
+
 Bộ tài liệu khám phá sản phẩm v0.11, ngày 18/10/2026, múi giờ `Asia/Ho_Chi_Minh`.
 
 **Review Chặng 12, 19/10/2026: PARTIAL.** [Review độc lập](docs/reviews/2026-10-19-stage12-followup.md) ghi S12-01..10 và đối chiếu S11/các chặng trước. Có API client/login và các sửa loss/selector/confirmation, nhưng DTO/catalog loader lệch server, FULL return thiếu selector, quầy chưa hoàn tất pending tiền, retry key mới, DEMO còn gọi live mutations và correction fine sai cột. Check/build,124 unit và22 Python tests pass; OpenAPI0 lỗi/22 cảnh báo;42 DB tests dừng setup, Workers spawn EPERM, browser bị tắt trong Work settings. Chưa dùng tiền/PII thật.

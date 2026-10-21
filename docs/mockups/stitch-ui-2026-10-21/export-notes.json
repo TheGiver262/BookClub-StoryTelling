@@ -1,0 +1,20 @@
+{
+  "editedLocally": true,
+  "scope": "Stitch HTML concepts only; app source unchanged",
+  "changes": [
+    "Normalized exported CSS hex colors to approved palette",
+    "Removed invented policy, newsletter and signup requirements",
+    "Corrected desktop operational table width",
+    "Raised small labels and added focus/reduced-motion rules"
+  ],
+  "screens": [
+    "01-catalog-desktop.html",
+    "02-catalog-mobile.html",
+    "03-reservation-desktop.html",
+    "04-reservation-mobile.html",
+    "05-desk-desktop.html",
+    "06-desk-mobile.html",
+    "07-community-desktop.html",
+    "08-components.html"
+  ]
+}

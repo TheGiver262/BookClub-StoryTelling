@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { startAvailabilityRefresh } from '../lib/availability-refresh';
+import PublishingManager from './PublishingManager';
+import MembershipManager from './MembershipManager';
+import ClubReviewComposer from './ClubReviewComposer';
 import { 
   LayoutDashboard, BookOpen, Users, Calendar, 
   Wallet, Award, BarChart3, Settings, ShieldAlert,
@@ -53,9 +56,25 @@ type Role = 'ADMIN' | 'ACTIVE_MEMBER' | 'ALUMNI' | 'GUEST';
 type WorkspaceMode = 'LIVE' | 'DEMO';
 
 export default function InternalWorkspace() {
-  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('LIVE');
+  const demoAllowed=import.meta.env.PUBLIC_DEMO_CONTENT==='true';
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      if (demoAllowed && p.get('mode') === 'demo') return 'DEMO';
+    }
+    return 'LIVE';
+  });
   const [currentRole, setCurrentRole] = useState<Role>('ACTIVE_MEMBER');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const sidebarRef=useRef<HTMLElement>(null),sidebarTriggerRef=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{if(window.matchMedia('(max-width: 767px)').matches) setIsSidebarCollapsed(true);},[]);
+  useEffect(()=>{
+    if(isSidebarCollapsed||!window.matchMedia('(max-width: 767px)').matches||!sidebarRef.current) return;
+    sidebarRef.current.querySelector('button')?.focus();
+    const escape=(event:KeyboardEvent)=>{if(event.key==='Escape') setIsSidebarCollapsed(true);};
+    window.addEventListener('keydown',escape);
+    return()=>{window.removeEventListener('keydown',escape);sidebarTriggerRef.current?.focus();};
+  },[isSidebarCollapsed]);
 
   // RF-06: Request versioning to abort/drop stale in-flight requests on mode/actor change
   const activeRequestVersionRef = useRef<number>(0);
@@ -475,10 +494,16 @@ export default function InternalWorkspace() {
   const [auditLogsTotalCount, setAuditLogsTotalCount] = useState<number>(0);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsSummaryDto | null>(null);
 
-  // Responsive sidebar collapse
+  // Responsive sidebar collapse and query mode init
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setIsSidebarCollapsed(true);
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 768) {
+        setIsSidebarCollapsed(true);
+      }
+      const p = new URLSearchParams(window.location.search);
+      if (demoAllowed && p.get('mode') === 'demo') {
+        setWorkspaceMode('DEMO');
+      }
     }
   }, []);
 
@@ -2060,7 +2085,7 @@ export default function InternalWorkspace() {
       if (result.isAlreadyConverted) {
         setApiSuccess(`Ứng viên đã được chuyển thành viên trước đó (Mã: ${result.member.id}). Không tạo thành viên trùng lặp.`);
       } else {
-        setApiSuccess(`Đã chuyển ứng viên trúng tuyển thành thành viên CLB thành công! Mã: ${result.member.id}, Tên: ${result.member.fullName}.`);
+        setApiSuccess(`Đã tiếp nhận ứng viên trúng tuyển thành cộng tác viên thử thách 1 tháng! Mã: ${result.member.id}, Tên: ${result.member.fullName}.`);
       }
       await loadLiveData();
     } catch (err: any) {
@@ -2750,10 +2775,10 @@ export default function InternalWorkspace() {
   // Loading Screen
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 border-4 border-brand-navy border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-semibold text-brand-navy">Đang xác thực phiên làm việc nội bộ YSBK...</p>
-        <p className="text-xs text-slate-400 mt-1">Đang kiểm tra cookie HttpOnly an toàn từ máy chủ</p>
+      <div className="min-h-screen bg-[#F8F5EC] flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 border-4 border-[#365E4B] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-semibold font-serif text-[#35483C]">Đang xác thực phiên làm việc nội bộ YSBK...</p>
+        <p className="text-xs text-[#64705C] mt-1">Đang kiểm tra cookie HttpOnly an toàn từ máy chủ</p>
       </div>
     );
   }
@@ -2761,24 +2786,24 @@ export default function InternalWorkspace() {
   // Not Authenticated in Live Mode
   if (workspaceMode === 'LIVE' && authError) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-[#F8F5EC] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#FFFDF5] rounded-[22px] shadow-soft-modal border border-[#DCDED0] p-6 text-center space-y-4">
+          <div className="w-12 h-12 bg-[#F7E7DB] text-[#9B4D36] rounded-full flex items-center justify-center mx-auto">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">Yêu Cầu Xác Thực Nội Bộ</h2>
-          <p className="text-xs text-slate-600 leading-relaxed">{authError}</p>
+          <h2 className="text-xl font-serif font-bold text-[#35483C]">Yêu Cầu Xác Thực Nội Bộ</h2>
+          <p className="text-xs text-[#64705C] leading-relaxed">{authError}</p>
           <div className="pt-2 flex flex-col gap-2">
             <a 
               href="/login" 
-              className="w-full py-2.5 rounded-lg bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-hover transition shadow-sm"
+              className="w-full py-2.5 rounded-[14px] bg-[#365E4B] text-white text-xs font-bold hover:bg-[#294C3A] transition shadow-soft-btn"
             >
               Đến Trang Đăng Nhập (/login)
             </a>
             <button 
-              hidden={import.meta.env.PUBLIC_DEMO_CONTENT === 'false'}
-              onClick={() => setWorkspaceMode('DEMO')}
-              className="w-full py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold hover:bg-amber-100 transition"
+              hidden={!demoAllowed}
+              onClick={() => { if(demoAllowed) setWorkspaceMode('DEMO'); }}
+              className="w-full py-2.5 rounded-[14px] border border-[#A87A4C] bg-[#F4EAD2] text-[#A87A4C] text-xs font-bold hover:bg-[#EBDDBB] transition shadow-soft-btn"
             >
               Xem Thử Nghiệm Giao Diện (Fixture Demo)
             </button>
@@ -2789,59 +2814,60 @@ export default function InternalWorkspace() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
+    <div className="ysbk-workspace min-h-screen bg-[#F8F5EC] flex flex-col font-sans text-[#35483C]">
       
       {/* ═════════════════════════════════════════════════════════ */}
       {/* MODE BANNER (LIVE API vs FIXTURE DEMO)                    */}
       {/* ═════════════════════════════════════════════════════════ */}
       {workspaceMode === 'DEMO' ? (
-        <div className="bg-amber-500 text-amber-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between border-b border-amber-600 gap-2">
+        <div className="bg-[#F7E7DB] text-[#813C2A] px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between border-b border-[#9B4D36]/30 gap-2">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-950" />
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#9B4D36]" />
             <span>⚠️ CHẾ ĐỘ THỬ NGHIỆM GIAO DIỆN (FIXTURE DEMO) — Đang dùng dữ liệu mẫu cục bộ, KHÔNG kết nối cơ sở dữ liệu thật.</span>
           </div>
           <div className="flex items-center gap-3">
             <a 
               href="/?public=1" 
-              className="px-2.5 py-0.5 bg-amber-900 text-amber-100 rounded text-[11px] hover:bg-slate-900 transition font-bold"
+              className="px-3 py-1 bg-[#813C2A] text-white rounded-[10px] text-[11px] hover:bg-[#60281A] transition font-semibold shadow-xs"
             >
               Về Cổng Thông Tin
             </a>
             <button 
               onClick={() => setWorkspaceMode('LIVE')} 
-              className="px-3 py-1 bg-amber-950 text-amber-100 rounded text-[11px] hover:bg-slate-900 transition font-bold"
+              className="px-3 py-1 bg-ysbk-primary text-white rounded-[10px] text-[11px] hover:bg-[#294C3A] transition font-semibold shadow-xs"
             >
               Chuyển Sang Chế Độ Live API
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-emerald-900 text-emerald-100 px-4 py-1.5 text-xs flex flex-wrap items-center justify-between border-b border-emerald-800 gap-2">
+        <div className="bg-[#E8EDDF] text-[#294C3A] px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-[#DCDED0] gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-emerald-200">CHẾ ĐỘ LIVE API:</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-ysbk-primary animate-pulse" />
+            <span className="font-bold text-ysbk-primary">CHẾ ĐỘ LIVE API:</span>
             <span>
-              Người dùng: <strong>{actor?.fullName || actor?.username || 'Thành viên'}</strong> · Quyền: <strong className="text-emerald-300">{actor?.role}</strong>
-              {actor?.isAlumni && <span className="text-amber-300 ml-1">(Cựu TV - Giới hạn xem)</span>}
+              Người dùng: <strong>{actor?.fullName || actor?.username || 'Thành viên'}</strong> · Quyền: <strong className="text-ysbk-primary">{actor?.role}</strong>
+              {actor?.isCollaborator && <span className="text-[#64705C] ml-1">(Cộng tác viên)</span>}
+              {actor?.isAlumni && <span className="text-[#813C2A] ml-1">(Cựu TV - Giới hạn xem)</span>}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <a 
               href="/?public=1" 
-              className="text-[11px] text-emerald-300 hover:text-white underline"
+              className="text-[11px] text-[#365E4B] hover:text-[#294C3A] font-semibold underline"
             >
               Về Cổng Thông Tin
             </a>
             <button 
-              hidden={import.meta.env.PUBLIC_DEMO_CONTENT === 'false'}
-              onClick={() => setWorkspaceMode('DEMO')} 
-              className="text-[11px] text-emerald-300 hover:text-white underline"
+              hidden={!demoAllowed}
+              onClick={() => { if(demoAllowed) setWorkspaceMode('DEMO'); }}
+              className="text-[11px] text-[#365E4B] hover:text-[#294C3A] font-semibold underline"
             >
               Xem Demo Fixture
             </button>
             <button 
               onClick={handleLogout}
-              className="text-[11px] text-rose-300 hover:text-rose-100 underline flex items-center gap-1"
+              className="text-[11px] text-rose-700 hover:text-rose-900 underline flex items-center gap-1 font-semibold"
             >
               <LogOut className="w-3 h-3" />
               Đăng xuất
@@ -2864,12 +2890,12 @@ export default function InternalWorkspace() {
       )}
 
       {apiSuccess && (
-        <div className="bg-emerald-50 border-b border-emerald-200 text-emerald-900 px-4 py-2 text-xs flex items-center justify-between">
+        <div className="bg-[#E8EDDF] border-b border-[#365E4B]/20 text-[#294C3A] px-4 py-2 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-ysbk-primary shrink-0" />
             <span>{apiSuccess}</span>
           </div>
-          <button onClick={() => setApiSuccess(null)} className="text-emerald-400 hover:text-emerald-700">
+          <button onClick={() => setApiSuccess(null)} className="text-[#64705C] hover:text-[#35483C]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -2878,35 +2904,39 @@ export default function InternalWorkspace() {
       <div className="flex-1 flex overflow-hidden">
         
         {/* ═════════════════════════════════════════════════════════ */}
-        {/* SIDEBAR NAVIGATION (Kế thừa phong cách WarePro 240/68px)  */}
+        {/* SIDEBAR NAVIGATION (Chuẩn 240px / Góc bo mềm)             */}
         {/* ═════════════════════════════════════════════════════════ */}
-        <aside className={`bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-0 hidden md:flex md:w-16' : 'w-60 shrink-0'}`}>
-          <div className="h-14 px-4 border-b border-slate-200 flex items-center justify-between">
+        {!isSidebarCollapsed&&<button className="workspace-drawer-backdrop fixed inset-0 z-40 bg-[#233127]/40 md:hidden" aria-label="Đóng menu nội bộ" onClick={()=>setIsSidebarCollapsed(true)}/>}
+        <aside ref={sidebarRef} id="workspace-navigation" aria-label="Điều hướng nội bộ" className={`fixed inset-y-0 left-0 z-50 bg-[#FFFDF5] border-r border-[#DCDED0] flex flex-col transition-all duration-300 md:relative md:inset-auto md:z-auto ${isSidebarCollapsed ? 'w-0 hidden md:flex md:w-16' : 'w-[240px] shrink-0'}`}>
+          <div className="h-16 px-4 border-b border-[#DCDED0] flex items-center justify-between">
             {!isSidebarCollapsed && (
-              <div className="flex items-center gap-2">
-                <img src="/book/assets/club-logo-v8.svg" alt="YSBK" className="h-7 w-auto" />
-                <span className="font-bold text-sm text-brand-navy">YSBK Nội Bộ</span>
+              <div className="flex items-center gap-2.5">
+                <img src="/book/assets/club-logo-v8.svg" alt="YSBK" className="h-8 w-auto" />
+                <div className="flex flex-col">
+                  <span className="font-serif font-bold text-sm text-[#35483C] leading-tight">YSBK Hà Nội</span>
+                  <span className="text-[10px] text-[#64705C] leading-tight">Bàn Làm Việc Nội Bộ</span>
+                </div>
               </div>
             )}
             <button 
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 mx-auto"
+              className="p-1.5 rounded-[10px] text-[#64705C] hover:text-[#35483C] hover:bg-[#E8EDDF]/40 mx-auto transition"
               title={isSidebarCollapsed ? "Mở rộng menu" : "Thu gọn menu"}
             >
               {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
 
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs" onClick={event=>{if((event.target as HTMLElement).closest('button')&&window.matchMedia('(max-width: 767px)').matches) setIsSidebarCollapsed(true);}}>
             {isAlumni ? (
               <div className="space-y-2">
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
+                <div className="p-3 bg-[#F7E7DB]/60 rounded-[14px] border border-[#9B4D36]/20 text-[#813C2A] text-[11px] leading-relaxed">
                   <span className="font-bold">Chế độ Cựu Thành Viên:</span>
                   <p className="mt-1">Bạn có quyền xem thông tin hoạt động công khai. Toàn bộ thông tin tài chính, bạn đọc và nghiệp vụ quầy bị khóa theo ma trận quyền.</p>
                 </div>
                 <button
                   onClick={() => setActiveModule('cuu')}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-600 text-white font-semibold"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] bg-ysbk-terracotta text-white font-semibold shadow-soft-btn transition"
                 >
                   <Award className="w-4 h-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Bản Tin Cựu TV</span>}
@@ -2916,52 +2946,52 @@ export default function InternalWorkspace() {
               <>
                 <button
                   onClick={() => setActiveModule('dashboard')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'dashboard' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'dashboard' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <LayoutDashboard className="w-4 h-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Tổng Quan (KPI)</span>}
                 </button>
 
-                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-slate-400">Bàn Sách & Quầy</div>}
+                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-[#64705C]">Bàn Sách & Quầy</div>}
                 
                 <button
                   onClick={() => setActiveModule('quay-sach')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'quay-sach' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'quay-sach' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
-                  <BookOpen className="w-4 h-4 shrink-0 text-brand-red" />
+                  <BookOpen className="w-4 h-4 shrink-0 text-ysbk-terracotta" />
                   {!isSidebarCollapsed && <span>Quầy Mượn – Trả</span>}
                 </button>
 
                 <button
                   onClick={() => setActiveModule('ban-sach')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'ban-sach' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'ban-sach' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
-                  <ShoppingBag className="w-4 h-4 shrink-0 text-amber-500" />
+                  <ShoppingBag className="w-4 h-4 shrink-0 text-ysbk-gold" />
                   {!isSidebarCollapsed && <span>Sách Mới & Ký Gửi</span>}
                 </button>
 
                 <button
                   onClick={() => setActiveModule('kho-sach')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'kho-sach' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'kho-sach' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <BookOpen className="w-4 h-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Kho Sách (2 Kho)</span>}
                 </button>
 
-                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-slate-400">Tổ Chức & Nhân Sự</div>}
+                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-[#64705C]">Tổ Chức & Nhân Sự</div>}
 
                 <button
                   onClick={() => setActiveModule('thanh-vien')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'thanh-vien' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'thanh-vien' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <Users className="w-4 h-4 shrink-0" />
@@ -2970,8 +3000,8 @@ export default function InternalWorkspace() {
 
                 <button
                   onClick={() => setActiveModule('truc-sach')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'truc-sach' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'truc-sach' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <Calendar className="w-4 h-4 shrink-0" />
@@ -2980,8 +3010,8 @@ export default function InternalWorkspace() {
 
                 <button
                   onClick={() => setActiveModule('tuyen')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'tuyen' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'tuyen' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <UserPlus className="w-4 h-4 shrink-0 text-indigo-600" />
@@ -2990,8 +3020,8 @@ export default function InternalWorkspace() {
 
                 <button
                   onClick={() => setActiveModule('su-kien')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'su-kien' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'su-kien' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <Award className="w-4 h-4 shrink-0 text-amber-500" />
@@ -3004,30 +3034,30 @@ export default function InternalWorkspace() {
                     loadModerationReviews();
                     loadModerationPosts();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'kiem-duyet' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'kiem-duyet' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <MessageSquare className="w-4 h-4 shrink-0 text-sky-500" />
                   {!isSidebarCollapsed && <span>Kiểm Duyệt Review & Bài Viết</span>}
                 </button>
 
-                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-slate-400">Tài Chính & Báo Cáo</div>}
+                {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-[#64705C]">Tài Chính & Báo Cáo</div>}
 
                 <button
                   onClick={() => setActiveModule('tai-chinh')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'tai-chinh' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'tai-chinh' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
-                  <Wallet className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <Wallet className="w-4 h-4 shrink-0 text-emerald-700" />
                   {!isSidebarCollapsed && <span>Sổ Quỹ & Ca Trực</span>}
                 </button>
 
                 <button
                   onClick={() => setActiveModule('bao-cao')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeModule === 'bao-cao' ? 'bg-brand-navy text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                    activeModule === 'bao-cao' ? 'bg-ysbk-primary text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                   }`}
                 >
                   <BarChart3 className="w-4 h-4 shrink-0" />
@@ -3036,15 +3066,15 @@ export default function InternalWorkspace() {
 
                 {isAdmin && (
                   <>
-                    {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-rose-500">Hệ Thống (Admin)</div>}
+                    {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-rose-600">Hệ Thống (Admin)</div>}
                     <button
                       onClick={() => setActiveModule('admin')}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                        activeModule === 'admin' ? 'bg-brand-red text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] transition ${
+                        activeModule === 'admin' ? 'bg-ysbk-terracotta text-white font-semibold shadow-soft-btn' : 'text-[#35483C] hover:bg-[#E8EDDF]/40'
                       }`}
                     >
-                      <Settings className="w-4 h-4 shrink-0 text-rose-400" />
-                      {!isSidebarCollapsed && <span>Quản Trị & Audit Log</span>}
+                      <Settings className="w-4 h-4 shrink-0 text-rose-300" />
+                      {!isSidebarCollapsed && <span>Quản Trị & Nội Dung</span>}
                     </button>
                   </>
                 )}
@@ -3056,36 +3086,39 @@ export default function InternalWorkspace() {
         {/* ═════════════════════════════════════════════════════════ */}
         {/* WORKSPACE MAIN BODY                                      */}
         {/* ═════════════════════════════════════════════════════════ */}
-        <main className="flex-1 flex flex-col overflow-y-auto">
+        <main className="flex-1 flex flex-col overflow-y-auto pb-20 md:pb-6">
           
           {/* Top Operational Status Header */}
-          <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-[#FFFDF5] border-b border-[#DCDED0] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-xs">
               <button 
+                ref={sidebarTriggerRef}
+                aria-expanded={!isSidebarCollapsed}
+                aria-controls="workspace-navigation"
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="md:hidden p-1.5 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0"
+                className="md:hidden p-2 rounded-[10px] bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0] shrink-0 transition"
                 title="Mở/Đóng menu"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-slate-500 hidden sm:inline">Trực quầy:</span>
-              <span className="font-bold text-brand-navy flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-brand-red shrink-0" />
+              <span className="font-semibold text-[#64705C] hidden sm:inline">Trực quầy:</span>
+              <span className="font-bold text-[#35483C] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-ysbk-terracotta shrink-0" />
                 Thứ Ba, Thứ Năm (14:00 – 17:00, Sảnh TV Tạ Quang Bửu)
               </span>
-              <span className="text-slate-300 hidden sm:inline">|</span>
+              <span className="text-[#DCDED0] hidden sm:inline">|</span>
               
               {/* Cash Session Status */}
               {workspaceMode === 'LIVE' ? (
                 liveSession && !liveSession.isClosed ? (
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-[#35483C]">
                       Phiên đang mở ({formatVND(liveSession.expectedClosingCash)}) · Phụ trách: <strong>{liveSession.openedBy}</strong>
                     </span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 text-amber-700 font-medium">
+                  <span className="flex items-center gap-1.5 text-[#813C2A] font-medium">
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     <span>Hôm nay chưa mở ca quầy tiền mặt</span>
                   </span>
@@ -3093,7 +3126,7 @@ export default function InternalWorkspace() {
               ) : (
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${demoCashSession.isClosed ? 'bg-slate-400' : 'bg-emerald-500 animate-pulse'}`} />
-                  <span className="font-medium text-slate-700">
+                  <span className="font-medium text-[#35483C]">
                     {demoCashSession.isClosed ? 'Đã đóng ca (Demo)' : `Quầy mở (Demo: ${formatVND(demoCashSession.expectedClosingCash)})`}
                   </span>
                 </span>
@@ -3107,7 +3140,7 @@ export default function InternalWorkspace() {
                     liveSession && !liveSession.isClosed ? (
                       <button
                         onClick={() => setShowCloseSessionModal(true)}
-                        className="px-3 py-1.5 rounded text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5"
+                        className="px-3.5 py-2 rounded-[12px] text-xs font-semibold bg-[#F7E7DB] hover:bg-[#F0D5C3] text-[#813C2A] border border-[#9B4D36]/30 transition flex items-center gap-1.5"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         Kiểm Kê & Đóng Ca Quầy
@@ -3115,7 +3148,7 @@ export default function InternalWorkspace() {
                     ) : (
                       <button
                         onClick={() => setShowOpenSessionModal(true)}
-                        className="px-3 py-1.5 rounded text-xs font-bold bg-brand-navy hover:bg-brand-navy-hover text-white shadow-sm transition flex items-center gap-1.5"
+                        className="px-3.5 py-2 rounded-[12px] text-xs font-bold bg-ysbk-primary hover:bg-[#294C3A] text-white shadow-soft-btn transition flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Mở Ca Quầy Hôm Nay
@@ -3124,7 +3157,7 @@ export default function InternalWorkspace() {
                   ) : (
                     <button
                       onClick={() => setShowCloseSessionModal(true)}
-                      className="px-3 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                      className="px-3.5 py-2 rounded-[12px] text-xs font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] transition"
                     >
                       Kiểm & Đóng Ca Quầy (Demo)
                     </button>
@@ -3167,48 +3200,48 @@ export default function InternalWorkspace() {
 
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex items-center justify-between">
                         <div>
-                          <div className="text-xs font-medium text-slate-500">Phiếu Đang Mượn</div>
-                          <div className="text-2xl font-bold text-slate-900 tnum mt-1">{activeCount}</div>
-                          <div className="text-[11px] text-emerald-600 font-medium mt-1">Đang trong hạn 14 ngày</div>
+                          <div className="text-xs font-semibold text-[#64705C]">Phiếu Đang Mượn</div>
+                          <div className="font-serif text-2xl font-bold text-[#35483C] tnum mt-1">{activeCount}</div>
+                          <div className="text-[11px] text-ysbk-primary font-medium mt-1">Đang trong hạn 14 ngày</div>
                         </div>
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <div className="w-11 h-11 rounded-[14px] bg-[#E8EDDF] text-ysbk-primary flex items-center justify-center">
                           <BookOpen className="w-5 h-5" />
                         </div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex items-center justify-between">
                         <div>
-                          <div className="text-xs font-medium text-slate-500">Phiếu Quá Hạn Phạt</div>
-                          <div className="text-2xl font-bold text-rose-600 tnum mt-1">{overdueCount}</div>
-                          <div className="text-[11px] text-rose-500 font-medium mt-1">1.000 ₫/ngày cả phiếu</div>
+                          <div className="text-xs font-semibold text-[#64705C]">Phiếu Quá Hạn Phạt</div>
+                          <div className="font-serif text-2xl font-bold text-rose-600 tnum mt-1">{overdueCount}</div>
+                          <div className="text-[11px] text-rose-600 font-medium mt-1">1.000 ₫/ngày cả phiếu</div>
                         </div>
-                        <div className="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                        <div className="w-11 h-11 rounded-[14px] bg-rose-50 text-rose-600 flex items-center justify-center">
                           <AlertTriangle className="w-5 h-5" />
                         </div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex items-center justify-between">
                         <div>
-                          <div className="text-xs font-medium text-slate-500">Tiền Cọc Đang Giữ</div>
-                          <div className="text-2xl font-bold text-brand-navy tnum mt-1">{formatVND(totalDeposit)}</div>
-                          <div className="text-[11px] text-slate-400 font-medium mt-1">Nghĩa vụ hoàn lại bạn đọc</div>
+                          <div className="text-xs font-semibold text-[#64705C]">Tiền Cọc Đang Giữ</div>
+                          <div className="font-serif text-2xl font-bold text-ysbk-primary tnum mt-1">{formatVND(totalDeposit)}</div>
+                          <div className="text-[11px] text-[#64705C] font-medium mt-1">Nghĩa vụ hoàn lại bạn đọc</div>
                         </div>
-                        <div className="w-10 h-10 rounded-lg bg-indigo-50 text-brand-navy flex items-center justify-center">
+                        <div className="w-11 h-11 rounded-[14px] bg-[#E8EDDF] text-ysbk-primary flex items-center justify-center">
                           <Wallet className="w-5 h-5" />
                         </div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex items-center justify-between">
                         <div>
-                          <div className="text-xs font-medium text-slate-500">Tiền Mặt Hộp Quầy</div>
-                          <div className="text-2xl font-bold text-emerald-700 tnum mt-1">{formatVND(cashInDrawer)}</div>
-                          <div className="text-[11px] text-slate-400 font-medium mt-1">
+                          <div className="text-xs font-semibold text-[#64705C]">Tiền Mặt Hộp Quầy</div>
+                          <div className="font-serif text-2xl font-bold text-emerald-700 tnum mt-1">{formatVND(cashInDrawer)}</div>
+                          <div className="text-[11px] text-[#64705C] font-medium mt-1">
                             {liveSession ? `Đầu ca: ${formatVND(liveSession.openingCash)}` : 'Chưa mở ca hôm nay'}
                           </div>
                         </div>
-                        <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <div className="w-11 h-11 rounded-[14px] bg-emerald-50 text-emerald-700 flex items-center justify-center">
                           <RotateCcw className="w-5 h-5" />
                         </div>
                       </div>
@@ -3217,34 +3250,34 @@ export default function InternalWorkspace() {
                 })()}
 
                 {/* Desk Sub-Tabs (S12-03) */}
-                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+                <div className="flex flex-wrap items-center gap-2 border-b border-[#DCDED0] pb-2">
                   <button
                     onClick={() => setDeskSubTab('LOANS')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-[12px] transition flex items-center gap-1.5 ${
                       deskSubTab === 'LOANS'
-                        ? 'bg-brand-navy text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-ysbk-primary text-white shadow-soft-btn'
+                        : 'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]'
                     }`}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     Phiếu Mượn Hiện Hành
-                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200/50 text-slate-800">
+                    <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-white/30 text-current font-bold">
                       {workspaceMode === 'LIVE' ? liveLoans.length : demoLoans.length}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setDeskSubTab('PENDING_REFUNDS')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-[12px] transition flex items-center gap-1.5 ${
                       deskSubTab === 'PENDING_REFUNDS'
-                        ? 'bg-brand-navy text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-ysbk-primary text-white shadow-soft-btn'
+                        : 'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]'
                     }`}
                   >
-                    <Wallet className="w-3.5 h-3.5 text-amber-500" />
+                    <Wallet className="w-3.5 h-3.5 text-ysbk-gold" />
                     Hoàn Cọc Chờ Chi (Refunds)
                     {livePendingRefunds.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500 text-white font-bold">
+                      <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">
                         {livePendingRefunds.length}
                       </span>
                     )}
@@ -3252,16 +3285,16 @@ export default function InternalWorkspace() {
 
                   <button
                     onClick={() => setDeskSubTab('PENDING_DEPOSITS')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-[12px] transition flex items-center gap-1.5 ${
                       deskSubTab === 'PENDING_DEPOSITS'
-                        ? 'bg-brand-navy text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-ysbk-primary text-white shadow-soft-btn'
+                        : 'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]'
                     }`}
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-blue-500" />
+                    <RotateCcw className="w-3.5 h-3.5 text-ysbk-primary" />
                     Cọc Mới Chờ Thu (T73)
                     {livePendingDeposits.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-bold">
+                      <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold">
                         {livePendingDeposits.length}
                       </span>
                     )}
@@ -3269,16 +3302,16 @@ export default function InternalWorkspace() {
 
                   <button
                     onClick={() => setDeskSubTab('PENDING_FINES')}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-[12px] transition flex items-center gap-1.5 ${
                       deskSubTab === 'PENDING_FINES'
-                        ? 'bg-brand-navy text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-ysbk-primary text-white shadow-soft-btn'
+                        : 'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]'
                     }`}
                   >
                     <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                     Phạt Quá Hạn Chờ Thu
                     {livePendingFines.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500 text-white font-bold">
+                      <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-bold">
                         {livePendingFines.length}
                       </span>
                     )}
@@ -3289,16 +3322,16 @@ export default function InternalWorkspace() {
                       setDeskSubTab('RESERVATIONS');
                       fetchStaffReservations();
                     }}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+                    className={`px-3.5 py-2 text-xs font-semibold rounded-[12px] transition flex items-center gap-1.5 ${
                       deskSubTab === 'RESERVATIONS'
-                        ? 'bg-brand-navy text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-ysbk-primary text-white shadow-soft-btn'
+                        : 'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]'
                     }`}
                   >
-                    <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                    <Clock className="w-3.5 h-3.5 text-ysbk-primary" />
                     Đơn Giữ Chỗ Chờ Nhận
                     {staffReservations.filter((r: any) => r.status === 'HELD').length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500 text-white font-bold">
+                      <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-600 text-white font-bold">
                         {staffReservations.filter((r: any) => r.status === 'HELD').length}
                       </span>
                     )}
@@ -3306,11 +3339,11 @@ export default function InternalWorkspace() {
                 </div>
 
                 {pendingQueuesError && deskSubTab !== 'LOANS' && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center justify-between shadow-sm">
+                  <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-[14px] text-xs flex items-center justify-between shadow-xs">
                     <span>⚠️ Lỗi tải dữ liệu hàng chờ từ máy chủ: {pendingQueuesError}</span>
                     <button
                       onClick={loadLiveData}
-                      className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-bold transition"
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-[10px] text-xs font-bold transition"
                     >
                       Thử lại
                     </button>
@@ -3320,32 +3353,32 @@ export default function InternalWorkspace() {
                 {deskSubTab === 'LOANS' && (
                   <>
                     {/* Action Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
+                    <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                       <div className="flex items-center gap-3">
-                        <h3 className="font-bold text-base text-brand-navy">Danh Sách Phiếu Mượn Bàn Trực</h3>
-                        <span className="text-xs text-slate-400">Tối đa 2 cuốn/phiếu · Hạn 14 ngày</span>
+                        <h3 className="font-serif font-bold text-lg text-[#35483C]">Danh Sách Phiếu Mượn Bàn Trực</h3>
+                        <span className="text-xs text-[#64705C]">Tối đa 2 cuốn/phiếu · Hạn 14 ngày</span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {liveSession && (
                           <button 
                             onClick={handleViewSessionSummary}
-                            className="px-3 py-2 text-xs font-semibold rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 flex items-center gap-1.5 transition"
+                            className="px-3.5 py-2 text-xs font-semibold rounded-[14px] border border-[#365E4B]/30 bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#294C3A] flex items-center gap-1.5 transition"
                           >
-                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                            <FileText className="w-3.5 h-3.5 text-ysbk-primary" />
                             Đối Soát Ca Trực
                           </button>
                         )}
                         <button 
                           onClick={() => setShowCorrectionModal(true)}
-                          className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition"
+                          className="px-3.5 py-2 text-xs font-semibold rounded-[14px] border border-[#DCDED0] hover:bg-[#E8EDDF]/40 text-[#35483C] flex items-center gap-1.5 transition"
                         >
-                          <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                          <RotateCcw className="w-3.5 h-3.5 text-[#64705C]" />
                           Sửa Sai Chứng Từ Sổ Cái
                         </button>
                         <button 
                           onClick={() => setShowNewLoanModal(true)}
-                          className="px-4 py-2 text-xs font-bold rounded-lg bg-brand-navy hover:bg-brand-navy-hover text-white shadow-sm flex items-center gap-2 transition"
+                          className="px-4 py-2 text-xs font-bold rounded-[14px] bg-ysbk-primary hover:bg-[#294C3A] text-white shadow-soft-btn flex items-center gap-2 transition min-h-[38px]"
                         >
                           <Plus className="w-4 h-4" />
                           Lập Phiếu Mượn Mới (Max 2 Cuốn)
@@ -3353,175 +3386,310 @@ export default function InternalWorkspace() {
                       </div>
                     </div>
 
-                    {/* Loans Table */}
-                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
-                            <tr>
-                              <th className="py-3 px-4">Số Phiếu</th>
-                              <th className="py-3 px-4">Người Mượn (SV)</th>
-                              <th className="py-3 px-4">Sách & Tiền Cọc Từng Cuốn</th>
-                              <th className="py-3 px-4">Hạn Trả (14 ngày)</th>
-                              <th className="py-3 px-4">Gia Hạn</th>
-                              <th className="py-3 px-4">Trạng Thái</th>
-                              <th className="py-3 px-4 text-right">Thao Tác Quầy</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {(() => {
-                              const list = workspaceMode === 'LIVE' ? liveLoans : demoLoans;
-                              const todayStr = new Intl.DateTimeFormat('en-CA').format(new Date());
+                    {/* Loans List: Desktop Table + Mobile Cards */}
+                    {(() => {
+                      const list = workspaceMode === 'LIVE' ? liveLoans : demoLoans;
+                      const todayStr = new Intl.DateTimeFormat('en-CA').format(new Date());
 
-                              if (list.length === 0) {
-                                return (
+                      if (list.length === 0) {
+                        return (
+                          <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] p-8 text-center text-[#64705C] shadow-soft-card">
+                            Chưa có phiếu mượn nào được ghi nhận.
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          {/* Desktop Table View */}
+                          <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] overflow-hidden shadow-soft-card hidden md:block">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-xs">
+                                <thead className="bg-[#F8F5EC] border-b border-[#DCDED0] text-[#64705C] font-semibold uppercase">
                                   <tr>
-                                    <td colSpan={7} className="py-8 text-center text-slate-400">
-                                      Chưa có phiếu mượn nào được ghi nhận.
-                                    </td>
+                                    <th className="py-3 px-4">Số Phiếu</th>
+                                    <th className="py-3 px-4">Người Mượn (SV)</th>
+                                    <th className="py-3 px-4 min-w-[280px]">Sách & Tiền Cọc Từng Cuốn</th>
+                                    <th className="py-3 px-4">Hạn Trả (14 ngày)</th>
+                                    <th className="py-3 px-4">Gia Hạn</th>
+                                    <th className="py-3 px-4">Trạng Thái</th>
+                                    <th className="py-3 px-4 text-right">Thao Tác Quầy</th>
                                   </tr>
-                                );
-                              }
+                                </thead>
+                                <tbody className="divide-y divide-[#DCDED0]/60">
+                                  {list.map((loan: any) => {
+                                    const isOverdue = loan.status === 'ACTIVE' && loan.dueDate < todayStr;
+                                    const borrowerName = loan.borrowerName || loan.borrower?.fullName || 'Bạn đọc';
+                                    const borrowerStudentId = loan.borrowerStudentId || loan.borrower?.studentId || '';
+                                    const borrowerPhone = loan.borrowerPhone || loan.borrower?.phone || '';
+                                    const items = loan.items || [];
+                                    const totalDep = items.reduce((s: number, it: any) => s + (it.depositSnapshot || 0), 0);
 
-                              return list.map((loan: any) => {
-                                const isOverdue = loan.status === 'ACTIVE' && loan.dueDate < todayStr;
-                                const borrowerName = loan.borrowerName || loan.borrower?.fullName || 'Bạn đọc';
-                                const borrowerStudentId = loan.borrowerStudentId || loan.borrower?.studentId || '';
-                                const borrowerPhone = loan.borrowerPhone || loan.borrower?.phone || '';
-                                const items = loan.items || [];
-                                const totalDep = items.reduce((s: number, it: any) => s + (it.depositSnapshot || 0), 0);
-
-                                return (
-                                  <tr key={loan.id} className="hover:bg-slate-50/80 transition">
-                                    <td className="py-3 px-4 font-mono font-medium text-brand-navy">
-                                      {loan.receiptNumber}
-                                      {loan.precedingReceiptId && (
-                                        <div className="text-[10px] text-amber-600 font-sans">
-                                          ↳ Phiếu chuyển tiếp
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <div className="font-bold text-slate-900">{borrowerName}</div>
-                                      <div className="text-[11px] text-slate-500">
-                                        MSSV: {borrowerStudentId} {borrowerPhone ? `· SĐT: ${borrowerPhone}` : ''}
-                                      </div>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <div className="space-y-1">
-                                        {items.map((it: any) => (
-                                          <div key={it.barcode} className="flex items-center justify-between gap-3 text-[11px]">
-                                            <span className="font-medium text-slate-800">
-                                              · {it.title || it.bookTitle}
-                                              {it.isLost && <span className="text-rose-600 ml-1 font-bold">(Đã mất)</span>}
-                                              {it.returnedAt && <span className="text-slate-400 ml-1">(Đã trả)</span>}
-                                            </span>
-                                            <span className="font-mono text-slate-500 tnum">Cọc: {formatVND(it.depositSnapshot)}</span>
+                                    return (
+                                      <tr key={loan.id} className="hover:bg-[#F8F5EC]/80 transition">
+                                        <td className="py-3.5 px-4 font-mono font-bold text-ysbk-primary">
+                                          {loan.receiptNumber}
+                                          {loan.precedingReceiptId && (
+                                            <div className="text-[10px] text-amber-700 font-sans">
+                                              ↳ Phiếu chuyển tiếp
+                                            </div>
+                                          )}
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                          <div className="font-bold text-[#35483C]">{borrowerName}</div>
+                                          <div className="text-[11px] text-[#64705C]">
+                                            MSSV: {borrowerStudentId} {borrowerPhone ? `· SĐT: ${borrowerPhone}` : ''}
                                           </div>
-                                        ))}
-                                        <div className="text-[11px] font-bold text-brand-navy border-t border-slate-100 pt-1">
-                                          Tổng cọc: {formatVND(totalDep)}
-                                        </div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                          <div className="space-y-1.5">
+                                            {items.map((it: any) => (
+                                              <div key={it.barcode} className="flex items-center justify-between gap-3 text-[11px]">
+                                                <span className="font-medium text-[#35483C]">
+                                                  · {it.title || it.bookTitle}
+                                                  {it.isLost && <span className="text-rose-600 ml-1 font-bold">(Đã mất)</span>}
+                                                  {it.returnedAt && <span className="text-[#64705C] ml-1">(Đã trả)</span>}
+                                                </span>
+                                                <span className="font-mono text-[#64705C] tnum">Cọc: {formatVND(it.depositSnapshot)}</span>
+                                              </div>
+                                            ))}
+                                            <div className="text-[11px] font-bold text-ysbk-primary border-t border-[#DCDED0] pt-1">
+                                              Tổng cọc: {formatVND(totalDep)}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                          <div className={`font-semibold ${isOverdue ? 'text-rose-600 font-bold' : 'text-[#35483C]'}`}>
+                                            {loan.dueDate}
+                                          </div>
+                                          <div className="text-[10px] text-[#64705C]">Mượn: {loan.borrowDate}</div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                          <span className="font-semibold text-[#35483C]">{loan.renewCount}/3 lần</span>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                          {loan.status === 'ACTIVE' && !isOverdue && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#294C3A] border border-[#365E4B]/20">
+                                              Đang mượn
+                                            </span>
+                                          )}
+                                          {loan.status === 'ACTIVE' && isOverdue && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F7E7DB] text-[#813C2A] border border-[#9B4D36]/20">
+                                              Quá hạn (Phạt 1k/ngày)
+                                            </span>
+                                          )}
+                                          {loan.status === 'RETURNED' && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F8F5EC] text-[#64705C] border border-[#DCDED0]">
+                                              Đã tất toán
+                                            </span>
+                                          )}
+                                          {loan.status === 'PARTIAL_SETTLED' && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+                                              Đã chuyển tiếp
+                                            </span>
+                                          )}
+                                          {loan.status === 'PENDING_DEPOSIT' && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F4EAD2] text-[#785420] border border-[#A87A4C]/20">
+                                              Chờ nộp cọc mới
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                          {loan.status === 'ACTIVE' && (
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              <button
+                                                onClick={() => handleOpenReturnModal(loan)}
+                                                className="px-3 py-1.5 rounded-[10px] text-xs font-bold bg-ysbk-primary text-white hover:bg-[#294C3A] transition shadow-xs"
+                                              >
+                                                Trả / Chuyển
+                                              </button>
+                                              <button
+                                                onClick={() => handleOpenRenewModal(loan)}
+                                                className="px-3 py-1.5 rounded-[10px] text-xs font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] transition"
+                                              >
+                                                Gia hạn
+                                              </button>
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedLoanForLoss(loan);
+                                                  const activeItems = items.filter((it: any) => !it.returnedAt && !it.isLost);
+                                                  if (activeItems.length > 0) {
+                                                    setLossSelectedBarcode(activeItems[0].barcode);
+                                                  }
+                                                  setShowLossModal(true);
+                                                }}
+                                                className="px-3 py-1.5 rounded-[10px] text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition"
+                                              >
+                                                Mất sách
+                                              </button>
+                                            </div>
+                                          )}
+                                          {loan.status === 'PENDING_DEPOSIT' && (
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              <button
+                                                onClick={() => {
+                                                  setShowConfirmDepositModal({ isOpen: true, loan });
+                                                  setDepositConfirmedT73(false);
+                                                }}
+                                                className="px-3 py-1.5 rounded-[10px] text-xs font-bold bg-ysbk-terracotta text-white hover:bg-[#813C2A] transition shadow-xs"
+                                              >
+                                                Thu cọc mới T73
+                                              </button>
+                                            </div>
+                                          )}
+                                          {(loan.status === 'RETURNED' || loan.status === 'PARTIAL_SETTLED') && (
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              <button
+                                                onClick={() => handleViewSettlementDetail(loan.id)}
+                                                className="px-3 py-1.5 rounded-[10px] text-xs font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] transition"
+                                              >
+                                                Xem Quyết Toán
+                                              </button>
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
+                          {/* Mobile Ticket Cards View */}
+                          <div className="md:hidden space-y-4">
+                            {list.map((loan: any) => {
+                              const isOverdue = loan.status === 'ACTIVE' && loan.dueDate < todayStr;
+                              const borrowerName = loan.borrowerName || loan.borrower?.fullName || 'Bạn đọc';
+                              const borrowerStudentId = loan.borrowerStudentId || loan.borrower?.studentId || '';
+                              const borrowerPhone = loan.borrowerPhone || loan.borrower?.phone || '';
+                              const items = loan.items || [];
+                              const totalDep = items.reduce((s: number, it: any) => s + (it.depositSnapshot || 0), 0);
+
+                              return (
+                                <div key={loan.id} className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] p-5 shadow-soft-card space-y-3">
+                                  <div className="flex items-center justify-between pb-3 border-b border-[#DCDED0]">
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-sm text-ysbk-primary">{loan.receiptNumber}</span>
+                                        {loan.parentLoanId && (
+                                          <span className="text-[10px] text-ysbk-primary font-medium bg-[#E8EDDF] px-2 py-0.5 rounded-full">
+                                            ↳ Chuyển tiếp
+                                          </span>
+                                        )}
                                       </div>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <div className={`font-semibold ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-800'}`}>
-                                        {loan.dueDate}
-                                      </div>
-                                      <div className="text-[10px] text-slate-400">Mượn: {loan.borrowDate}</div>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <span className="font-semibold text-slate-700">{loan.renewCount}/3 lần</span>
-                                    </td>
-                                    <td className="py-3 px-4">
+                                      <div className="font-semibold text-sm text-[#35483C]">{borrowerName}</div>
+                                      <div className="text-[11px] text-[#64705C]">MSSV: {borrowerStudentId} {borrowerPhone ? `· SĐT: ${borrowerPhone}` : ''}</div>
+                                    </div>
+                                    <div className="text-right">
                                       {loan.status === 'ACTIVE' && !isOverdue && (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#294C3A] border border-[#365E4B]/20">
                                           Đang mượn
                                         </span>
                                       )}
                                       {loan.status === 'ACTIVE' && isOverdue && (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F7E7DB] text-[#813C2A] border border-[#9B4D36]/20">
                                           Quá hạn (Phạt 1k/ngày)
                                         </span>
                                       )}
                                       {loan.status === 'RETURNED' && (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F8F5EC] text-[#64705C] border border-[#DCDED0]">
                                           Đã tất toán
                                         </span>
                                       )}
                                       {loan.status === 'PARTIAL_SETTLED' && (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
                                           Đã chuyển tiếp
                                         </span>
                                       )}
                                       {loan.status === 'PENDING_DEPOSIT' && (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F4EAD2] text-[#785420] border border-[#A87A4C]/20">
                                           Chờ nộp cọc mới
                                         </span>
                                       )}
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                      {loan.status === 'ACTIVE' && (
-                                        <div className="flex items-center justify-end gap-1.5">
-                                          <button
-                                            onClick={() => handleOpenReturnModal(loan)}
-                                            className="px-2.5 py-1.5 rounded text-xs font-bold bg-brand-navy text-white hover:bg-brand-navy-hover transition shadow-sm"
-                                          >
-                                            Trả / Chuyển
-                                          </button>
-                                          <button
-                                            onClick={() => handleOpenRenewModal(loan)}
-                                            className="px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
-                                          >
-                                            Gia hạn
-                                          </button>
-                                          <button
-                                            onClick={() => {
-                                              setSelectedLoanForLoss(loan);
-                                              const activeItems = items.filter((it: any) => !it.returnedAt && !it.isLost);
-                                              if (activeItems.length > 0) {
-                                                setLossSelectedBarcode(activeItems[0].barcode);
-                                              }
-                                              setShowLossModal(true);
-                                            }}
-                                            className="px-2.5 py-1.5 rounded text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition"
-                                          >
-                                            Mất sách
-                                          </button>
-                                        </div>
-                                      )}
-                                      {loan.status === 'PENDING_DEPOSIT' && (
-                                        <div className="flex items-center justify-end gap-1.5">
-                                          <button
-                                            onClick={() => {
-                                              setShowConfirmDepositModal({ isOpen: true, loan });
-                                              setDepositConfirmedT73(false);
-                                            }}
-                                            className="px-2.5 py-1.5 rounded text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition shadow-sm"
-                                          >
-                                            Thu cọc mới T73
-                                          </button>
-                                        </div>
-                                      )}
-                                      {(loan.status === 'RETURNED' || loan.status === 'PARTIAL_SETTLED') && (
-                                        <div className="flex items-center justify-end gap-1.5">
-                                          <button
-                                            onClick={() => handleViewSettlementDetail(loan.id)}
-                                            className="px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                                          >
-                                            Xem Quyết Toán
-                                          </button>
-                                        </div>
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              });
-                            })()}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1.5 text-xs">
+                                    <div className="text-[11px] font-semibold text-[#64705C]">Sách mượn:</div>
+                                    {items.map((it: any) => (
+                                      <div key={it.barcode} className="flex items-center justify-between gap-2 text-xs py-0.5">
+                                        <span className="font-medium text-[#35483C]">
+                                          · {it.title || it.bookTitle}
+                                          {it.isLost && <span className="text-rose-600 ml-1 font-bold">(Đã mất)</span>}
+                                          {it.returnedAt && <span className="text-[#64705C] ml-1">(Đã trả)</span>}
+                                        </span>
+                                        <span className="font-mono text-[#64705C] shrink-0 tnum">Cọc: {formatVND(it.depositSnapshot)}</span>
+                                      </div>
+                                    ))}
+                                    <div className="flex justify-between font-bold text-xs pt-1 border-t border-[#DCDED0] text-ysbk-primary">
+                                      <span>Tổng tiền cọc:</span>
+                                      <span className="font-mono tnum">{formatVND(totalDep)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs pt-1 text-[#64705C]">
+                                      <span>Hạn trả:</span>
+                                      <span className={`font-semibold ${isOverdue ? 'text-rose-600' : 'text-[#35483C]'}`}>
+                                        {loan.dueDate} (Mượn: {loan.borrowDate} · Gia hạn: {loan.renewCount}/3)
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Mobile Actions 1-Touch */}
+                                  <div className="pt-2 border-t border-[#DCDED0] flex flex-wrap gap-2">
+                                    {loan.status === 'ACTIVE' && (
+                                      <>
+                                        <button
+                                          onClick={() => handleOpenReturnModal(loan)}
+                                          className="flex-1 min-h-[42px] py-2 px-3 rounded-[12px] text-xs font-bold bg-ysbk-primary text-white hover:bg-[#294C3A] transition text-center shadow-xs"
+                                        >
+                                          Trả / Chuyển
+                                        </button>
+                                        <button
+                                          onClick={() => handleOpenRenewModal(loan)}
+                                          className="min-h-[42px] py-2 px-3 rounded-[12px] text-xs font-semibold bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0] transition text-center"
+                                        >
+                                          Gia hạn
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setSelectedLoanForLoss(loan);
+                                            const activeItems = items.filter((it: any) => !it.returnedAt && !it.isLost);
+                                            if (activeItems.length > 0) setLossSelectedBarcode(activeItems[0].barcode);
+                                            setShowLossModal(true);
+                                          }}
+                                          className="min-h-[42px] py-2 px-3 rounded-[12px] text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 transition text-center"
+                                        >
+                                          Mất sách
+                                        </button>
+                                      </>
+                                    )}
+                                    {loan.status === 'PENDING_DEPOSIT' && (
+                                      <button
+                                        onClick={() => {
+                                          setShowConfirmDepositModal({ isOpen: true, loan });
+                                          setDepositConfirmedT73(false);
+                                        }}
+                                        className="w-full min-h-[42px] py-2 px-3 rounded-[12px] text-xs font-bold bg-ysbk-terracotta text-white transition text-center"
+                                      >
+                                        Thu cọc mới T73
+                                      </button>
+                                    )}
+                                    {(loan.status === 'RETURNED' || loan.status === 'PARTIAL_SETTLED') && (
+                                      <button
+                                        onClick={() => handleViewSettlementDetail(loan.id)}
+                                        className="w-full min-h-[42px] py-2 px-3 rounded-[12px] text-xs font-semibold bg-[#E8EDDF] text-[#35483C] transition text-center"
+                                      >
+                                        Xem Quyết Toán
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
 
@@ -4033,61 +4201,61 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'kho-sach' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Quản Lý Bản Sách & Vị Trí Kho</h3>
-                    <p className="text-xs text-slate-500">Hai kho chính: Thư viện Tạ Quang Bửu & Văn phòng Hội Sinh viên + Bàn trực tạm</p>
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Quản Lý Bản Sách & Vị Trí Kho</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">Hai kho chính: Thư viện Tạ Quang Bửu & Văn phòng Hội Sinh viên + Bàn trực tạm</p>
                   </div>
                   <button 
                     onClick={() => setShowExportModal({ isOpen: true, type: 'EXCEL', title: 'Nhập Sách Mới Từ Excel' })}
-                    className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition"
+                    className="px-3.5 py-2 text-xs font-semibold rounded-[14px] border border-[#DCDED0] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] flex items-center gap-1.5 transition"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
                     Preview Import Excel
                   </button>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] overflow-hidden shadow-soft-card">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                    <thead className="bg-[#F8F5EC] border-b border-[#DCDED0] text-[#64705C] font-semibold uppercase">
                       <tr>
                         <th className="py-3 px-4">Mã Bản Sách</th>
-                        <th className="py-3 px-4">Tên Đầu Sách</th>
+                        <th className="py-3 px-4 min-w-[220px]">Tên Đầu Sách</th>
                         <th className="py-3 px-4">Vị Trí Hiện Tại</th>
                         <th className="py-3 px-4">Giá Bìa Snapshot</th>
                         <th className="py-3 px-4">Mức Cọc Tự Động</th>
                         <th className="py-3 px-4">Trạng Thái</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-[#DCDED0]/60">
                       {liveCopies.map((copy) => (
-                        <tr key={copy.barcode} className="hover:bg-slate-50/80">
-                          <td className="py-3 px-4 font-mono font-medium text-brand-navy">{copy.barcode}</td>
-                          <td className="py-3 px-4 font-semibold text-slate-900">{copy.title || 'Đầu sách'}</td>
-                          <td className="py-3 px-4">
+                        <tr key={copy.barcode} className="hover:bg-[#F8F5EC]/70 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-ysbk-primary">{copy.barcode}</td>
+                          <td className="py-3.5 px-4 font-semibold text-[#35483C]">{copy.title || 'Đầu sách'}</td>
+                          <td className="py-3.5 px-4">
                             {copy.location === 'BAN_TRUC_TAM' && <span className="font-medium text-blue-700">Bàn trực sảnh Thư viện TQB</span>}
-                            {copy.location === 'KHO_THU_VIEN' && <span>Kho Thư viện Tạ Quang Bửu</span>}
-                            {copy.location === 'KHO_HOI_SINH_VIEN' && <span>Kho VP Hội Sinh viên</span>}
+                            {copy.location === 'KHO_THU_VIEN' && <span className="text-[#35483C]">Kho Thư viện Tạ Quang Bửu</span>}
+                            {copy.location === 'KHO_HOI_SINH_VIEN' && <span className="text-[#35483C]">Kho VP Hội Sinh viên</span>}
                           </td>
-                          <td className="py-3 px-4 font-mono tnum">
-                            {copy.coverPrice ? formatVND(copy.coverPrice) : <span className="text-slate-400 italic">Chưa có giá</span>}
+                          <td className="py-3.5 px-4 font-mono tnum">
+                            {copy.coverPrice ? formatVND(copy.coverPrice) : <span className="text-[#64705C] italic">Chưa có giá</span>}
                           </td>
-                          <td className="py-3 px-4 font-bold text-brand-navy tnum">
+                          <td className="py-3.5 px-4 font-bold text-ysbk-primary tnum">
                             {formatVND(calculateDeposit(copy.coverPrice))}
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3.5 px-4">
                             {copy.status === 'AVAILABLE' && (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8EDDF] text-[#294C3A]">
                                 Sẵn sàng
                               </span>
                             )}
                             {copy.status === 'BORROWED' && (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F4EAD2] text-[#785420]">
                                 Đang mượn
                               </span>
                             )}
                             {copy.status === 'LOST' && (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-800">
                                 Đã mất
                               </span>
                             )}
@@ -4105,13 +4273,13 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'thanh-vien' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Quản Lý Nhân Sự & Hội Phí 4 Ban (Chặng 13)</h3>
-                    <p className="text-xs text-slate-500">Mỗi thành viên có thể kiêm nhiệm nhiều ban. Hội phí 100k thu duy nhất 1 lần khi kết nạp.</p>
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Quản Lý Nhân Sự & Hội Phí 4 Ban (Chặng 13)</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">Mỗi thành viên có thể kiêm nhiệm nhiều ban. Hội phí 100k thu duy nhất 1 lần khi kết nạp.</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-lg bg-brand-navy/10 text-brand-navy text-xs font-bold">
+                    <span className="px-3 py-1.5 rounded-[12px] bg-[#E8EDDF] text-[#294C3A] text-xs font-semibold">
                       Tổng thực tế (Distinct): {memberHeadcount ? memberHeadcount.totalDistinctMembers : (liveMembers.length || INITIAL_MEMBERS.length)} bạn
                     </span>
                   </div>
@@ -4119,47 +4287,47 @@ export default function InternalWorkspace() {
 
                 {/* Headcount Stat Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-[11px] text-slate-500 font-semibold uppercase">Tổng Thành Viên</div>
-                    <div className="text-2xl font-bold text-brand-navy mt-1">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-[11px] text-[#64705C] font-semibold uppercase">Tổng Thành Viên</div>
+                    <div className="font-serif text-2xl font-bold text-ysbk-primary mt-1">
                       {memberHeadcount ? memberHeadcount.totalDistinctMembers : (liveMembers.length || INITIAL_MEMBERS.length)}
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">Không đếm trùng</div>
+                    <div className="text-[10px] text-[#64705C] mt-0.5">Không đếm trùng</div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-blue-100 shadow-sm">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                     <div className="text-[11px] text-blue-700 font-semibold uppercase">Ban Hậu Cần</div>
-                    <div className="text-2xl font-bold text-blue-800 mt-1">
+                    <div className="font-serif text-2xl font-bold text-blue-800 mt-1">
                       {memberHeadcount ? memberHeadcount.departments.BAN_HAU_CAN : 2}
                     </div>
-                    <div className="text-[10px] text-blue-500 mt-0.5">Kho sách & ca trực</div>
+                    <div className="text-[10px] text-blue-600 mt-0.5">Kho sách & ca trực</div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-sm">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                     <div className="text-[11px] text-emerald-700 font-semibold uppercase">Ban Nội Dung</div>
-                    <div className="text-2xl font-bold text-emerald-800 mt-1">
+                    <div className="font-serif text-2xl font-bold text-emerald-800 mt-1">
                       {memberHeadcount ? memberHeadcount.departments.BAN_NOI_DUNG : 1}
                     </div>
-                    <div className="text-[10px] text-emerald-500 mt-0.5">Review & Tọa đàm</div>
+                    <div className="text-[10px] text-emerald-600 mt-0.5">Review & Tọa đàm</div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                     <div className="text-[11px] text-purple-700 font-semibold uppercase">Ban TT & ĐN</div>
-                    <div className="text-2xl font-bold text-purple-800 mt-1">
+                    <div className="font-serif text-2xl font-bold text-purple-800 mt-1">
                       {memberHeadcount ? memberHeadcount.departments.BAN_TTDN : 1}
                     </div>
-                    <div className="text-[10px] text-purple-500 mt-0.5">Fanpage & Tài trợ</div>
+                    <div className="text-[10px] text-purple-600 mt-0.5">Fanpage & Tài trợ</div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-rose-100 shadow-sm">
-                    <div className="text-[11px] text-rose-700 font-semibold uppercase">Ban Chủ Nhiệm</div>
-                    <div className="text-2xl font-bold text-rose-800 mt-1">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-[11px] text-[#813C2A] font-semibold uppercase">Ban Chủ Nhiệm</div>
+                    <div className="font-serif text-2xl font-bold text-[#813C2A] mt-1">
                       {memberHeadcount ? memberHeadcount.departments.BAN_CHU_NHIEM : 1}
                     </div>
-                    <div className="text-[10px] text-rose-500 mt-0.5">Điều hành chung</div>
+                    <div className="text-[10px] text-[#813C2A]/80 mt-0.5">Điều hành chung</div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-amber-100 shadow-sm">
+                  <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                     <div className="text-[11px] text-amber-700 font-semibold uppercase">Kiêm Nhiệm</div>
-                    <div className="text-2xl font-bold text-amber-800 mt-1">
+                    <div className="font-serif text-2xl font-bold text-amber-800 mt-1">
                       {memberHeadcount ? memberHeadcount.multiDepartmentMemberCount : 0}
                     </div>
-                    <div className="text-[10px] text-amber-500 mt-0.5">Thuộc ≥ 2 ban</div>
+                    <div className="text-[10px] text-amber-600 mt-0.5">Thuộc ≥ 2 ban</div>
                   </div>
                 </div>
 
@@ -4188,7 +4356,7 @@ export default function InternalWorkspace() {
                     const deptBadgeColor = 
                       (m.department === 'BAN_HAU_CAN' || m.department === 'HAU_CAN') ? 'bg-blue-100 text-blue-800' :
                       (m.department === 'BAN_NOI_DUNG' || m.department === 'NOI_DUNG') ? 'bg-emerald-100 text-emerald-800' :
-                      (m.department === 'BAN_TTDN' || m.department === 'TTDN') ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800';
+                      (m.department === 'BAN_TTDN' || m.department === 'TTDN') ? 'bg-purple-100 text-purple-800' : 'bg-[#F7E7DB] text-[#813C2A]';
 
                     const roleLabel =
                       m.role === 'CHU_NHIEM' ? 'Chủ Nhiệm' :
@@ -4197,39 +4365,39 @@ export default function InternalWorkspace() {
                       m.role === 'PHO_BAN' ? 'Phó Ban' : 'Thành Viên';
 
                     return (
-                      <div key={m.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs flex flex-col justify-between">
+                      <div key={m.id} className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card space-y-3 text-xs flex flex-col justify-between">
                         <div className="space-y-2">
                           <div className="flex justify-between items-start gap-2">
                             <div>
-                              <div className="font-bold text-sm text-slate-900">{m.fullName}</div>
-                              <div className="text-slate-500 text-[11px]">
+                              <div className="font-bold text-sm text-[#35483C]">{m.fullName}</div>
+                              <div className="text-[#64705C] text-[11px]">
                                 @{m.username} {m.studentId ? `· MSSV: ${m.studentId}` : ''} {m.schoolYear ? `· ${m.schoolYear}` : ''}
                               </div>
                             </div>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${deptBadgeColor}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${deptBadgeColor}`}>
                               {deptLabel}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                            <span className="text-slate-600 font-medium">Chức vụ: <strong>{roleLabel}</strong></span>
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#DCDED0]">
+                            <span className="text-[#64705C] font-medium">Chức vụ: <strong>{roleLabel}</strong></span>
                             {m.hasPaidFee ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8EDDF] text-[#294C3A] flex items-center gap-1">
                                 <CheckCircle className="w-3 h-3" /> Đã nộp 100k
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F7E7DB] text-[#813C2A] flex items-center gap-1">
                                 <AlertTriangle className="w-3 h-3" /> Chưa nộp hội phí
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DCDED0]">
                           <button
                             type="button"
                             onClick={() => handleOpenAffiliationsModal(m)}
-                            className="px-2.5 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                            className="px-3 py-1.5 rounded-[12px] text-xs font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] transition"
                           >
                             Lịch sử Ban
                           </button>
@@ -4237,7 +4405,7 @@ export default function InternalWorkspace() {
                             <button
                               type="button"
                               onClick={() => handleOpenCollectDuesModal(m)}
-                              className="px-2.5 py-1.5 rounded text-xs font-bold bg-brand-red text-white hover:bg-brand-red-hover transition shadow-sm"
+                              className="px-3 py-1.5 rounded-[12px] text-xs font-bold bg-ysbk-terracotta text-white hover:bg-[#813C2A] transition shadow-xs"
                             >
                               Thu Hội Phí 100k
                             </button>
@@ -4255,29 +4423,29 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'truc-sach' && (
               <div className="space-y-6">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Lịch Trực Bàn Sách Chiều Thứ Ba & Thứ Năm</h3>
-                    <p className="text-xs text-slate-500">Khung giờ đón bạn đọc: 14:00 – 17:00 tại Sảnh Thư viện Tạ Quang Bửu (Thu dọn 17:00 - 17:15 [GIẢ ĐỊNH / CHƯA CHỐT POLICY])</p>
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Lịch Trực Bàn Sách Chiều Thứ Ba & Thứ Năm</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">Khung giờ đón bạn đọc: 14:00 – 17:00 tại Sảnh Thư viện Tạ Quang Bửu (Thu dọn 17:00 - 17:15 [GIẢ ĐỊNH / CHƯA CHỐT POLICY])</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => setShowGenerateScheduleModal(true)}
-                      className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] bg-ysbk-primary hover:bg-[#294C3A] text-white shadow-soft-btn flex items-center gap-1.5 transition"
                     >
                       <Plus className="w-4 h-4" />
                       Tạo Dự Thảo Lịch
                     </button>
                     <button 
                       onClick={() => setShowAvailabilityModal(true)}
-                      className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition shadow-sm"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] border border-[#DCDED0] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] flex items-center gap-1.5 transition"
                     >
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
                       Import Lịch Bận (Excel)
                     </button>
                     <button 
                       onClick={() => setShowFbPostModal(true)}
-                      className="px-3 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] bg-ysbk-terracotta hover:bg-[#813C2A] text-white shadow-soft-btn flex items-center gap-1.5 transition"
                     >
                       <Copy className="w-4 h-4" />
                       Lấy Mẫu Đăng Facebook
@@ -4287,7 +4455,7 @@ export default function InternalWorkspace() {
 
                 {liveSchedules.length === 0 ? (
                   <div className="space-y-4">
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+                    <div className="p-4 bg-[#F4EAD2]/50 border border-[#A87A4C]/30 rounded-[16px] text-xs text-[#785420] flex items-center justify-between">
                       <div>
                         <strong>Chưa có lịch trực trong cơ sở dữ liệu:</strong> Đang hiển thị lịch mẫu (Demo fixtures).
                         Bấm <strong>"Tạo Dự Thảo Lịch"</strong> để chạy solver thuật toán xếp lịch tự động.
@@ -4295,18 +4463,18 @@ export default function InternalWorkspace() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {INITIAL_DUTY_SHIFTS.map((shift) => (
-                        <div key={shift.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs">
-                          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                            <span className="font-bold text-sm text-brand-navy">{shift.date} ({shift.dayOfWeek})</span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        <div key={shift.id} className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card space-y-3 text-xs">
+                          <div className="flex justify-between items-center pb-2 border-b border-[#DCDED0]">
+                            <span className="font-serif font-bold text-base text-[#35483C]">{shift.date} ({shift.dayOfWeek})</span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8EDDF] text-[#294C3A]">
                               {shift.status}
                             </span>
                           </div>
-                          <div className="space-y-1 text-slate-600">
-                            <div>⏰ Thời gian: {shift.mainTime}</div>
-                            <div>📍 Địa điểm: {shift.location}</div>
-                            <div>👤 Trực chính: <strong>{shift.mainAssignees.join(', ')}</strong></div>
-                            <div>👥 Hỗ trợ: {shift.supportAssignees.join(', ')}</div>
+                          <div className="space-y-1 text-[#64705C]">
+                            <div>⏰ Thời gian: <span className="text-[#35483C]">{shift.mainTime}</span></div>
+                            <div>📍 Địa điểm: <span className="text-[#35483C]">{shift.location}</span></div>
+                            <div>👤 Trực chính: <strong className="text-[#35483C]">{shift.mainAssignees.join(', ')}</strong></div>
+                            <div>👥 Hỗ trợ: <span className="text-[#35483C]">{shift.supportAssignees.join(', ')}</span></div>
                           </div>
                         </div>
                       ))}
@@ -4326,27 +4494,27 @@ export default function InternalWorkspace() {
                       };
 
                       return (
-                        <div key={shift.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs flex flex-col justify-between">
+                        <div key={shift.id} className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card space-y-3 text-xs flex flex-col justify-between">
                           <div className="space-y-2">
-                            <div className="flex justify-between items-start pb-2 border-b border-slate-100 gap-2">
+                            <div className="flex justify-between items-start pb-2 border-b border-[#DCDED0] gap-2">
                               <div>
-                                <span className="font-bold text-sm text-brand-navy">{shift.scheduleDate} ({dayLabel})</span>
-                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                <span className="font-serif font-bold text-base text-[#35483C]">{shift.scheduleDate} ({dayLabel})</span>
+                                <div className="text-[10px] text-[#64705C] mt-0.5">
                                   Phiên bản: v{shift.version} {shift.publishedVersion ? `(Công bố: v${shift.publishedVersion})` : ''}
                                 </div>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 {shift.isManuallyEdited && (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800">
                                     Đã sửa tay
                                   </span>
                                 )}
                                 {shift.status === 'PUBLISHED' ? (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8EDDF] text-[#294C3A] flex items-center gap-1">
                                     <CheckCircle className="w-3 h-3" /> Đã công bố
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F4EAD2] text-[#785420] flex items-center gap-1">
                                     <Clock className="w-3 h-3" /> Dự thảo
                                   </span>
                                 )}
@@ -4355,31 +4523,31 @@ export default function InternalWorkspace() {
 
                             {/* Cảnh báo thiếu nhân sự riêng biệt (R11) */}
                             {shift.warningMain && (
-                              <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-semibold flex items-center gap-1.5">
+                              <div className="p-2.5 rounded-[12px] bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-semibold flex items-center gap-1.5">
                                 <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                                 {shift.warningMain}
                               </div>
                             )}
                             {shift.warningSupport && (
-                              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold flex items-center gap-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <div className="p-2.5 rounded-[12px] bg-[#F7E7DB] border border-[#9B4D36]/20 text-[#813C2A] text-[11px] font-semibold flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-ysbk-terracotta shrink-0" />
                                 {shift.warningSupport}
                               </div>
                             )}
 
-                            <div className="space-y-1.5 text-slate-600 pt-1">
-                              <div>⏰ Thời gian: <span className="text-slate-800">{shift.shiftTime}</span></div>
-                              <div>📍 Địa điểm: <span className="text-slate-800">{shift.location}</span></div>
+                            <div className="space-y-1.5 text-[#64705C] pt-1">
+                              <div>⏰ Thời gian: <span className="text-[#35483C] font-medium">{shift.shiftTime}</span></div>
+                              <div>📍 Địa điểm: <span className="text-[#35483C] font-medium">{shift.location}</span></div>
                               <div>
                                 👤 Trực chính ({mains.length}/2):
-                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-slate-200">
+                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-[#DCDED0]">
                                   {mains.length === 0 ? (
-                                    <span className="text-rose-500 italic">Chưa có người trực chính đủ điều kiện!</span>
+                                    <span className="text-rose-600 italic">Chưa có người trực chính đủ điều kiện!</span>
                                   ) : (
                                     mains.map((m) => (
-                                      <div key={m.id} className="text-slate-800">
+                                      <div key={m.id} className="text-[#35483C]">
                                         <strong>{m.memberName || m.memberId}</strong>
-                                        <span className="ml-1 text-[11px] text-slate-500 font-normal">
+                                        <span className="ml-1 text-[11px] text-[#64705C] font-normal">
                                           ({roleMap[m.assignedRole] || m.assignedRole})
                                         </span>
                                       </div>
@@ -4389,14 +4557,14 @@ export default function InternalWorkspace() {
                               </div>
                               <div>
                                 👥 Hỗ trợ ({supports.length}/3-5):
-                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-slate-200">
+                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-[#DCDED0]">
                                   {supports.length === 0 ? (
-                                    <span className="text-amber-600 italic">Chưa có người trực hỗ trợ!</span>
+                                    <span className="text-amber-700 italic">Chưa có người trực hỗ trợ!</span>
                                   ) : (
                                     supports.map((s) => (
-                                      <div key={s.id} className="text-slate-800">
+                                      <div key={s.id} className="text-[#35483C]">
                                         {s.memberName || s.memberId}
-                                        <span className="ml-1 text-[11px] text-slate-500">
+                                        <span className="ml-1 text-[11px] text-[#64705C]">
                                           ({roleMap[s.assignedRole] || s.assignedRole})
                                         </span>
                                       </div>
@@ -4407,12 +4575,12 @@ export default function InternalWorkspace() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap items-center justify-end gap-1.5 pt-3 border-t border-slate-100">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5 pt-3 border-t border-[#DCDED0]">
                             {shift.facebookPostContent && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenFacebookViewModal(shift.facebookPostContent!)}
-                                className="px-2 py-1 rounded text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1 transition"
+                                className="px-2.5 py-1.5 rounded-[10px] text-[11px] font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] flex items-center gap-1 transition"
                               >
                                 <Copy className="w-3 h-3" /> Mẫu FB
                               </button>
@@ -4420,7 +4588,7 @@ export default function InternalWorkspace() {
                             <button
                               type="button"
                               onClick={() => handleOpenManualEditModal(shift)}
-                              className="px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                              className="px-3 py-1.5 rounded-[10px] text-[11px] font-semibold bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] border border-[#DCDED0] transition"
                             >
                               Chỉnh sửa tay
                             </button>
@@ -4428,7 +4596,7 @@ export default function InternalWorkspace() {
                               <button
                                 type="button"
                                 onClick={() => handlePublishSchedule(shift.id)}
-                                className="px-2.5 py-1 rounded text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm flex items-center gap-1"
+                                className="px-3 py-1.5 rounded-[10px] text-[11px] font-bold bg-ysbk-primary hover:bg-[#294C3A] text-white transition shadow-xs flex items-center gap-1"
                               >
                                 <CheckCircle className="w-3 h-3" /> Công bố
                               </button>
@@ -4447,17 +4615,17 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'tuyen' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Tiếp Nhận & Đối Soát Đơn Tuyển Thành Viên (Chặng 16)</h3>
-                    <p className="text-xs text-slate-500">
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Tiếp Nhận & Đối Soát Đơn Tuyển Thành Viên (Chặng 16)</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">
                       Tự động tiếp nhận webhook Google Form (HMAC-SHA256), khóa nguồn FormID + ResponseID, phân tách dữ liệu nguồn với điểm chấm.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => setShowReconcileModal(true)}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                      className="px-4 py-2 text-xs font-semibold rounded-[14px] bg-ysbk-primary hover:bg-[#294C3A] text-white shadow-soft-btn flex items-center gap-1.5 transition"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Đối Soát Bù Đơn (Reconcile)
@@ -4475,56 +4643,56 @@ export default function InternalWorkspace() {
 
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-[11px] text-slate-500 font-semibold uppercase">Tổng Đơn Đã Nhận</div>
-                        <div className="text-2xl font-bold text-brand-navy mt-1">{total}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">Đã commit bền</div>
+                      <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-[11px] text-[#64705C] font-semibold uppercase">Tổng Đơn Đã Nhận</div>
+                        <div className="font-serif text-2xl font-bold text-ysbk-primary mt-1">{total}</div>
+                        <div className="text-[10px] text-[#64705C] mt-0.5">Đã commit bền</div>
                       </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-blue-100 shadow-sm">
+                      <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                         <div className="text-[11px] text-blue-700 font-semibold uppercase">Ban Hậu Cần (NV1)</div>
-                        <div className="text-2xl font-bold text-blue-800 mt-1">{hcCount}</div>
-                        <div className="text-[10px] text-blue-500 mt-0.5">Quản lý kho & bàn trực</div>
+                        <div className="font-serif text-2xl font-bold text-blue-800 mt-1">{hcCount}</div>
+                        <div className="text-[10px] text-blue-600 mt-0.5">Kho & bàn trực</div>
                       </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-sm">
+                      <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                         <div className="text-[11px] text-emerald-700 font-semibold uppercase">Ban Nội Dung (NV1)</div>
-                        <div className="text-2xl font-bold text-emerald-800 mt-1">{ndCount}</div>
-                        <div className="text-[10px] text-emerald-500 mt-0.5">Viết bài & tọa đàm</div>
+                        <div className="font-serif text-2xl font-bold text-emerald-800 mt-1">{ndCount}</div>
+                        <div className="text-[10px] text-emerald-600 mt-0.5">Viết bài & tọa đàm</div>
                       </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm">
+                      <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
                         <div className="text-[11px] text-purple-700 font-semibold uppercase">Ban TT & ĐN (NV1)</div>
-                        <div className="text-2xl font-bold text-purple-800 mt-1">{ttCount}</div>
-                        <div className="text-[10px] text-purple-500 mt-0.5">Fanpage & tài trợ</div>
+                        <div className="font-serif text-2xl font-bold text-purple-800 mt-1">{ttCount}</div>
+                        <div className="text-[10px] text-purple-600 mt-0.5">Fanpage & tài trợ</div>
                       </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-rose-100 shadow-sm">
-                        <div className="text-[11px] text-rose-700 font-semibold uppercase">Ban Chủ Nhiệm (NV1)</div>
-                        <div className="text-2xl font-bold text-rose-800 mt-1">{bcnCount}</div>
-                        <div className="text-[10px] text-rose-500 mt-0.5">Điều hành chung</div>
+                      <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-[11px] text-[#813C2A] font-semibold uppercase">Ban Chủ Nhiệm (NV1)</div>
+                        <div className="font-serif text-2xl font-bold text-[#813C2A] mt-1">{bcnCount}</div>
+                        <div className="text-[10px] text-[#813C2A]/80 mt-0.5">Điều hành chung</div>
                       </div>
                     </div>
                   );
                 })()}
 
                 {/* Danh sách đơn ứng tuyển */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-xs">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                    <span className="font-bold text-slate-800">
+                <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] shadow-soft-card overflow-hidden text-xs">
+                  <div className="p-4 border-b border-[#DCDED0] flex items-center justify-between bg-[#F8F5EC]">
+                    <span className="font-serif font-bold text-sm text-[#35483C]">
                       Danh Sách Hồ Sơ Ứng Tuyển ({liveRecruitmentResponses.length} đơn)
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-[#64705C]">
                       Chỉ hiển thị cho thành viên nội bộ; dữ liệu công khai được bảo vệ PII
                     </span>
                   </div>
 
                   {liveRecruitmentResponses.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 space-y-2">
-                      <UserPlus className="w-8 h-8 mx-auto text-slate-300" />
+                    <div className="p-8 text-center text-[#64705C] space-y-2">
+                      <UserPlus className="w-8 h-8 mx-auto text-[#64705C]/60" />
                       <p>Chưa có đơn ứng tuyển nào được đồng bộ vào hệ thống.</p>
                       <p className="text-[11px]">Bấm nút <strong>"Đối Soát Bù Đơn (Reconcile)"</strong> để nạp các đơn từ Google Form / Sheets.</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                        <thead className="bg-[#F8F5EC] text-[#64705C] font-semibold border-b border-[#DCDED0]">
                           <tr>
                             <th className="py-3 px-4">Họ và Tên</th>
                             <th className="py-3 px-4">Liên Hệ (Email / SĐT)</th>
@@ -4534,7 +4702,7 @@ export default function InternalWorkspace() {
                             <th className="py-3 px-4 text-right">Thao Tác</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-[#DCDED0]/60">
                           {liveRecruitmentResponses.map((r) => {
                             const aspirationLabel = (asp: string) => {
                               if (asp === 'BAN_HAU_CAN') return 'Hậu Cần';
@@ -4545,34 +4713,34 @@ export default function InternalWorkspace() {
                             };
 
                             return (
-                              <tr key={r.id} className="hover:bg-slate-50/80">
-                                <td className="py-3 px-4 font-semibold text-slate-900">
+                              <tr key={r.id} className="hover:bg-[#F8F5EC]/70 transition">
+                                <td className="py-3 px-4 font-semibold text-[#35483C]">
                                   <div>{r.applicantName}</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">
+                                  <div className="text-[10px] text-[#64705C] font-mono">
                                     {r.applicantStudentId ? `MSSV: ${r.applicantStudentId}` : `ID: ${r.responseId.slice(-8)}`}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className="font-mono text-slate-800">{r.applicantEmail}</div>
-                                  <div className="text-slate-400 text-[11px]">{r.applicantPhone || '—'}</div>
+                                  <div className="font-mono text-[#35483C]">{r.applicantEmail}</div>
+                                  <div className="text-[#64705C] text-[11px]">{r.applicantPhone || '—'}</div>
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex flex-wrap gap-1">
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">
                                       NV1: {aspirationLabel(r.aspiration1)}
                                     </span>
                                     {r.aspiration2 && (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#E8EDDF] text-[#35483C]">
                                         NV2: {aspirationLabel(r.aspiration2)}
                                       </span>
                                     )}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                                <td className="py-3 px-4 text-[#64705C] font-mono text-[11px]">
                                   {new Date(r.submissionTimestamp).toLocaleString('vi-VN')}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 w-fit">
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E8EDDF] text-[#294C3A] flex items-center gap-1 w-fit">
                                     <CheckCircle className="w-3 h-3" /> Đã đồng bộ
                                   </span>
                                   {r.version > 1 && (
@@ -4584,21 +4752,21 @@ export default function InternalWorkspace() {
                                     <button
                                       type="button"
                                       onClick={() => handleOpenApplicantDetail(r)}
-                                      className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition"
+                                      className="px-2.5 py-1 rounded-[10px] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] font-semibold text-[11px] transition"
                                     >
                                       Xem Đơn
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleOpenEvaluationModal(r)}
-                                      className="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] transition"
+                                      className="px-2.5 py-1 rounded-[10px] bg-ysbk-primary text-white font-semibold text-[11px] hover:bg-[#294C3A] transition shadow-xs"
                                     >
                                       Chấm Điểm
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleOpenDecisionModal(r)}
-                                      className="px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] transition"
+                                      className="px-2.5 py-1 rounded-[10px] bg-ysbk-terracotta text-white font-semibold text-[11px] hover:bg-[#813C2A] transition shadow-xs"
                                     >
                                       Hội Đồng
                                     </button>
@@ -4620,27 +4788,27 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'ban-sach' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
-                      <ShoppingBag className="w-5 h-5 text-amber-500" />
+                    <h3 className="font-serif font-bold text-lg text-[#35483C] flex items-center gap-2">
+                      <ShoppingBag className="w-5 h-5 text-ysbk-gold" />
                       Quầy Sách Mới & Ký Gửi Nhà Sách (Chặng 18)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#64705C] mt-0.5">
                       Sách mới nhận theo lô từ nhà sách, bán tại quầy thu đủ tiền, trả sách dư vật lý và quyết toán nợ riêng biệt với hoàn cọc.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowCreateSupplierModal(true)}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm flex items-center gap-1.5 transition"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] border border-[#DCDED0] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] shadow-xs flex items-center gap-1.5 transition"
                     >
-                      <Store className="w-4 h-4 text-slate-500" />
+                      <Store className="w-4 h-4 text-[#64705C]" />
                       Thêm Nhà Sách
                     </button>
                     <button
                       onClick={() => setShowCreateLotModal(true)}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] bg-ysbk-terracotta hover:bg-[#813C2A] text-white shadow-soft-btn flex items-center gap-1.5 transition"
                     >
                       <Plus className="w-4 h-4" />
                       Nhập Lô Sách Mới
@@ -4667,28 +4835,28 @@ export default function InternalWorkspace() {
 
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-xs font-medium text-slate-500">Tổng Doanh Thu Bán Sách</div>
-                        <div className="text-2xl font-bold text-emerald-700 tnum mt-1">{formatVND(totalRevenue)}</div>
-                        <div className="text-[11px] text-slate-400 font-medium mt-1">Đã thu đủ từ khách mua lẻ</div>
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-xs font-semibold text-[#64705C]">Tổng Doanh Thu Bán Sách</div>
+                        <div className="font-serif text-2xl font-bold text-emerald-700 tnum mt-1">{formatVND(totalRevenue)}</div>
+                        <div className="text-[11px] text-[#64705C] font-medium mt-1">Đã thu đủ từ khách mua lẻ</div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-xs font-medium text-slate-500">Tiền Nợ Nhà Sách (Giá Vốn)</div>
-                        <div className="text-2xl font-bold text-rose-700 tnum mt-1">{formatVND(totalPayable)}</div>
-                        <div className="text-[11px] text-slate-400 font-medium mt-1">Chỉ CLB nợ, thanh toán riêng</div>
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-xs font-semibold text-[#64705C]">Tiền Nợ Nhà Sách (Giá Vốn)</div>
+                        <div className="font-serif text-2xl font-bold text-rose-600 tnum mt-1">{formatVND(totalPayable)}</div>
+                        <div className="text-[11px] text-[#64705C] font-medium mt-1">Chỉ CLB nợ, thanh toán riêng</div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-xs font-medium text-slate-500">Chênh Lệch Gộp Dự Kiến</div>
-                        <div className="text-2xl font-bold text-brand-navy tnum mt-1">{formatVND(grossProfit)}</div>
-                        <div className="text-[11px] text-slate-400 font-medium mt-1">Doanh thu trừ nợ nhà sách</div>
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-xs font-semibold text-[#64705C]">Chênh Lệch Gộp Dự Kiến</div>
+                        <div className="font-serif text-2xl font-bold text-ysbk-primary tnum mt-1">{formatVND(grossProfit)}</div>
+                        <div className="text-[11px] text-[#64705C] font-medium mt-1">Doanh thu trừ nợ nhà sách</div>
                       </div>
 
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="text-xs font-medium text-slate-500">Cọc Nhà Sách Đã Chi</div>
-                        <div className="text-2xl font-bold text-indigo-700 tnum mt-1">{formatVND(totalDeposits)}</div>
-                        <div className="text-[11px] text-slate-400 font-medium mt-1">Tách biệt hoàn toàn cọc bạn đọc</div>
+                      <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                        <div className="text-xs font-semibold text-[#64705C]">Cọc Nhà Sách Đã Chi</div>
+                        <div className="font-serif text-2xl font-bold text-indigo-700 tnum mt-1">{formatVND(totalDeposits)}</div>
+                        <div className="text-[11px] text-[#64705C] font-medium mt-1">Tách biệt hoàn toàn cọc bạn đọc</div>
                       </div>
                     </div>
                   );
@@ -4697,45 +4865,45 @@ export default function InternalWorkspace() {
                 {/* Danh sách các lô sách ký gửi */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-sm text-slate-800">Danh Sách Lô Sách Ký Gửi ({liveLots.length})</h4>
-                    <span className="text-xs text-slate-400">Không lấy sách cho mượn để bán · Invariant: Nhận = Bán + Trả + Giữ + Khả dụng</span>
+                    <h4 className="font-serif font-bold text-base text-[#35483C]">Danh Sách Lô Sách Ký Gửi ({liveLots.length})</h4>
+                    <span className="text-xs text-[#64705C]">Không lấy sách cho mượn để bán · Invariant: Nhận = Bán + Trả + Giữ + Khả dụng</span>
                   </div>
 
                   {liveLots.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                      <ShoppingBag className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] p-8 text-center text-[#64705C] shadow-soft-card">
+                      <ShoppingBag className="w-10 h-10 mx-auto mb-2 text-[#64705C]/60" />
                       <p className="text-xs">Chưa có lô sách ký gửi nào. Bấm "Nhập Lô Sách Mới" để tạo đợt nhận hàng.</p>
                     </div>
                   ) : (
                     liveLots.map((lot) => (
-                      <div key={lot.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-xs">
-                        <div className="p-4 bg-slate-50/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                      <div key={lot.id} className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] shadow-soft-card overflow-hidden text-xs">
+                        <div className="p-4 bg-[#F8F5EC] border-b border-[#DCDED0] flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <span className="font-mono font-bold text-slate-900 text-sm bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                            <span className="font-mono font-bold text-[#35483C] text-sm bg-white border border-[#DCDED0] px-3 py-1 rounded-[10px] shadow-xs">
                               {lot.batchCode}
                             </span>
                             <div>
-                              <div className="font-bold text-slate-800">{lot.campaignName}</div>
-                              <div className="text-[11px] text-slate-500">
-                                Nhà sách: <span className="font-semibold text-slate-700">{lot.supplierName || 'Đối tác'}</span> · Ngày nhận: {lot.receivedDate}
+                              <div className="font-bold text-[#35483C] text-sm">{lot.campaignName}</div>
+                              <div className="text-[11px] text-[#64705C]">
+                                Nhà sách: <span className="font-semibold text-[#35483C]">{lot.supplierName || 'Đối tác'}</span> · Ngày nhận: {lot.receivedDate}
                               </div>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              lot.status === 'SETTLED' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-800'
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${
+                              lot.status === 'SETTLED' ? 'bg-[#F8F5EC] text-[#64705C] border border-[#DCDED0]' : 'bg-[#E8EDDF] text-[#294C3A]'
                             }`}>
                               {lot.status === 'SETTLED' ? 'Đã Quyết Toán' : 'Đang Bán'}
                             </span>
                             {lot.depositAmount > 0 && (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
                                 Cọc: {formatVND(lot.depositAmount)} ({lot.depositStatus})
                               </span>
                             )}
                             <button
                               onClick={() => handleOpenSettlementModal(lot)}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition flex items-center gap-1 shadow-2xs"
+                              className="px-3.5 py-1.5 rounded-[12px] bg-ysbk-primary hover:bg-[#294C3A] text-white font-semibold transition flex items-center gap-1 shadow-xs"
                             >
                               <FileText className="w-3.5 h-3.5" />
                               Quyết Toán Lô
@@ -4747,7 +4915,7 @@ export default function InternalWorkspace() {
                         <div className="p-4 overflow-x-auto">
                           <table className="w-full text-left border-collapse">
                             <thead>
-                              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase">
+                              <tr className="border-b border-[#DCDED0] text-[11px] font-bold text-[#64705C] uppercase">
                                 <th className="pb-2">Đầu Sách</th>
                                 <th className="pb-2">Giá Bìa / CK Nhập</th>
                                 <th className="pb-2">Giá Nhập / Giá Bán</th>
@@ -4755,30 +4923,30 @@ export default function InternalWorkspace() {
                                 <th className="pb-2 text-center text-emerald-700">Đã Bán</th>
                                 <th className="pb-2 text-center text-rose-700">Đã Trả</th>
                                 <th className="pb-2 text-center text-amber-700">Giữ Lại</th>
-                                <th className="pb-2 text-center font-bold text-brand-navy">Khả Dụng</th>
+                                <th className="pb-2 text-center font-bold text-ysbk-primary">Khả Dụng</th>
                                 <th className="pb-2 text-right">Thao Tác</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-[#DCDED0]/60">
                               {(lot.items || []).map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50/50">
-                                  <td className="py-2.5 font-semibold text-slate-900">
+                                <tr key={item.id} className="hover:bg-[#F8F5EC]/70 transition">
+                                  <td className="py-2.5 font-semibold text-[#35483C]">
                                     {item.bookTitle}
-                                    {item.isbn && <span className="block text-[10px] text-slate-400 font-mono">{item.isbn}</span>}
+                                    {item.isbn && <span className="block text-[10px] text-[#64705C] font-mono">{item.isbn}</span>}
                                   </td>
                                   <td className="py-2.5">
-                                    <div className="font-mono text-slate-700">{formatVND(item.coverPrice)}</div>
-                                    <div className="text-[10px] text-slate-400">CK: {item.importDiscountPercent}%</div>
+                                    <div className="font-mono text-[#35483C]">{formatVND(item.coverPrice)}</div>
+                                    <div className="text-[10px] text-[#64705C]">CK: {item.importDiscountPercent}%</div>
                                   </td>
                                   <td className="py-2.5">
                                     <div className="font-mono font-medium text-rose-700">Nhập: {formatVND(item.importPrice)}</div>
                                     <div className="font-mono font-medium text-emerald-700">Bán: {formatVND(item.retailPrice)}</div>
                                   </td>
-                                  <td className="py-2.5 text-center font-mono font-bold text-slate-700">{item.initialQuantity}</td>
+                                  <td className="py-2.5 text-center font-mono font-bold text-[#35483C]">{item.initialQuantity}</td>
                                   <td className="py-2.5 text-center font-mono font-bold text-emerald-700">{item.soldQuantity}</td>
                                   <td className="py-2.5 text-center font-mono font-bold text-rose-700">{item.returnedQuantity}</td>
                                   <td className="py-2.5 text-center font-mono font-bold text-amber-700">{item.retainedQuantity}</td>
-                                  <td className="py-2.5 text-center font-mono font-extrabold text-brand-navy bg-slate-50 rounded">
+                                  <td className="py-2.5 text-center font-mono font-extrabold text-ysbk-primary bg-[#E8EDDF]/40 rounded-[6px]">
                                     {item.availableQuantity}
                                   </td>
                                   <td className="py-2.5 text-right space-x-1">
@@ -4786,13 +4954,13 @@ export default function InternalWorkspace() {
                                       <>
                                         <button
                                           onClick={() => handleOpenSellModal(lot, item)}
-                                          className="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition"
+                                          className="px-2.5 py-1 rounded-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition"
                                         >
                                           Bán Sách
                                         </button>
                                         <button
                                           onClick={() => handleOpenConsignmentReturnModal(lot, item)}
-                                          className="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold transition"
+                                          className="px-2.5 py-1 rounded-[10px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold transition"
                                         >
                                           Trả Dư
                                         </button>
@@ -4816,19 +4984,19 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'su-kien' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
-                      <Award className="w-5 h-5 text-amber-500" />
+                    <h3 className="font-serif font-bold text-lg text-[#35483C] flex items-center gap-2">
+                      <Award className="w-5 h-5 text-ysbk-gold" />
                       Hoạt Động, Sự Kiện & Nhiệm Vụ Liên Kết Quỹ (Chặng 19)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#64705C] mt-0.5">
                       Quản lý kế hoạch, nhiệm vụ (audit log), người tham gia (thành viên hoặc khách ngoài không ép MSSV), dự toán và chi thực tế liên kết sổ quỹ đúng một lần.
                     </p>
                   </div>
                   <button
                     onClick={() => setIsNewEventModalOpen(true)}
-                    className="px-4 py-2 text-xs font-bold rounded-lg bg-brand-navy hover:bg-slate-800 text-white shadow-sm flex items-center gap-1.5 transition"
+                    className="px-4 py-2 text-xs font-semibold rounded-[14px] bg-ysbk-primary hover:bg-[#294C3A] text-white shadow-soft-btn flex items-center gap-1.5 transition"
                   >
                     <Plus className="w-4 h-4" />
                     Tạo Sự Kiện Mới
@@ -4838,61 +5006,61 @@ export default function InternalWorkspace() {
                 {/* Danh sách các sự kiện */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {liveEvents.length === 0 ? (
-                    <div className="col-span-full bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400 text-sm">
+                    <div className="col-span-full bg-[#FFFDF5] p-8 rounded-[22px] border border-[#DCDED0] text-center text-[#64705C] text-sm shadow-soft-card">
                       Chưa có sự kiện nào. Hãy nhấn "Tạo Sự Kiện Mới" để bắt đầu lên kế hoạch!
                     </div>
                   ) : (
                     liveEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-amber-300 transition flex flex-col justify-between"
+                        className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card hover:border-[#365E4B]/40 transition flex flex-col justify-between"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F4EAD2] text-[#785420] border border-[#A87A4C]/20">
                               {evt.eventType}
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              evt.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                              evt.status === 'COMPLETED' ? 'bg-[#E8EDDF] text-[#294C3A]' :
                               evt.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
                               evt.status === 'APPROVED' ? 'bg-indigo-100 text-indigo-800' :
-                              evt.status === 'CANCELLED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-800'
+                              evt.status === 'CANCELLED' ? 'bg-rose-100 text-rose-800' : 'bg-[#F8F5EC] text-[#64705C]'
                             }`}>
                               {evt.status}
                             </span>
                           </div>
-                          <h4 className="font-bold text-slate-900 text-sm hover:text-amber-600 transition">
+                          <h4 className="font-serif font-bold text-[#35483C] text-base hover:text-ysbk-primary transition">
                             {evt.title}
                           </h4>
-                          <p className="text-xs text-slate-500 line-clamp-2">{evt.description || 'Chưa có mô tả chi tiết.'}</p>
-                          <div className="text-xs text-slate-600 space-y-1 pt-2 border-t border-slate-100">
+                          <p className="text-xs text-[#64705C] line-clamp-2">{evt.description || 'Chưa có mô tả chi tiết.'}</p>
+                          <div className="text-xs text-[#64705C] space-y-1 pt-2 border-t border-[#DCDED0]">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <Calendar className="w-3.5 h-3.5 text-[#64705C]" />
                               <span>{evt.eventDate}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <Wallet className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Dự toán: {formatVND(evt.budget)}</span>
+                              <Wallet className="w-3.5 h-3.5 text-[#64705C]" />
+                              <span>Dự toán: <strong className="text-[#35483C]">{formatVND(evt.budget)}</strong></span>
                             </div>
                           </div>
                           <div className="flex gap-2 pt-2 text-[10px]">
                             {evt.isApprovedForPublic && (
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                              <span className="px-2 py-0.5 rounded-full bg-[#E8EDDF] text-[#294C3A] font-semibold border border-[#365E4B]/20">
                                 Công khai (Public)
                               </span>
                             )}
                             {evt.isApprovedForAlumni && (
-                              <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">
                                 Cựu (Alumni Allowlist)
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="pt-4 mt-3 border-t border-slate-100 flex justify-end">
+                        <div className="pt-4 mt-3 border-t border-[#DCDED0] flex justify-end">
                           <button
                             onClick={() => handleOpenEventDetailModal(evt.id)}
-                            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 transition"
+                            className="px-3.5 py-1.5 text-xs font-semibold rounded-[12px] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] transition"
                           >
                             Xem Chi Tiết & Nhiệm Vụ &rarr;
                           </button>
@@ -4909,15 +5077,15 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'tai-chinh' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Sổ Quỹ & Ca Trực Tiền Mặt Bàn Sách</h3>
-                    <p className="text-xs text-slate-500">Cách ly độc lập 2 quỹ: Quỹ Cọc Mượn Sách & Quỹ Hoạt Động CLB</p>
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Sổ Quỹ & Ca Trực Tiền Mặt Bàn Sách</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">Cách ly độc lập 2 quỹ: Quỹ Cọc Mượn Sách & Quỹ Hoạt Động CLB</p>
                   </div>
                   {liveSession && !liveSession.isClosed && (
                     <button 
                       onClick={() => setShowCloseSessionModal(true)}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5 transition"
+                      className="px-4 py-2 text-xs font-semibold rounded-[14px] bg-rose-600 hover:bg-rose-700 text-white shadow-soft-btn flex items-center gap-1.5 transition"
                     >
                       <RotateCcw className="w-4 h-4" />
                       Kiểm Kê & Đóng Ca Quầy
@@ -4926,26 +5094,26 @@ export default function InternalWorkspace() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-medium">Tiền Mặt Quầy Dự Kiến</div>
-                    <div className="text-2xl font-bold text-emerald-700 tnum mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-xs text-[#64705C] font-semibold">Tiền Mặt Quầy Dự Kiến</div>
+                    <div className="font-serif text-2xl font-bold text-emerald-700 tnum mt-1">
                       {liveSession ? formatVND(liveSession.expectedClosingCash) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">Hộp tiền mượn-trả bàn trực</div>
+                    <div className="text-[11px] text-[#64705C] mt-1">Hộp tiền mượn-trả bàn trực</div>
                   </div>
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-medium">Tiền Mặt Đầu Ca</div>
-                    <div className="text-2xl font-bold text-brand-navy tnum mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-xs text-[#64705C] font-semibold">Tiền Mặt Đầu Ca</div>
+                    <div className="font-serif text-2xl font-bold text-ysbk-primary tnum mt-1">
                       {liveSession ? formatVND(liveSession.openingCash) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">Bàn giao từ ca trước cất tủ</div>
+                    <div className="text-[11px] text-[#64705C] mt-1">Bàn giao từ ca trước cất tủ</div>
                   </div>
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-medium">Trạng Thái Ca Hôm Nay</div>
-                    <div className="text-2xl font-bold text-slate-900 mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-xs text-[#64705C] font-semibold">Trạng Thái Ca Hôm Nay</div>
+                    <div className="font-serif text-2xl font-bold text-[#35483C] mt-1">
                       {liveSession ? (liveSession.isClosed ? 'Đã đóng ca' : 'Đang mở') : 'Chưa mở ca'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">
+                    <div className="text-[11px] text-[#64705C] mt-1">
                       {liveSession ? `Mã: ${liveSession.id}` : 'Bấm Mở Ca để bắt đầu'}
                     </div>
                   </div>
@@ -4959,15 +5127,15 @@ export default function InternalWorkspace() {
             {activeModule === 'bao-cao' && (
               <div className="space-y-6">
                 {/* Header & Controls */}
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-base text-brand-navy">Báo Cáo Hoạt Động & Xuất Dữ Liệu</h3>
-                    <p className="text-xs text-slate-500">Đối soát tài chính hai quỹ độc lập, drill-down bút toán sổ kép và lưu thông sách</p>
+                    <h3 className="font-serif font-bold text-lg text-[#35483C]">Báo Cáo Hoạt Động & Xuất Dữ Liệu</h3>
+                    <p className="text-xs text-[#64705C] mt-0.5">Đối soát tài chính hai quỹ độc lập, drill-down bút toán sổ kép và lưu thông sách</p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Period Filter */}
-                    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs">
+                    <div className="inline-flex rounded-[12px] border border-[#DCDED0] bg-[#F8F5EC] p-1 text-xs">
                       {(['WEEK', 'MONTH', 'QUARTER', 'YEAR', 'ALL'] as const).map((p) => (
                         <button
                           key={p}
@@ -4975,10 +5143,10 @@ export default function InternalWorkspace() {
                             setReportPeriod(p);
                             loadReportsData(p);
                           }}
-                          className={`px-3 py-1.5 font-medium rounded-md transition ${
+                          className={`px-3 py-1.5 font-medium rounded-[10px] transition ${
                             reportPeriod === p
-                              ? 'bg-white text-brand-navy font-bold shadow-xs'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-[#365E4B] text-white font-bold shadow-xs'
+                              : 'text-[#64705C] hover:text-[#35483C]'
                           }`}
                         >
                           {p === 'WEEK' ? 'Tuần' : p === 'MONTH' ? 'Tháng' : p === 'QUARTER' ? 'Quý' : p === 'YEAR' ? 'Năm' : 'Toàn bộ'}
@@ -4989,7 +5157,7 @@ export default function InternalWorkspace() {
                     <button 
                       onClick={() => handleDownloadCsvExport('FINANCIAL_SUMMARY')}
                       disabled={isExporting}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5 transition disabled:opacity-50"
+                      className="px-3.5 py-2 text-xs font-bold rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white shadow-soft-btn flex items-center gap-1.5 transition disabled:opacity-50"
                     >
                       <FileSpreadsheet className="w-4 h-4" />
                       {isExporting ? 'Đang xuất...' : 'Xuất CSV Tài Chính'}
@@ -4998,7 +5166,7 @@ export default function InternalWorkspace() {
                     <button 
                       onClick={() => handleDownloadCsvExport('CIRCULATION')}
                       disabled={isExporting}
-                      className="px-3.5 py-2 text-xs font-bold rounded-lg bg-brand-navy hover:bg-slate-800 text-white shadow-sm flex items-center gap-1.5 transition disabled:opacity-50"
+                      className="px-3.5 py-2 text-xs font-bold rounded-[14px] bg-[#FFFDF5] border border-[#DCDED0] text-[#35483C] hover:bg-[#F8F5EC] shadow-soft-btn flex items-center gap-1.5 transition disabled:opacity-50"
                     >
                       <FileText className="w-4 h-4" />
                       Xuất CSV Lưu Thông
@@ -5008,36 +5176,36 @@ export default function InternalWorkspace() {
 
                 {/* KPI Cards: Financial Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-medium">Tiền Mặt Hộp Quỹ</div>
-                    <div className="text-xl font-bold text-slate-900 mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-xs text-[#64705C] font-medium">Tiền Mặt Hộp Quỹ</div>
+                    <div className="text-xl font-bold font-serif text-[#35483C] mt-1">
                       {financialReportData ? formatVND(financialReportData.cashDrawerBalance) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">Tài khoản TIEN_MAT_HOP</div>
+                    <div className="text-[11px] text-[#8C9685] mt-1">Tài khoản TIEN_MAT_HOP</div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-medium">Tiền Tài Khoản Ngân Hàng</div>
-                    <div className="text-xl font-bold text-slate-900 mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                    <div className="text-xs text-[#64705C] font-medium">Tiền Tài Khoản Ngân Hàng</div>
+                    <div className="text-xl font-bold font-serif text-[#35483C] mt-1">
                       {financialReportData ? formatVND(financialReportData.bankMainBalance) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">Tài khoản TIEN_NGAN_HANG</div>
+                    <div className="text-[11px] text-[#8C9685] mt-1">Tài khoản TIEN_NGAN_HANG</div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-sm bg-amber-50/20">
-                    <div className="text-xs text-amber-800 font-medium">Cọc Bạn Đọc Đang Giữ</div>
-                    <div className="text-xl font-bold text-amber-900 mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#E5D7B7] shadow-soft-card bg-[#FDF9F0]/60">
+                    <div className="text-xs text-[#8C6D23] font-medium">Cọc Bạn Đọc Đang Giữ</div>
+                    <div className="text-xl font-bold font-serif text-[#7A5B15] mt-1">
                       {financialReportData ? formatVND(financialReportData.depositLiability) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-amber-700 mt-1">Nghĩa vụ nợ COC_PHAI_HOAN</div>
+                    <div className="text-[11px] text-[#A68A3E] mt-1">Nghĩa vụ nợ COC_PHAI_HOAN</div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/20">
-                    <div className="text-xs text-emerald-800 font-medium">Kết Quả Ròng (Lãi/Lỗ)</div>
-                    <div className="text-xl font-bold text-emerald-900 mt-1">
+                  <div className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#C2D6C8] shadow-soft-card bg-[#F0F6F2]/60">
+                    <div className="text-xs text-[#2D5A40] font-medium">Kết Quả Ròng (Lãi/Lỗ)</div>
+                    <div className="text-xl font-bold font-serif text-[#1E432E] mt-1">
                       {financialReportData ? formatVND(financialReportData.netIncome) : '0 ₫'}
                     </div>
-                    <div className="text-[11px] text-emerald-700 mt-1">
+                    <div className="text-[11px] text-[#4A725B] mt-1">
                       Doanh thu - Chi phí hoạt động
                     </div>
                   </div>
@@ -5045,44 +5213,44 @@ export default function InternalWorkspace() {
 
                 {/* Additional KPI Cards: Circulation */}
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Lượt Mượn</div>
-                    <div className="text-lg font-bold text-slate-800 mt-0.5">{circulationReportData?.totalLoansIssued || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Lượt Mượn</div>
+                    <div className="text-lg font-bold font-serif text-[#35483C] mt-0.5">{circulationReportData?.totalLoansIssued || 0}</div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Lượt Trả</div>
-                    <div className="text-lg font-bold text-emerald-600 mt-0.5">{circulationReportData?.totalLoansReturned || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Lượt Trả</div>
+                    <div className="text-lg font-bold font-serif text-[#365E4B] mt-0.5">{circulationReportData?.totalLoansReturned || 0}</div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Gia Hạn</div>
-                    <div className="text-lg font-bold text-blue-600 mt-0.5">{circulationReportData?.totalLoansRenewed || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Gia Hạn</div>
+                    <div className="text-lg font-bold font-serif text-[#2F5270] mt-0.5">{circulationReportData?.totalLoansRenewed || 0}</div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Báo Mất</div>
-                    <div className="text-lg font-bold text-rose-600 mt-0.5">{circulationReportData?.totalBooksLost || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Báo Mất</div>
+                    <div className="text-lg font-bold font-serif text-[#9B4D36] mt-0.5">{circulationReportData?.totalBooksLost || 0}</div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Đang Mượn</div>
-                    <div className="text-lg font-bold text-amber-600 mt-0.5">{circulationReportData?.totalActiveLoans || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Đang Mượn</div>
+                    <div className="text-lg font-bold font-serif text-[#A87A4C] mt-0.5">{circulationReportData?.totalActiveLoans || 0}</div>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-center">
-                    <div className="text-[11px] text-slate-400">Quá Hạn</div>
-                    <div className="text-lg font-bold text-rose-700 mt-0.5">{circulationReportData?.totalOverdueLoans || 0}</div>
+                  <div className="bg-[#FFFDF5] p-3.5 rounded-[16px] border border-[#DCDED0] text-center shadow-xs">
+                    <div className="text-[11px] text-[#64705C]">Quá Hạn</div>
+                    <div className="text-lg font-bold font-serif text-[#813C2A] mt-0.5">{circulationReportData?.totalOverdueLoans || 0}</div>
                   </div>
                 </div>
 
                 {/* Drill-down Journal Entries Table */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="bg-[#FFFDF5] rounded-[22px] border border-[#DCDED0] shadow-soft-card overflow-hidden">
+                  <div className="p-4 border-b border-[#DCDED0] flex items-center justify-between">
                     <div>
-                      <h4 className="font-bold text-sm text-slate-800">Chứng Từ Sổ Kép Phát Sinh (Drill-Down)</h4>
-                      <p className="text-xs text-slate-500">Toàn bộ bút toán bất biến cân bằng Nợ = Có từ bảng journal_entries ({drilldownTotalCount} bút toán)</p>
+                      <h4 className="font-serif font-bold text-sm text-[#35483C]">Chứng Từ Sổ Kép Phát Sinh (Drill-Down)</h4>
+                      <p className="text-xs text-[#64705C]">Toàn bộ bút toán bất biến cân bằng Nợ = Có từ bảng journal_entries ({drilldownTotalCount} bút toán)</p>
                     </div>
                   </div>
 
                   <div className="overflow-x-auto max-h-96 overflow-y-auto">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-medium sticky top-0 border-b border-slate-200">
+                      <thead className="bg-[#F8F5EC] text-[#64705C] font-medium sticky top-0 border-b border-[#DCDED0]">
                         <tr>
                           <th className="py-2.5 px-3">Mã Bút Toán</th>
                           <th className="py-2.5 px-3">Quỹ</th>
@@ -5094,29 +5262,29 @@ export default function InternalWorkspace() {
                           <th className="py-2.5 px-3">Thời Gian</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-mono">
+                      <tbody className="divide-y divide-[#EFECE4] font-mono">
                         {drilldownItems.length > 0 ? (
                           drilldownItems.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-50">
-                              <td className="py-2.5 px-3 font-semibold text-slate-900">{item.entryCode}</td>
+                            <tr key={item.id} className="hover:bg-[#F8F5EC]/60 transition">
+                              <td className="py-2.5 px-3 font-semibold text-[#35483C]">{item.entryCode}</td>
                               <td className="py-2.5 px-3">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                  item.fundId === 'FUND_LOAN' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  item.fundId === 'FUND_LOAN' ? 'bg-[#E8EDDF] text-[#365E4B]' : 'bg-[#F7E7DB] text-[#9B4D36]'
                                 }`}>
                                   {item.fundId === 'FUND_LOAN' ? 'MƯỢN TRẢ' : 'HOẠT ĐỘNG'}
                                 </span>
                               </td>
-                              <td className="py-2.5 px-3 text-slate-600">{item.sourceType}</td>
-                              <td className="py-2.5 px-3 text-emerald-700 font-medium">{item.debitAccount}</td>
-                              <td className="py-2.5 px-3 text-rose-700 font-medium">{item.creditAccount}</td>
-                              <td className="py-2.5 px-3 text-right font-bold text-slate-900">{formatVND(item.amount)}</td>
-                              <td className="py-2.5 px-3 text-slate-500 font-sans">{item.createdBy}</td>
-                              <td className="py-2.5 px-3 text-slate-400 font-sans text-[11px]">{item.createdAt.slice(0, 16).replace('T', ' ')}</td>
+                              <td className="py-2.5 px-3 text-[#64705C]">{item.sourceType}</td>
+                              <td className="py-2.5 px-3 text-[#365E4B] font-medium">{item.debitAccount}</td>
+                              <td className="py-2.5 px-3 text-[#9B4D36] font-medium">{item.creditAccount}</td>
+                              <td className="py-2.5 px-3 text-right font-bold text-[#35483C]">{formatVND(item.amount)}</td>
+                              <td className="py-2.5 px-3 text-[#64705C] font-sans">{item.createdBy}</td>
+                              <td className="py-2.5 px-3 text-[#8C9685] font-sans text-[11px]">{item.createdAt.slice(0, 16).replace('T', ' ')}</td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={8} className="py-8 text-center text-slate-400 font-sans">
+                            <td colSpan={8} className="py-8 text-center text-[#8C9685] font-sans">
                               Chưa có bút toán nào phát sinh trong kỳ đã chọn.
                             </td>
                           </tr>
@@ -5133,50 +5301,52 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'admin' && isAdmin && (
               <div className="space-y-6">
+                {workspaceMode !== 'DEMO' && <PublishingManager />}
+                {workspaceMode !== 'DEMO' && <MembershipManager />}
                 {/* Analytics Summary */}
                 {analyticsData && (
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <div className="text-[11px] text-slate-500 font-medium">Đầu Sách Đã Đăng</div>
-                      <div className="text-xl font-bold text-brand-navy mt-1">{analyticsData.totalBooksCataloged}</div>
+                    <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card text-center">
+                      <div className="text-[11px] text-[#64705C] font-medium">Đầu Sách Đã Đăng</div>
+                      <div className="text-xl font-bold font-serif text-[#365E4B] mt-1">{analyticsData.totalBooksCataloged}</div>
                     </div>
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <div className="text-[11px] text-slate-500 font-medium">Bản Sao Lưu Thông</div>
-                      <div className="text-xl font-bold text-blue-600 mt-1">{analyticsData.totalCopiesInCirculation}</div>
+                    <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card text-center">
+                      <div className="text-[11px] text-[#64705C] font-medium">Bản Sao Lưu Thông</div>
+                      <div className="text-xl font-bold font-serif text-[#2F5270] mt-1">{analyticsData.totalCopiesInCirculation}</div>
                     </div>
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <div className="text-[11px] text-slate-500 font-medium">Thành Viên Hoạt Động</div>
-                      <div className="text-xl font-bold text-emerald-600 mt-1">{analyticsData.totalActiveMembers}</div>
+                    <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card text-center">
+                      <div className="text-[11px] text-[#64705C] font-medium">Thành Viên Hoạt Động</div>
+                      <div className="text-xl font-bold font-serif text-[#365E4B] mt-1">{analyticsData.totalActiveMembers}</div>
                     </div>
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <div className="text-[11px] text-slate-500 font-medium">Review Đã Duyệt</div>
-                      <div className="text-xl font-bold text-amber-600 mt-1">{analyticsData.totalReviewsPublished}</div>
+                    <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card text-center">
+                      <div className="text-[11px] text-[#64705C] font-medium">Review Đã Duyệt</div>
+                      <div className="text-xl font-bold font-serif text-[#A87A4C] mt-1">{analyticsData.totalReviewsPublished}</div>
                     </div>
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-center">
-                      <div className="text-[11px] text-slate-500 font-medium">Bài Viết Tin Tức</div>
-                      <div className="text-xl font-bold text-purple-600 mt-1">{analyticsData.totalPublicPosts}</div>
+                    <div className="bg-[#FFFDF5] p-4 rounded-[22px] border border-[#DCDED0] shadow-soft-card text-center">
+                      <div className="text-[11px] text-[#64705C] font-medium">Bài Viết Tin Tức</div>
+                      <div className="text-xl font-bold font-serif text-[#9B4D36] mt-1">{analyticsData.totalPublicPosts}</div>
                     </div>
                   </div>
                 )}
 
                 {/* Audit Logs Table */}
-                <div className="bg-white rounded-xl border border-rose-200 shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="bg-[#FFFDF5] rounded-[22px] border border-[#EAC4BC] shadow-soft-card overflow-hidden">
+                  <div className="p-4 border-b border-[#F5D8D2] flex items-center justify-between">
                     <div>
-                      <h3 className="font-bold text-base text-rose-700 flex items-center gap-2">
+                      <h3 className="font-serif font-bold text-base text-[#9B4D36] flex items-center gap-2">
                         <Lock className="w-4 h-4" />
                         Nhật Ký Kiểm Toán Hệ Thống (System Audit Logs)
                       </h3>
-                      <p className="text-xs text-slate-500">Chỉ Quản trị viên (Admin) được truy cập. Mọi thông tin nhạy cảm đã được che chắn tự động.</p>
+                      <p className="text-xs text-[#64705C]">Chỉ Quản trị viên (Admin) được truy cập. Mọi thông tin nhạy cảm đã được che chắn tự động.</p>
                     </div>
-                    <div className="text-xs text-slate-400 font-mono">
+                    <div className="text-xs text-[#8C9685] font-mono">
                       {auditLogsTotalCount} bản ghi
                     </div>
                   </div>
 
                   <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-medium sticky top-0 border-b border-slate-200">
+                      <thead className="bg-[#FDF6F4] text-[#64705C] font-medium sticky top-0 border-b border-[#F5D8D2]">
                         <tr>
                           <th className="py-2.5 px-3">Thời Gian</th>
                           <th className="py-2.5 px-3">Người Thao Tác</th>
@@ -5186,27 +5356,27 @@ export default function InternalWorkspace() {
                           <th className="py-2.5 px-3">Chi Tiết (Sanitized)</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                      <tbody className="divide-y divide-[#F5E6E3] font-mono text-[11px]">
                         {auditLogsData.length > 0 ? (
                           auditLogsData.map((log) => (
-                            <tr key={log.id} className="hover:bg-slate-50">
-                              <td className="py-2 px-3 text-slate-400 whitespace-nowrap">{log.createdAt.slice(0, 19).replace('T', ' ')}</td>
-                              <td className="py-2 px-3 font-semibold text-slate-800">{log.actorId || 'HỆ THỐNG'}</td>
+                            <tr key={log.id} className="hover:bg-[#FDF6F4]/50 transition">
+                              <td className="py-2 px-3 text-[#8C9685] whitespace-nowrap">{log.createdAt.slice(0, 19).replace('T', ' ')}</td>
+                              <td className="py-2 px-3 font-semibold text-[#35483C]">{log.actorId || 'HỆ THỐNG'}</td>
                               <td className="py-2 px-3">
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8EDDF] text-[#365E4B]">
                                   {log.action}
                                 </span>
                               </td>
-                              <td className="py-2 px-3 text-blue-700">{log.targetResource}</td>
-                              <td className="py-2 px-3 text-slate-600">{log.targetId || '-'}</td>
-                              <td className="py-2 px-3 max-w-xs truncate text-slate-500" title={JSON.stringify(log.details)}>
+                              <td className="py-2 px-3 text-[#2F5270]">{log.targetResource}</td>
+                              <td className="py-2 px-3 text-[#64705C]">{log.targetId || '-'}</td>
+                              <td className="py-2 px-3 max-w-xs truncate text-[#8C9685]" title={JSON.stringify(log.details)}>
                                 {log.details ? JSON.stringify(log.details) : '-'}
                               </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={6} className="py-8 text-center text-slate-400 font-sans">
+                            <td colSpan={6} className="py-8 text-center text-[#8C9685] font-sans">
                               Chưa có bản ghi nhật ký kiểm toán nào trong hệ thống.
                             </td>
                           </tr>
@@ -5223,29 +5393,29 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {activeModule === 'cuu' && (
               <div className="space-y-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
-                    <Award className="w-6 h-6 text-brand-red" />
+                <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#DCDED0]">
+                    <Award className="w-6 h-6 text-[#9B4D36]" />
                     <div>
-                      <h3 className="font-bold text-lg text-brand-navy">Bản Tin Hoạt Động Cựu Thành Viên</h3>
-                      <p className="text-xs text-slate-500">Nơi kết nối và cập nhật những bước tiến mới của CLB Sách Bách Khoa</p>
+                      <h3 className="font-serif font-bold text-lg text-[#35483C]">Bản Tin Hoạt Động Cựu Thành Viên</h3>
+                      <p className="text-xs text-[#64705C]">Nơi kết nối và cập nhật những bước tiến mới của CLB Sách Bách Khoa</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     {liveActivities.length > 0 ? (
                       liveActivities.map((act) => (
-                        <div key={act.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                          <span className="font-bold text-brand-red uppercase">{act.status}</span>
-                          <h4 className="font-bold text-sm text-slate-900 mt-1">{act.title}</h4>
-                          <p className="text-slate-600 mt-1">{act.description}</p>
-                          <div className="text-[11px] text-slate-400 mt-2">
+                        <div key={act.id} className="p-4 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0] text-xs">
+                          <span className="font-bold text-[#9B4D36] uppercase text-[10px] bg-[#F7E7DB] px-2 py-0.5 rounded-full inline-block mb-1">{act.status}</span>
+                          <h4 className="font-serif font-bold text-sm text-[#35483C] mt-1">{act.title}</h4>
+                          <p className="text-[#64705C] mt-1">{act.description}</p>
+                          <div className="text-[11px] text-[#8C9685] mt-2">
                             Thời gian: {act.activityDate} · Địa điểm: {act.location}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-500">
+                      <div className="p-4 bg-[#F8F5EC] rounded-[18px] text-xs text-[#8C9685]">
                         Chưa có sự kiện nào được công bố cho Cựu Thành Viên.
                       </div>
                     )}
@@ -5257,24 +5427,24 @@ export default function InternalWorkspace() {
             {/* DASHBOARD MODULE */}
             {activeModule === 'dashboard' && (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                  <h3 className="font-bold text-base text-brand-navy mb-4">Bảng Chỉ Huy Nghiệp Vụ YSBK</h3>
+                <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
+                  <h3 className="font-serif font-bold text-lg text-[#35483C] mb-4">Bảng Chỉ Huy Nghiệp Vụ YSBK</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <div className="text-xs text-slate-400">Tổng đầu sách:</div>
-                      <div className="text-2xl font-bold text-slate-900 tnum">{liveCopies.length}</div>
+                    <div className="p-5 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0]">
+                      <div className="text-xs text-[#64705C]">Tổng đầu sách:</div>
+                      <div className="text-2xl font-bold font-serif text-[#35483C] tnum mt-1">{liveCopies.length}</div>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <div className="text-xs text-slate-400">Phiếu mượn đang phục vụ:</div>
-                      <div className="text-2xl font-bold text-emerald-700 tnum">{liveLoans.length}</div>
+                    <div className="p-5 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0]">
+                      <div className="text-xs text-[#64705C]">Phiếu mượn đang phục vụ:</div>
+                      <div className="text-2xl font-bold font-serif text-[#365E4B] tnum mt-1">{liveLoans.length}</div>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <div className="text-xs text-slate-400">Hồ sơ bạn đọc:</div>
-                      <div className="text-2xl font-bold text-slate-900 tnum">{liveBorrowers.length}</div>
+                    <div className="p-5 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0]">
+                      <div className="text-xs text-[#64705C]">Hồ sơ bạn đọc:</div>
+                      <div className="text-2xl font-bold font-serif text-[#35483C] tnum mt-1">{liveBorrowers.length}</div>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-lg">
-                      <div className="text-xs text-slate-400">Tiền mặt quầy hiện tại:</div>
-                      <div className="text-2xl font-bold text-brand-navy tnum">
+                    <div className="p-5 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0]">
+                      <div className="text-xs text-[#64705C]">Tiền mặt quầy hiện tại:</div>
+                      <div className="text-2xl font-bold font-serif text-[#365E4B] tnum mt-1">
                         {liveSession ? formatVND(liveSession.expectedClosingCash) : '0 ₫'}
                       </div>
                     </div>
@@ -5289,13 +5459,13 @@ export default function InternalWorkspace() {
             {activeModule === 'kiem-duyet' && (
               <div className="space-y-6">
                 {/* Module Header */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-brand-navy flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-sky-500" />
+                    <h2 className="text-xl font-bold font-serif text-[#35483C] flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-[#365E4B]" />
                       <span>Kiểm Duyệt Nội Dung & Bài Viết Công Khai</span>
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-[#64705C] mt-1">
                       Phê duyệt cảm nhận sách của bạn đọc và quản lý các bài viết thông báo/tin tức xuất bản ra Cổng thông tin (FR-08).
                     </p>
                   </div>
@@ -5305,7 +5475,7 @@ export default function InternalWorkspace() {
                         loadModerationReviews();
                         loadModerationPosts();
                       }}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-[14px] bg-[#F8F5EC] hover:bg-[#E8EDDF] text-[#35483C] border border-[#DCDED0] transition flex items-center gap-1.5"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>Tải lại</span>
@@ -5313,7 +5483,7 @@ export default function InternalWorkspace() {
                     {moderationTab === 'POSTS' && (
                       <button
                         onClick={() => setShowCreatePostModal(true)}
-                        className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-brand-navy hover:bg-brand-navy-hover text-white transition flex items-center gap-1.5"
+                        className="px-4 py-2 text-xs font-bold rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white shadow-soft-btn transition flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Viết Bài Mới</span>
@@ -5323,16 +5493,16 @@ export default function InternalWorkspace() {
                 </div>
 
                 {/* Sub-tabs: Reviews vs Posts */}
-                <div className="flex border-b border-slate-200 gap-4 text-xs font-semibold">
+                <div className="inline-flex rounded-[12px] bg-[#F8F5EC] p-1 border border-[#DCDED0] text-xs font-semibold">
                   <button
                     onClick={() => {
                       setModerationTab('REVIEWS');
                       loadModerationReviews();
                     }}
-                    className={`pb-2.5 transition border-b-2 ${
+                    className={`px-3.5 py-1.5 rounded-[10px] transition ${
                       moderationTab === 'REVIEWS'
-                        ? 'border-brand-navy text-brand-navy font-bold'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#FFFDF5] text-[#365E4B] font-bold shadow-xs'
+                        : 'text-[#64705C] hover:text-[#35483C]'
                     }`}
                   >
                     Đánh Giá Sách Bạn Đọc ({moderationReviews.filter(r => r.status === 'PENDING').length} chờ duyệt)
@@ -5342,10 +5512,10 @@ export default function InternalWorkspace() {
                       setModerationTab('POSTS');
                       loadModerationPosts();
                     }}
-                    className={`pb-2.5 transition border-b-2 ${
+                    className={`px-3.5 py-1.5 rounded-[10px] transition ${
                       moderationTab === 'POSTS'
-                        ? 'border-brand-navy text-brand-navy font-bold'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                        ? 'bg-[#FFFDF5] text-[#365E4B] font-bold shadow-xs'
+                        : 'text-[#64705C] hover:text-[#35483C]'
                     }`}
                   >
                     Bài Viết & Tin Tức ({moderationPosts.length})
@@ -5355,9 +5525,11 @@ export default function InternalWorkspace() {
                 {/* SUBTAB 1: REVIEWS */}
                 {moderationTab === 'REVIEWS' && (
                   <div className="space-y-4">
+                    <ClubReviewComposer onSubmitted={()=>void loadModerationReviews()}/>
+                    {!isAdmin&&<p className="ui-card p-4 text-sm">Chỉ quản trị viên được duyệt hoặc từ chối review.</p>}
                     {/* Filter bar */}
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-400 font-medium">Lọc theo trạng thái:</span>
+                    <div className="flex items-center gap-2 text-xs flex-wrap">
+                      <span className="text-[#64705C] font-medium">Lọc theo trạng thái:</span>
                       {['PENDING', 'APPROVED', 'REJECTED', ''].map((st) => (
                         <button
                           key={st}
@@ -5365,10 +5537,10 @@ export default function InternalWorkspace() {
                             setReviewStatusFilter(st);
                             loadModerationReviews(st);
                           }}
-                          className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                          className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
                             reviewStatusFilter === st
-                              ? 'bg-brand-navy text-white'
-                              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                              ? 'bg-[#365E4B] text-white shadow-xs'
+                              : 'bg-[#FFFDF5] border border-[#DCDED0] text-[#64705C] hover:bg-[#F8F5EC]'
                           }`}
                         >
                           {st === 'PENDING' ? 'Chờ duyệt' : st === 'APPROVED' ? 'Đã duyệt' : st === 'REJECTED' ? 'Đã từ chối' : 'Tất cả'}
@@ -5378,32 +5550,32 @@ export default function InternalWorkspace() {
 
                     {/* Reviews List */}
                     {moderationReviews.length === 0 ? (
-                      <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400 text-xs">
+                      <div className="bg-[#FFFDF5] p-8 rounded-[22px] border border-[#DCDED0] text-center text-[#8C9685] text-xs">
                         Không có đánh giá nào phù hợp với bộ lọc hiện tại.
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {moderationReviews.map((rev) => (
-                          <div key={rev.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                          <div key={rev.id} className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card space-y-3">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800">{rev.authorName}</span>
+                                <span className="font-bold text-[#35483C]">{rev.authorName}</span>
                                 {rev.authorEmail && (
-                                  <span className="text-slate-400 text-[11px]">({rev.authorEmail})</span>
+                                  <span className="text-[#8C9685] text-[11px]">({rev.authorEmail})</span>
                                 )}
-                                <span className="text-slate-300">·</span>
-                                <span className="font-mono text-[11px] text-brand-navy font-medium">Mã sách: {rev.bookId}</span>
-                                <span className="text-slate-300">·</span>
-                                <span className="text-[11px] text-slate-400">Phiên bản: v{rev.version}</span>
+                                <span className="text-[#DCDED0]">·</span>
+                                <span className="font-mono text-[11px] text-[#365E4B] font-medium">Mã sách: {rev.bookId}</span>
+                                <span className="text-[#DCDED0]">·</span>
+                                <span className="text-[11px] text-[#8C9685]">Phiên bản: v{rev.version}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-amber-500 font-bold flex items-center">
+                                <span className="text-[#A87A4C] font-bold flex items-center">
                                   {rev.rating} ★
                                 </span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  rev.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
-                                  rev.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
-                                  'bg-amber-100 text-amber-800'
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                  rev.status === 'APPROVED' ? 'bg-[#E8EDDF] text-[#365E4B]' :
+                                  rev.status === 'REJECTED' ? 'bg-[#F7E7DB] text-[#9B4D36]' :
+                                  'bg-[#FDF9F0] text-[#A87A4C]'
                                 }`}>
                                   {rev.status === 'APPROVED' ? 'ĐÃ DUYỆT' : rev.status === 'REJECTED' ? 'ĐÃ TỪ CHỐI' : 'CHỜ DUYỆT'}
                                 </span>
@@ -5411,20 +5583,20 @@ export default function InternalWorkspace() {
                             </div>
 
                             {/* Review Content */}
-                            <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-700 leading-relaxed font-serif">
+                            <div className="p-3.5 bg-[#F8F5EC] rounded-[14px] text-xs text-[#35483C] leading-relaxed font-serif italic border border-[#E5E2D6]">
                               "{rev.content}"
                             </div>
 
                             {/* Pending Content if edited */}
                             {rev.pendingContent && (
-                              <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-xs text-amber-900">
-                                <div className="font-bold mb-1 flex items-center gap-1 text-[11px] text-amber-800">
+                              <div className="p-3.5 bg-[#FFF9ED] border border-[#F0DFB8] rounded-[14px] text-xs text-[#7A5B15]">
+                                <div className="font-bold mb-1 flex items-center gap-1 text-[11px] text-[#8C6D23]">
                                   <AlertTriangle className="w-3.5 h-3.5" />
                                   <span>Bản sửa mới chờ duyệt (Đang cách ly khỏi cổng công khai):</span>
                                 </div>
                                 <p className="font-serif italic">"{rev.pendingContent}"</p>
                                 {rev.pendingRating && (
-                                  <div className="text-[11px] mt-1 text-amber-700 font-semibold">
+                                  <div className="text-[11px] mt-1 text-[#8C6D23] font-semibold">
                                     Đánh giá sao mới: {rev.pendingRating} ★
                                   </div>
                                 )}
@@ -5432,34 +5604,36 @@ export default function InternalWorkspace() {
                             )}
 
                             {rev.moderationNote && (
-                              <div className="text-[11px] text-slate-500 italic">
+                              <div className="text-[11px] text-[#64705C] italic">
                                 Ghi chú kiểm duyệt: {rev.moderationNote}
                               </div>
                             )}
 
                             {/* Actions for Member */}
-                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                              <span className="text-[11px] text-slate-400">
+                            <div className="flex items-center justify-between pt-2 border-t border-[#EFECE4] text-xs">
+                              <span className="text-[11px] text-[#8C9685]">
                                 Gửi lúc: {rev.createdAt.slice(0, 16).replace('T', ' ')}
                               </span>
                               <div className="flex items-center gap-2">
                                 <button
+                                  disabled={!isAdmin}
                                   onClick={() => {
                                     setSelectedReviewForModerate(rev);
                                     setModerationDecision('APPROVED');
                                     setShowModerateReviewModal(true);
                                   }}
-                                  className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition text-xs"
+                                  className="px-3.5 py-1.5 rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white font-bold transition text-xs shadow-soft-btn"
                                 >
                                   Phê Duyệt
                                 </button>
                                 <button
+                                  disabled={!isAdmin}
                                   onClick={() => {
                                     setSelectedReviewForModerate(rev);
                                     setModerationDecision('REJECTED');
                                     setShowModerateReviewModal(true);
                                   }}
-                                  className="px-3 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold transition text-xs"
+                                  className="px-3.5 py-1.5 rounded-[14px] bg-[#9B4D36] hover:bg-[#813C2A] text-white font-bold transition text-xs shadow-soft-btn"
                                 >
                                   Từ Chối
                                 </button>
@@ -5476,34 +5650,34 @@ export default function InternalWorkspace() {
                 {moderationTab === 'POSTS' && (
                   <div className="space-y-4">
                     {moderationPosts.length === 0 ? (
-                      <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400 text-xs">
+                      <div className="bg-[#FFFDF5] p-8 rounded-[22px] border border-[#DCDED0] text-center text-[#8C9685] text-xs">
                         Chưa có bài viết nào. Hãy bấm "Viết Bài Mới" để xuất bản tin tức hoặc bài giới thiệu sách!
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {moderationPosts.map((post) => (
-                          <div key={post.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                          <div key={post.id} className="bg-[#FFFDF5] p-5 rounded-[22px] border border-[#DCDED0] shadow-soft-card flex flex-col justify-between">
                             <div>
                               <div className="flex items-center justify-between text-xs mb-2">
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-navy-soft text-brand-navy">
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E8EDDF] text-[#365E4B]">
                                   {post.category}
                                 </span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  post.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                  post.status === 'PUBLISHED' ? 'bg-[#E8EDDF] text-[#365E4B]' : 'bg-[#F8F5EC] text-[#64705C]'
                                 }`}>
                                   {post.status === 'PUBLISHED' ? 'ĐÃ XUẤT BẢN' : 'BẢN NHÁP'}
                                 </span>
                               </div>
-                              <h3 className="font-bold text-slate-900 text-sm line-clamp-2">{post.title}</h3>
-                              <p className="font-mono text-[10px] text-slate-400 mt-0.5">/posts/{post.slug}</p>
-                              <p className="text-xs text-slate-600 mt-2 line-clamp-3 leading-relaxed">{post.summary}</p>
+                              <h3 className="font-serif font-bold text-[#35483C] text-base line-clamp-2">{post.title}</h3>
+                              <p className="font-mono text-[10px] text-[#8C9685] mt-0.5">/posts/{post.slug}</p>
+                              <p className="text-xs text-[#64705C] mt-2 line-clamp-3 leading-relaxed">{post.summary}</p>
                             </div>
-                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                              <span className="text-[11px] text-slate-400">Tác giả: {post.authorDisplayName}</span>
+                            <div className="mt-4 pt-3 border-t border-[#EFECE4] flex items-center justify-between text-xs">
+                              <span className="text-[11px] text-[#8C9685]">Tác giả: {post.authorDisplayName}</span>
                               {post.status !== 'PUBLISHED' && (
                                 <button
                                   onClick={() => handleExecutePublishPost(post.id)}
-                                  className="px-3 py-1 rounded bg-brand-navy hover:bg-brand-navy-hover text-white font-semibold text-xs transition"
+                                  className="px-3.5 py-1.5 rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white font-bold text-xs transition shadow-soft-btn"
                                 >
                                   Xuất Bản Công Khai
                                 </button>
@@ -5527,7 +5701,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showNewLoanModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-brand-red" />
@@ -5691,7 +5865,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showReturnModal && selectedLoanForReturn && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy">
                 Xử Lý Trả Sách: {selectedLoanForReturn.receiptNumber}
@@ -5946,7 +6120,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showRenewModal && selectedLoanForRenew && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-brand-navy" />
@@ -6098,7 +6272,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showConfirmRefundModal && selectedRefundForConfirm && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -6217,7 +6391,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {selectedReservationForFulfill && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -6340,7 +6514,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {selectedReservationForCancel && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-rose-700 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -6399,7 +6573,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showLoanSettlementModal && settlementDetailData && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-2xl w-full p-6 shadow-soft-modal border border-[#DCDED0] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <FileText className="w-5 h-5 text-brand-navy" />
@@ -6599,7 +6773,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showLossModal && selectedLoanForLoss && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-rose-700 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600" />
@@ -6669,7 +6843,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showOpenSessionModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy">Mở Ca Quầy Tiền Mặt Bàn Trực</h3>
               <button onClick={() => setShowOpenSessionModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -6729,7 +6903,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showCloseSessionModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy">Biên Bản Kiểm Kê & Đóng Ca Quầy Tiền</h3>
               <button onClick={() => setShowCloseSessionModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -6815,7 +6989,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showCorrectionModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <RotateCcw className="w-4 h-4 text-brand-navy" />
@@ -6891,7 +7065,7 @@ export default function InternalWorkspace() {
       {/* ═════════════════════════════════════════════════════════ */}
       {showFbPostModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Copy className="w-4 h-4 text-brand-red" />
@@ -6946,7 +7120,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showExportModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-sm text-brand-navy flex items-center gap-2">
                 <Download className="w-4 h-4 text-emerald-600" />
@@ -6980,7 +7154,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showConfirmDepositModal.isOpen && showConfirmDepositModal.loan && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Wallet className="w-4 h-4 text-amber-600" />
@@ -7070,7 +7244,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showPendingFineModal.isOpen && showPendingFineModal.loan && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Clock className="w-4 h-4 text-rose-600" />
@@ -7165,7 +7339,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showSessionSummaryModal && sessionSummaryData && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-600" />
@@ -7469,7 +7643,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showAvailabilityModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-3xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
@@ -7686,7 +7860,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showGenerateScheduleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal space-y-4 text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-indigo-600" />
@@ -7795,7 +7969,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showManualEditModal && selectedScheduleForEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-2xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
@@ -7940,7 +8114,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showFacebookViewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal space-y-4 text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Copy className="w-5 h-5 text-blue-600" />
@@ -7997,7 +8171,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showResponseDetailModal && selectedResponseForDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-2xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm">
@@ -8101,7 +8275,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showReconcileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-indigo-600" />
@@ -8201,7 +8375,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showEvaluationModal && selectedResponseForEval && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-2xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -8442,7 +8616,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showDecisionModal && selectedResponseForDecision && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col text-xs">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full p-6 shadow-soft-modal space-y-4 max-h-[90vh] flex flex-col text-xs border border-[#DCDED0]">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -8562,11 +8736,10 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-emerald-900 pt-3">
                   <div className="font-bold flex items-center gap-1.5 text-sm">
                     <UserPlus className="w-4 h-4 text-emerald-700" />
-                    Chuyển Trúng Tuyển Thành Member CLB (Idempotent / Retry-Safe)
+                    Tiếp nhận ứng viên trúng tuyển thành cộng tác viên
                   </div>
                   <p className="text-[11px] text-emerald-800 leading-relaxed">
-                    Hệ thống tạo bản ghi thành viên chính thức với trạng thái <code>Thành viên tập sự</code>, <code>chưa đủ điều kiện trực chính (D31)</code>, <code>chưa đóng hội phí (D37)</code>.
-                    <strong> Bấm nhiều lần hoặc thử lại an toàn</strong>: Tuyệt đối không tạo ra 2 member.
+                    Ứng viên bắt đầu là <strong>cộng tác viên thử thách 1 tháng</strong>. Sau thời gian này, quản lý đánh giá và công nhận thành viên tại Quản Trị & Nội Dung.
                   </p>
                   <div className="pt-1 flex items-center gap-3">
                     <button
@@ -8583,7 +8756,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          Chuyển Thành Viên Ngay
+                          Tiếp Nhận Cộng Tác Viên
                         </>
                       )}
                     </button>
@@ -8615,7 +8788,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════════ */}
       {showCreateSupplierModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Store className="w-5 h-5 text-amber-500" />
@@ -8697,7 +8870,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
 
       {showCreateLotModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-amber-500" />
@@ -8896,7 +9069,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════════ */}
       {showSellBookModal && selectedLotItemForSale && selectedLotForAction && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-emerald-600" />
@@ -9007,7 +9180,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════════ */}
       {showReturnBooksModal && selectedLotItemForSale && selectedLotForAction && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <PackageCheck className="w-5 h-5 text-rose-600" />
@@ -9088,7 +9261,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════════ */}
       {showSettlementModal && selectedLotForAction && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <FileText className="w-5 h-5 text-indigo-600" />
@@ -9265,7 +9438,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════════ */}
       {showSupplierPaymentModal && activeSettlement && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-md w-full shadow-soft-modal border border-[#DCDED0] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-indigo-600" />
@@ -10205,7 +10378,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showModerateReviewModal && selectedReviewForModerate && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-lg w-full p-6 shadow-soft-modal border border-[#DCDED0]">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-sky-500" />
@@ -10306,7 +10479,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       {/* ═════════════════════════════════════════════════════════ */}
       {showCreatePostModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#FFFDF5] rounded-[24px] ui-modal max-w-xl w-full p-6 shadow-soft-modal border border-[#DCDED0] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-brand-navy flex items-center gap-2">
                 <Plus className="w-4 h-4 text-brand-navy" />
@@ -10403,6 +10576,52 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
             </form>
           </div>
         </div>
+      )}
+
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      {!isAlumni && (
+        <nav aria-label="Điều hướng nhanh di động" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF5]/95 backdrop-blur-md border-t border-[#DCDED0] flex items-center justify-around py-2 px-1 shadow-soft-modal text-[10px]">
+          <button 
+            type="button" 
+            onClick={() => setActiveModule('dashboard')} 
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-[10px] transition ${activeModule === 'dashboard' ? 'text-ysbk-primary font-bold' : 'text-[#64705C]'}`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span>Tổng quan</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setActiveModule('quay-sach')} 
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-[10px] transition ${activeModule === 'quay-sach' ? 'text-ysbk-primary font-bold' : 'text-[#64705C]'}`}
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Quầy sách</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setActiveModule('ban-sach')} 
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-[10px] transition ${activeModule === 'ban-sach' ? 'text-ysbk-primary font-bold' : 'text-[#64705C]'}`}
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <span>Sách mới</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setActiveModule('tai-chinh')} 
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-[10px] transition ${activeModule === 'tai-chinh' ? 'text-ysbk-primary font-bold' : 'text-[#64705C]'}`}
+          >
+            <Wallet className="w-5 h-5" />
+            <span>Sổ quỹ</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setIsSidebarCollapsed(false)} 
+            className="flex flex-col items-center gap-1 p-1.5 rounded-[10px] text-[#64705C] hover:text-[#35483C] transition"
+          >
+            <Settings className="w-5 h-5" />
+            <span>Menu</span>
+          </button>
+        </nav>
       )}
 
     </div>

@@ -1,5 +1,15 @@
 # YSBK — Tài Liệu Thiết Kế Hệ Thống & Backend v1.0
 
+**Cập nhật chat tiếp nối 21/10:** [tài khoản bạn đọc bắt buộc và cổng nội bộ](reader-accounts-local-and-access.md) đã có implementation local, thay quyết định không đăng nhập/tài khoản tùy chọn cho đơn mới. Google-only, phiên một trình duyệt, subdomain nội bộ + Access đã chọn; provider/domain chưa có, chưa cloud. Review [Antigravity](../reviews/2026-10-21-antigravity-review.md) vẫn còn hai findings UI ngoài phạm vi tài khoản.
+
+## Cập nhật trạng thái kỹ thuật 21/10/2026
+
+Đọc [session handoff](../SESSION-HANDOFF.md) và [trạng thái hiện hành](../CURRENT-STATE.md). Các nhãn “chưa triển khai”, “chưa có PostgreSQL” và số operation/test trong snapshot 18/10 phía dưới không là trạng thái hiện tại.
+
+Local đã có giữ chỗ, landing sách, cổng chung, publishing và vòng đời CTV; xem tài liệu chuyên đề để biết đúng bằng chứng. Có 14 mẫu [UI Stitch](../mockups/stitch-ui-2026-10-21/HANDOFF.md) và [kế hoạch UI](../superpowers/plans/2026-10-21-ysbk-soft-ui.md). Workspace đã có source UI/ảnh QA sau concept nhưng chưa review toàn bộ trong lượt bàn giao.
+
+[Nghiên cứu UX đặt/hủy](public-reservation-ux-research-2026-10-21.md) đang mở lại thảo luận, chưa thay luật ba đơn/IP/24 giờ hoặc thêm tài khoản/đổi sách. Local readiness 200 DB/Auth connected lúc bàn giao; chưa deploy beta cloud. Review/log theo chặng giữ nguyên để truy vết.
+
 Tài liệu thiết kế kỹ thuật, kiến trúc phần mềm, cơ sở dữ liệu và hợp đồng API cho Website Quản Lý CLB Yêu Sách Bách Khoa Hà Nội (YSBK).  
 Ngày hoàn thành: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.  
 Tác giả: Antigravity (Kiến trúc sư hệ thống & Kỹ sư Backend).
@@ -10,6 +20,7 @@ Tác giả: Antigravity (Kiến trúc sư hệ thống & Kỹ sư Backend).
 
 | Tài liệu | Nội dung chính | Cấp độ bằng chứng / Trạng thái |
 |---|---|---|
+| [public-portal-publishing.md](public-portal-publishing.md) | Cổng bạn đọc chung, quản lý sách/ảnh/lịch/sự kiện/tuyển và CTV thử thách 1 tháng | Triển khai local; chưa deploy cloud |
 | [book-landing-local.md](book-landing-local.md) | Landing cuốn sách bản chính, tủ sách 50 cuốn/trang, theme công khai/nội bộ và kiểm chứng | Đã tích hợp local 4321; chưa deploy |
 | [local-development.md](local-development.md) | Docker local, cổng 4321, tài khoản, volume bền vững, kiểm thử và checklist trước beta | Ưu tiên hiện tại; chưa triển khai beta |
 | [beta-deployment-guide.md](beta-deployment-guide.md) | Dashboard Supabase, Hyperdrive, Workers, Turnstile; gói Free, tải thứ Ba/thứ Năm và chi phí chat | Hướng dẫn cấu hình; chưa deploy cloud |
@@ -18,11 +29,11 @@ Tác giả: Antigravity (Kiến trúc sư hệ thống & Kỹ sư Backend).
 | [domain-data.md](domain-data.md) | Mô hình domain, từ điển dữ liệu, toàn vẹn ràng buộc, index & tìm kiếm tiếng Việt | Thiết kế thực thể & DDL đề xuất |
 | [transactions-finance.md](transactions-finance.md) | Giao dịch tài chính lõi: mượn, trả/chuyển tiếp, 2 quỹ, cọc/phạt, bán lô, khóa & idempotency | Thiết kế giao dịch & Bút toán |
 | [security-operations.md](security-operations.md) | Mô hình danh tính, cách ly Auth, kiểm soát quyền Cựu TV, Threat model, Backup & Quota | Thiết kế bảo mật & Spike danh tính |
-| [public-reservation-design.md](public-reservation-design.md) | Cổng công khai/nội bộ, đặt 1 quyển/đơn không đăng nhập, CAPTCHA, 3 suất/SĐT, 3 đơn/IP/24 giờ, hết hạn cuối buổi trực và ca kiểm thử | Nghiệp vụ chốt 20/10/2026; chưa triển khai |
-| [Kế hoạch đặt sách và kiểm chứng sửa lỗi cũ](../superpowers/plans/2026-10-20-public-reservation.md) | PR-0…PR-9, file map, contract, kiểm thử 49 ca và gate DB/Workers/browser/provider | Kế hoạch triển khai 20/10/2026; chưa thực thi |
+| [public-reservation-design.md](public-reservation-design.md) | Cổng công khai/nội bộ, đặt 1 quyển/đơn không đăng nhập, CAPTCHA, 3 suất/SĐT, 3 đơn/IP/24 giờ, hết hạn cuối buổi trực và ca kiểm thử | Nghiệp vụ chốt 20/10; có local, xem bàn giao hiện hành |
+| [Kế hoạch đặt sách và kiểm chứng sửa lỗi cũ](../superpowers/plans/2026-10-20-public-reservation.md) | PR-0…PR-9, file map, contract, kiểm thử 49 ca và gate DB/Workers/browser/provider | Kế hoạch gốc 20/10; xem handoff trước khi tiếp tục |
 | [implementation-plan.md](implementation-plan.md) | Lát chức năng (Vertical Slices), ma trận phụ thuộc, kế hoạch test và tiến độ D1–D30 | Kế hoạch triển khai đề xuất |
 | [openapi.yaml](openapi.yaml) | Hợp đồng API OpenAPI 3.1.0 (26 operations; đã validate 0 lỗi bằng Redocly 2.64.1; các endpoint Event/Loss/Score Audit dự kiến bổ sung ở các chặng sau) | Hợp đồng API (0 errors, 24 warnings) |
-| [schema/](schema/) | PostgreSQL DDL (`01_schema.sql`), Seed data (`02_seed.sql`), script kiểm tra toàn vẹn | DDL draft (Chưa apply PostgreSQL local/production) |
+| [schema/](schema/) | PostgreSQL DDL (`01_schema.sql`), Seed data (`02_seed.sql`), script kiểm tra toàn vẹn | Có schema/migration và bằng chứng PostgreSQL local; cloud chưa nghiệm thu |
 | [diagrams/](diagrams/) | Bộ 10 sơ đồ Mermaid chi tiết: C4, ERD, State machines, Sequence, DFD, Deployment | 10 Sơ đồ (Đã render SVG & PNG) |
 | [experiments/](../../experiments/) | Bài thử kỹ thuật local PoC: giao dịch cọc/phạt/chuyển tiếp, thuật toán xếp ca, parser Excel | PoC Local (SQLite/Python simulation; chưa phải PostgreSQL/Auth thật) |
 

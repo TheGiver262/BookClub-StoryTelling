@@ -1,5 +1,9 @@
 # Đối chiếu tài liệu tham chiếu của CLB
 
+## Cập nhật nguồn và nội dung 21/10/2026
+
+Quyết định mới của chủ sản phẩm ưu tiên hơn nội dung tài liệu CLB lịch sử. Landing dùng ảnh thật được cung cấp; bỏ hoạt động tặng giáo trình và thay mục giao lưu CLB bằng Ngày Sách Việt Nam. Ngày thành lập được xác nhận 16/09/2013. Không dùng ảnh sự kiện khác để khẳng định thành tích hoặc mốc chưa có nguồn. Xem [landing](technical/book-landing-local.md) và [trạng thái hiện hành](CURRENT-STATE.md).
+
 Ngày đọc: 18/10/2026, qua kết nối Google Drive; không sửa hoặc đổi chia sẻ tài liệu nguồn.
 
 Nguồn: [Quy tắc ứng xử với bạn đọc](https://docs.google.com/document/d/1ibHsHZ_2wV0NkV_oxXTNpgcvfotbbtvlpbhV0e2y2Cw/edit?tab=t.0). Metadata kết nối trả về: tạo 14/10/2020, sửa gần nhất 13/11/2020. Đây là metadata của bản đọc được, không chứng minh các quy tắc đó còn hiện hành.

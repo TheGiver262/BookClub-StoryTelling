@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { verifyTurnstileToken } from '../../src/server/reservations/captcha.ts';
 import { validateLocalSettings } from '../../scripts/local-runtime.mjs';
 import { handleRequest } from '../../src/server/router.ts';
+import {readerHeaders,withReaderSession} from '../helpers/reader-session.ts';
 
 const testSecret = '1x0000000000000000000000000000000AA';
 const testProvider = async () => Response.json({ success: true, hostname: 'example.com', metadata: { result_with_testing_key: true } });
@@ -26,10 +27,10 @@ test('Local runtime refuses foreign targets and keeps persistent and disposable 
 test('Production and public hosts cannot opt into local CAPTCHA test responses', async () => {
   for (const [mode, host] of [['production', 'localhost'], ['development', 'public.example']]) {
     const response = await handleRequest(new Request(`http://${host}/api/v1/public/reservations`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.10' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.10',...readerHeaders },
       body: JSON.stringify({ captchaToken: 'XXXX.DUMMY.TOKEN.XXXX' }),
     }), { NODE_ENV: mode, LOCAL_TESTING: 'true', TURNSTILE_SECRET_KEY: testSecret, TURNSTILE_EXPECTED_HOSTNAME: 'localhost' }, {
-      queryable: { query: async () => { throw new Error('Should fail CAPTCHA before SQL'); } }, turnstileFetch: testProvider,
+      queryable: withReaderSession({ query: async () => { throw new Error('Should fail CAPTCHA before reservation SQL'); } }), turnstileFetch: testProvider,
     } as any);
     assert.equal(response.status, 400);
     assert.equal((await response.json()).error.code, 'CAPTCHA_INVALID');

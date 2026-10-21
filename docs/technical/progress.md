@@ -1,5 +1,11 @@
 # YSBK — Báo Cáo Tiến Độ Kỹ Thuật (progress.md)
 
+## Snapshot bàn giao 21/10/2026 — đọc trước lịch sử chặng
+
+Báo cáo này chứa lịch sử theo chặng; PASS/BLOCKED và hướng dẫn deploy cuối tài liệu thuộc các mốc cũ, không dùng như checklist cloud hiện tại. Đọc [CURRENT-STATE](../CURRENT-STATE.md), [session handoff](../SESSION-HANDOFF.md), [publishing/CTV](public-portal-publishing.md), [landing](book-landing-local.md) và [beta guide](beta-deployment-guide.md).
+
+Tài liệu chức năng ghi mốc 353 unit, 7 PG publishing/CTV và 12 PG hồi quy giữ chỗ theo các lần chạy trước; không cộng thành một suite đã chạy lại. Lượt bàn giao chỉ kiểm tra tài liệu và HTTP: 4321 ready DB/Auth connected, landing và preview 4323 HTTP 200. Có thêm `ui.css`/ảnh QA trong workspace sau concept nhưng chưa review đầy đủ; không đánh dấu toàn bộ UI hoàn thành. Tiếp theo thảo luận UX đặt/hủy; tài khoản bạn đọc/đổi sách/thay IP chưa được duyệt. Chưa commit/push/deploy trong lượt này.
+
 Tài liệu ghi nhận tiến độ thực hiện theo từng chặng, các finding từ đợt review 18/10/2026, các bài thử đã kiểm chứng thực tế và trạng thái các cổng kiểm tra (Gates). Cập nhật chuẩn hóa theo danh mục 22 chặng tại `docs/prompts/antigravity-next/README.md`.
 
 ---

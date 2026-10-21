@@ -1,5 +1,11 @@
 # YSBK — Kế Hoạch Triển Khai Backend Theo Lát Chức Năng (implementation-plan.md)
 
+## Điều phối kế hoạch 21/10/2026
+
+Các lát cắt bên dưới là kế hoạch gốc, không là lệnh làm lại code đã có. Đọc [session handoff](../SESSION-HANDOFF.md), [trạng thái hiện hành](../CURRENT-STATE.md), [kế hoạch UI mới](../superpowers/plans/2026-10-21-ysbk-soft-ui.md) và [publishing/CTV](public-portal-publishing.md). Workspace đã có thay đổi UI sau concept; kiểm tra diff/QA trước khi tiếp tục.
+
+Công việc tiếp theo người dùng yêu cầu là chuyển chat để thảo luận UX đặt/hủy. Không tự triển khai tài khoản/đổi sách/IP từ nghiên cứu; nếu được duyệt sau đó mới cập nhật plan/API/test. Chưa commit/push/deploy hoặc reset dữ liệu.
+
 Kế hoạch xây dựng backend chi tiết theo phương pháp **Vertical Slices (Lát cắt chức năng dọc)**, ma trận phụ thuộc, các cổng nghiệm thu kỹ thuật và lộ trình D1–D30.  
 Ngày lập: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.
 

@@ -193,20 +193,20 @@ const jsonLd = {
     <!-- Staging / Preview Rule: noindex trên môi trường staging nhưng không dùng thay Authorization -->
     <meta name="robots" content={isStaging ? "noindex, nofollow" : "index, follow"} />
   </head>
-  <body class="min-h-screen bg-slate-50 font-sans text-slate-900">
+  <body class="min-h-screen bg-[#F8F3E7] font-sans text-[#35483C]">
     <!-- Top Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <header class="bg-[#FFFDF5] border-b border-[#DCDED0] sticky top-0 z-30">
       <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
         <a href="/sach/" class="flex items-center gap-3">
           <img src="/book/assets/club-logo-v8.svg" alt="Logo YSBK" class="h-9 w-auto object-contain" />
           <div>
-            <div class="font-bold text-base text-brand-navy leading-tight">CLB Yêu Sách Bách Khoa</div>
-            <div class="text-[11px] text-brand-red font-medium">Mở sách, đọc tương lai</div>
+            <div class="font-bold text-base text-[#365E4B] leading-tight">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</div>
+            <div class="text-[11px] text-[#9B4D36] font-medium">Mở sách, đọc tương lai</div>
           </div>
         </a>
         <a 
           href="/" 
-          class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+          class="ui-btn ui-btn-ghost text-xs font-semibold px-3.5 py-1.5 rounded-[14px] border border-[#DCDED0] bg-[#F8F3E7] hover:bg-[#E8EDDF] text-[#35483C] transition"
         >
           ← Quay lại trang chủ
         </a>
@@ -216,88 +216,88 @@ const jsonLd = {
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto px-4 py-8">
       {isMock && (
-        <div class="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-center justify-between shadow-sm">
+        <div class="mb-4 p-3.5 bg-[#F4EAD2] border border-[#A87A4C]/30 text-[#A87A4C] text-xs rounded-[14px] flex items-center justify-between shadow-sm">
           <div class="flex items-center gap-2">
             <span class="font-bold">⚠️ Bản xem trước dữ liệu mẫu:</span>
             <span>Cuốn sách này đang được hiển thị từ bộ dữ liệu mẫu dự phòng (Catalog Mock).</span>
           </div>
-          <span class="text-[10px] font-mono bg-amber-200/70 text-amber-950 font-bold px-2 py-0.5 rounded">MOCK_PREVIEW</span>
+          <span class="text-[10px] font-mono bg-[#A87A4C]/20 text-[#A87A4C] font-bold px-2 py-0.5 rounded-full">MOCK_PREVIEW</span>
         </div>
       )}
 
-      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+      <div class="bg-[#FFFDF5] rounded-[22px] p-6 sm:p-8 border border-[#DCDED0] shadow-[0_5px_18px_rgba(53,72,60,0.08)]">
         <div class="flex flex-col sm:flex-row gap-6">
-          <div class="w-full sm:w-52 aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shrink-0 shadow">
+          <div class="w-full sm:w-52 aspect-[3/4] bg-[#F8F3E7] rounded-[4px] overflow-hidden shrink-0 shadow-sm border border-[#DCDED0]">
             <img 
               src={book.coverImage || '/book/assets/club-logo-v8.svg'}
               alt={book.title} 
-              class="w-full h-full object-cover"
+              class="w-full h-full object-contain"
             />
           </div>
 
           <div class="flex-1">
             <div class="flex flex-wrap gap-1.5 mb-2">
               {book.categories.map((c) => (
-                <span class="text-xs font-semibold bg-brand-navy-soft text-brand-navy px-2.5 py-0.5 rounded-full">
+                <span class="text-xs font-semibold bg-[#E8EDDF] text-[#365E4B] px-2.5 py-0.5 rounded-full">
                   {c}
                 </span>
               ))}
             </div>
 
-            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-slate-900 leading-tight">
+            <h1 class="text-2xl sm:text-3xl font-serif font-bold text-[#35483C] leading-tight">
               {book.title}
             </h1>
 
-            <p class="text-sm text-slate-600 mt-2">
-              Tác giả: <span class="font-semibold text-slate-800">{book.authors.join(', ')}</span>
+            <p class="text-sm text-[#64705C] mt-2">
+              Tác giả: <span class="font-semibold text-[#35483C]">{book.authors.join(', ')}</span>
             </p>
-            <p class="text-xs text-slate-500 mt-0.5">
+            <p class="text-xs text-[#64705C] mt-0.5">
               Nhà xuất bản: {book.publisher} ({book.publishYear})
             </p>
 
-            <div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 gap-4 text-xs">
+            <div class="mt-4 p-4 bg-[#F8F3E7] rounded-[14px] border border-[#DCDED0] grid grid-cols-2 gap-4 text-xs">
               <div>
-                <div class="text-slate-400">Giá bìa:</div>
-                <div class="font-bold text-slate-800 tnum text-sm mt-0.5">
+                <div class="text-[#64705C]">Giá bìa:</div>
+                <div class="font-bold text-[#35483C] tnum text-sm mt-0.5">
                   {book.coverPrice ? formatVND(book.coverPrice) : 'Chưa có giá'}
                 </div>
               </div>
               <div>
-                <div class="text-slate-400">Tiền cọc quy định:</div>
-                <div class="font-bold text-brand-navy tnum text-sm mt-0.5">
+                <div class="text-[#64705C]">Tiền cọc quy định:</div>
+                <div class="font-bold text-[#365E4B] tnum text-sm mt-0.5">
                   {formatVND(standardDeposit)}
                 </div>
               </div>
             </div>
 
-            <div class="mt-4 text-xs text-slate-700 leading-relaxed font-sans">
-              <h3 class="font-bold text-slate-900 mb-1 text-sm">Giới thiệu sách:</h3>
+            <div class="mt-4 text-xs text-[#35483C] leading-relaxed font-sans">
+              <h3 class="font-serif font-bold text-[#35483C] mb-1 text-sm">Giới thiệu sách:</h3>
               <p>{book.description}</p>
             </div>
           </div>
         </div>
 
         <!-- Trạng thái các bản sách vật lý (Chỉ công khai mã barcode, vị trí, tình trạng sẵn sàng - KHÔNG có PII) -->
-        <div class="mt-8 pt-6 border-t border-slate-100">
-          <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
+        <div class="mt-8 pt-6 border-t border-[#DCDED0]">
+          <h3 class="text-sm font-serif font-bold text-[#35483C] mb-3 flex items-center justify-between">
             <span>Trạng thái các bản sách vật lý tại quầy</span>
-            <span class="text-xs text-slate-400 font-normal">Hạn mượn tiêu chuẩn 14 ngày</span>
+            <span class="text-xs text-[#64705C] font-normal font-sans">Hạn mượn tiêu chuẩn 14 ngày</span>
           </h3>
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto rounded-[14px] border border-[#DCDED0]">
             <table class="w-full text-left text-xs" id="copies-table">
-              <thead class="bg-slate-50 text-slate-500 font-semibold uppercase">
+              <thead class="bg-[#F8F3E7] text-[#64705C] font-semibold uppercase">
                 <tr>
                   <th class="py-2.5 px-3">Mã bản sách</th>
                   <th class="py-2.5 px-3">Vị trí lưu kho</th>
                   <th class="py-2.5 px-3">Tình trạng</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100" id="copies-tbody">
+              <tbody class="divide-y divide-[#DCDED0]" id="copies-tbody">
                 {book.copies && book.copies.length > 0 ? (
                   book.copies.map((copy: any) => (
                     <tr>
-                      <td class="py-3 px-3 font-mono font-medium text-slate-800">{copy.barcode}</td>
-                      <td class="py-3 px-3 text-slate-600">
+                      <td class="py-3 px-3 font-mono font-medium text-[#35483C]">{copy.barcode}</td>
+                      <td class="py-3 px-3 text-[#64705C]">
                         {copy.location === 'BAN_TRUC_TAM' && 'Bàn trực sảnh Thư viện TQB'}
                         {copy.location === 'KHO_THU_VIEN' && 'Kho Thư viện Tạ Quang Bửu'}
                         {copy.location === 'KHO_HOI_SINH_VIEN' && 'Kho Văn phòng Hội Sinh viên'}
@@ -305,11 +305,11 @@ const jsonLd = {
                       </td>
                       <td class="py-3 px-3">
                         {copy.status === 'AVAILABLE' ? (
-                          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E8EDDF] text-[#365E4B]">
                             Sẵn sàng cho mượn
                           </span>
                         ) : (
-                          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F4EAD2] text-[#A87A4C]">
                             Đang có bạn đọc mượn
                           </span>
                         )}
@@ -318,7 +318,7 @@ const jsonLd = {
                   ))
                 ) : (
                   <tr>
-                    <td colspan="3" class="py-4 text-center text-slate-400">
+                    <td colspan="3" class="py-4 text-center text-[#64705C]">
                       Hiện chưa có bản sách vật lý nào tại quầy.
                     </td>
                   </tr>
@@ -329,12 +329,12 @@ const jsonLd = {
         </div>
 
         <!-- Góc Review Sách Đã Được Duyệt (Chỉ hiển thị bài APPROVED, không PII) -->
-        <div class="mt-8 pt-6 border-t border-slate-100">
+        <div class="mt-8 pt-6 border-t border-[#DCDED0]">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-bold text-brand-navy">Cảm Nhận & Đánh Giá Từ Bạn Đọc</h3>
+            <h3 class="text-base font-serif font-bold text-[#365E4B]">Cảm Nhận & Đánh Giá Từ Bạn Đọc</h3>
             <a 
               href={`/cong-dong?tab=review&sach=${book.id}`}
-              class="text-xs font-semibold text-brand-navy hover:underline"
+              class="text-xs font-semibold text-[#365E4B] hover:underline"
             >
               Gửi cảm nhận sách này →
             </a>
@@ -342,21 +342,21 @@ const jsonLd = {
 
           <div id="reviews-container">
             {approvedReviews.length === 0 ? (
-              <p class="text-xs text-slate-400 italic py-3" id="no-reviews-msg">
+              <p class="text-xs text-[#64705C] italic py-3" id="no-reviews-msg">
                 Chưa có đánh giá nào được duyệt cho cuốn sách này. Hãy là người đầu tiên chia sẻ cảm nhận!
               </p>
             ) : (
               <div class="space-y-3" id="reviews-list">
                 {approvedReviews.map((rev) => (
-                  <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                      <span class="font-bold text-slate-800">{rev.readerName}</span>
+                  <div class="p-4 bg-[#F8F3E7] rounded-[14px] border border-[#DCDED0]">
+                    <div class="flex items-center justify-between text-xs text-[#64705C] mb-1.5">
+                      <span class="font-bold text-[#35483C]">{rev.readerName}</span>
                       <span class="text-amber-500">{'★'.repeat(rev.rating)}</span>
                     </div>
-                    <p class="text-xs text-slate-700 leading-relaxed font-serif">
+                    <p class="text-xs text-[#35483C] leading-relaxed font-serif">
                       "{rev.content}"
                     </p>
-                    <div class="mt-2 text-[10px] text-slate-400">
+                    <div class="mt-2 text-[10px] text-[#64705C]">
                       Đăng ngày: {rev.submittedAt} · Đã duyệt bởi Ban Quản Trị YSBK
                     </div>
                   </div>

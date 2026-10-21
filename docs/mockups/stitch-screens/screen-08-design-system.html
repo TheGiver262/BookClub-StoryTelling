@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1440, initial-scale=1.0"/>
+<title>08 — Bộ UI & Hệ thống góc mềm · PC | Thư Quán Bách Khoa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'ysbk-bg': '#F8F5EC', 'ysbk-paper': '#FFFDF5', 'ysbk-ink': '#35483C', 'ysbk-muted': '#64705C',
+        'ysbk-border': '#DCDED0', 'ysbk-primary': '#365E4B', 'ysbk-primary-hover': '#294C3A', 'ysbk-primary-pale': '#E8EDDF',
+        'ysbk-terracotta': '#9B4D36', 'ysbk-terracotta-pale': '#F7E7DB', 'ysbk-gold': '#A87A4C', 'ysbk-gold-pale': '#F4EAD2'
+      },
+      fontFamily: { serif: ['Newsreader', 'Lora', 'serif'], sans: ['Be Vietnam Pro', 'sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+body { background-color: #F8F5EC; color: #35483C; font-family: 'Be Vietnam Pro', sans-serif; }
+.btn-press { box-shadow: 0 2px 0 #35483C; transition: all 0.15s ease; }
+.btn-press:active { transform: translateY(2px); box-shadow: 0 0 0 #35483C; }
+.btn-press-primary { background-color: #365E4B; color: #FFFDF5; box-shadow: 0 2px 0 #294C3A; }
+.btn-press-primary:hover { background-color: #294C3A; }
+.btn-press-primary:active { transform: translateY(2px); box-shadow: 0 0 0 #294C3A; }
+.btn-press-terracotta { background-color: #9B4D36; color: #FFFDF5; box-shadow: 0 2px 0 #813C2A; }
+.btn-press-terracotta:hover { background-color: #813C2A; }
+.btn-press-terracotta:active { transform: translateY(2px); box-shadow: 0 0 0 #813C2A; }
+.ribbon-tag {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+}
+.book-spine-demo {
+  box-shadow: -6px 0 12px -3px rgba(0,0,0,0.25), 3px 4px 12px rgba(53,72,60,0.15);
+  position: relative;
+}
+.book-spine-demo::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 10px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0.18) 60%, rgba(255,255,255,0.1) 100%);
+  pointer-events: none;
+}
+</style>
+</head>
+<body class="min-h-screen bg-[#F8F5EC] text-[#35483C] p-8 antialiased">
+
+<!-- DESIGN SYSTEM HEADER -->
+<header class="max-w-7xl mx-auto pb-8 mb-10 border-b border-[#DCDED0] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+  <div class="flex items-center gap-4">
+    <div class="w-14 h-14 rounded-lg bg-[#365E4B] flex items-center justify-center text-white font-serif font-bold text-2xl shadow-[0_3px_0_#294C3A]">
+      Y
+    </div>
+    <div>
+      <span class="text-xs font-mono uppercase tracking-widest text-[#9B4D36] font-bold">DESIGN SYSTEM & COMPONENT SPECIMEN</span>
+      <h1 class="font-serif text-3xl md:text-4xl font-bold text-[#35483C] leading-tight">
+        Hệ Thống Thiết Kế · Thư Quán Bách Khoa
+      </h1>
+      <p class="text-xs text-[#64705C] font-mono mt-1">
+        Dành riêng cho Câu lạc bộ Yêu Sách Bách Khoa · Chuẩn bảng màu chốt · Tactile 3D Spine & Ribbon
+      </p>
+    </div>
+  </div>
+
+  <div class="px-4 py-2 rounded bg-[#FFFDF5] border border-[#DCDED0] text-xs font-mono text-[#64705C]">
+    Phiên bản: <strong class="text-[#365E4B]">2.1 Refined</strong> · 10/2026
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto space-y-12">
+
+  <!-- 1. LOCKED COLOR PALETTE -->
+  <section class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-8 shadow-sm">
+    <div class="mb-6 pb-3 border-b border-[#DCDED0] flex items-center justify-between">
+      <div>
+        <h2 class="font-serif font-bold text-2xl text-[#35483C]">1. Bảng Màu Chốt (Locked Palette)</h2>
+        <p class="text-xs text-[#64705C]">Quy tắc tuyệt đối: Sử dụng chuẩn mã hex đã chốt, bảo toàn độ tương phản chuẩn WCAG 2.1</p>
+      </div>
+      <span class="text-[11px] font-mono px-2.5 py-1 rounded bg-[#E8EDDF] text-[#365E4B] font-bold">100% COMPLIANT</span>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-xs font-mono">
+      <!-- SWATCH 1 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#365E4B]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Primary Evergreen</strong>
+          <span class="text-[#365E4B] font-bold">#365E4B</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Thương hiệu / Nút chính</span>
+        </div>
+      </div>
+
+      <!-- SWATCH 2 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#294C3A]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Primary Hover</strong>
+          <span class="text-[#294C3A] font-bold">#294C3A</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Hover / Bóng nút</span>
+        </div>
+      </div>
+
+      <!-- SWATCH 3 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#9B4D36]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Terracotta Accent</strong>
+          <span class="text-[#9B4D36] font-bold">#9B4D36</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Điểm nhấn / Tiền cọc</span>
+        </div>
+      </div>
+
+      <!-- SWATCH 4 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#A87A4C]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Antique Gold</strong>
+          <span class="text-[#A87A4C] font-bold">#A87A4C</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Nhũ sách / Huy hiệu</span>
+        </div>
+      </div>
+
+      <!-- SWATCH 5 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#F8F5EC] border-b border-[#DCDED0]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Page Cream</strong>
+          <span class="text-[#35483C] font-bold">#F8F5EC</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Nền trang sách</span>
+        </div>
+      </div>
+
+      <!-- SWATCH 6 -->
+      <div class="border border-[#DCDED0] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div class="h-16 bg-[#FFFDF5] border-b border-[#DCDED0]"></div>
+        <div class="p-3">
+          <strong class="text-xs font-sans text-[#35483C] block font-bold">Paper Ivory</strong>
+          <span class="text-[#35483C] font-bold">#FFFDF5</span>
+          <span class="text-[10px] text-[#64705C] block mt-0.5">Nền thẻ card giấy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. TYPOGRAPHY SPECIMEN -->
+  <section class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-8 shadow-sm">
+    <div class="mb-6 pb-3 border-b border-[#DCDED0]">
+      <h2 class="font-serif font-bold text-2xl text-[#35483C]">2. Hệ Thống Kiểu Chữ (Typography Scale)</h2>
+      <p class="text-xs text-[#64705C]">Newsreader Serif (Tiêu đề, trích dẫn văn học) + Be Vietnam Pro (Giao diện, bảng biểu, đọc nhanh)</p>
+    </div>
+
+    <div class="space-y-6">
+      <div class="pb-4 border-b border-[#DCDED0] flex flex-col md:flex-row items-baseline justify-between gap-4">
+        <div class="flex-1">
+          <span class="text-[11px] font-mono text-[#64705C] block mb-1">Display Title · Newsreader SemiBold · 48px</span>
+          <h3 class="font-serif text-4xl font-semibold text-[#35483C] leading-tight">
+            Mở sách, đọc tương lai.
+          </h3>
+        </div>
+        <span class="text-xs font-mono text-[#64705C]">font-serif text-4xl leading-tight</span>
+      </div>
+
+      <div class="pb-4 border-b border-[#DCDED0] flex flex-col md:flex-row items-baseline justify-between gap-4">
+        <div class="flex-1">
+          <span class="text-[11px] font-mono text-[#64705C] block mb-1">Section Heading · Newsreader Bold · 32px</span>
+          <h4 class="font-serif text-2xl md:text-3xl font-bold text-[#35483C]">
+            Tủ Sách Bách Khoa Mở Rộng
+          </h4>
+        </div>
+        <span class="text-xs font-mono text-[#64705C]">font-serif text-2xl font-bold</span>
+      </div>
+
+      <div class="pb-4 border-b border-[#DCDED0] flex flex-col md:flex-row items-baseline justify-between gap-4">
+        <div class="flex-1">
+          <span class="text-[11px] font-mono text-[#64705C] block mb-1">Literary Pull-Quote · Newsreader Italic · 18px</span>
+          <p class="font-serif italic text-lg text-[#64705C] border-l-2 border-[#A87A4C] pl-4 py-1">
+            "Học không phải để cầu danh lợi, mà là để mở mang tâm trí và nuôi dưỡng lòng nhân ái."
+          </p>
+        </div>
+        <span class="text-xs font-mono text-[#64705C]">font-serif italic text-lg</span>
+      </div>
+
+      <div class="flex flex-col md:flex-row items-baseline justify-between gap-4">
+        <div class="flex-1">
+          <span class="text-[11px] font-mono text-[#64705C] block mb-1">Body Text · Be Vietnam Pro Regular · 15px/1.6</span>
+          <p class="text-sm text-[#35483C] leading-relaxed max-w-3xl">
+            Câu lạc bộ Yêu Sách Bách Khoa được thành lập vào ngày 16/09/2013 tại Đại học Bách Khoa Hà Nội, hướng tới mục tiêu xây dựng một không gian trao đổi sách mở, sẻ chia tri thức và kết nối những tâm hồn yêu con chữ.
+          </p>
+        </div>
+        <span class="text-xs font-mono text-[#64705C]">font-sans text-sm leading-relaxed</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TACTILE BUTTON STATES (PAPER-PRESSED) -->
+  <section class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-8 shadow-sm">
+    <div class="mb-6 pb-3 border-b border-[#DCDED0]">
+      <h2 class="font-serif font-bold text-2xl text-[#35483C]">3. Nút Bấm Khắc Chìm & Nổi (Tactile Buttons)</h2>
+      <p class="text-xs text-[#64705C]">Bóng đổ vật lý 2px mô phỏng thẻ giấy dập nổi, phản hồi cảm ứng rõ ràng khi click/touch</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <!-- Primary Matrix -->
+      <div class="space-y-3">
+        <h3 class="font-serif font-bold text-sm text-[#35483C]">Nút Chính (Primary Evergreen)</h3>
+        <button class="w-full py-2.5 rounded bg-[#365E4B] text-[#FFFDF5] font-semibold text-xs btn-press-primary shadow-[0_2px_0_#294C3A]">
+          Xác Nhận Giữ Chỗ (Normal)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#294C3A] text-[#FFFDF5] font-semibold text-xs shadow-[0_2px_0_#1E382B]">
+          Hover State (#294C3A)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#294C3A] text-[#FFFDF5] font-semibold text-xs translate-y-[2px] shadow-none">
+          Active / Pressed State
+        </button>
+        <button disabled class="w-full py-2.5 rounded bg-[#DCDED0] text-[#64705C] font-semibold text-xs cursor-not-allowed">
+          Disabled State
+        </button>
+      </div>
+
+      <!-- Secondary Matrix -->
+      <div class="space-y-3">
+        <h3 class="font-serif font-bold text-sm text-[#35483C]">Nút Phụ (Secondary Ivory)</h3>
+        <button class="w-full py-2.5 rounded bg-[#FFFDF5] text-[#365E4B] border border-[#365E4B] font-semibold text-xs btn-press">
+          Xem Chi Tiết Sách (Normal)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B] font-semibold text-xs">
+          Hover State (#E8EDDF)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B] font-semibold text-xs translate-y-[2px] shadow-none">
+          Active / Pressed State
+        </button>
+        <button class="w-full py-2.5 text-[#365E4B] underline font-semibold text-xs text-center block">
+          Ghost / Text Link →
+        </button>
+      </div>
+
+      <!-- Terracotta Matrix -->
+      <div class="space-y-3">
+        <h3 class="font-serif font-bold text-sm text-[#9B4D36]">Nút Nhấn / Xử Lý (Terracotta)</h3>
+        <button class="w-full py-2.5 rounded bg-[#9B4D36] text-[#FFFDF5] font-semibold text-xs btn-press-terracotta shadow-[0_2px_0_#813C2A]">
+          Nhận Trả & Hoàn Cọc (Normal)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#813C2A] text-[#FFFDF5] font-semibold text-xs shadow-[0_2px_0_#622D1F]">
+          Hover State (#813C2A)
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#813C2A] text-[#FFFDF5] font-semibold text-xs translate-y-[2px] shadow-none">
+          Active / Pressed State
+        </button>
+        <button class="w-full py-2.5 rounded bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/40 font-semibold text-xs">
+          Light Variant (Badge Action)
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. PHYSICAL BOOK SIGNATURE: SPINES & RIBBONS -->
+  <section class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-8 shadow-sm">
+    <div class="mb-6 pb-3 border-b border-[#DCDED0]">
+      <h2 class="font-serif font-bold text-2xl text-[#35483C]">4. Đặc Trưng Vật Lý: Gáy Sách 3D & Bookmark Ribbon</h2>
+      <p class="text-xs text-[#64705C]">Điểm nhấn thị giác độc quyền của concept Thư Quán Bách Khoa</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+      
+      <!-- 3D Book Spine Demo -->
+      <div class="flex flex-col items-center p-4 bg-[#F8F5EC] rounded-lg border border-[#DCDED0]">
+        <div class="w-36 aspect-[2/3] rounded-r rounded-l-[1px] book-spine-demo bg-[#365E4B] overflow-hidden relative mb-3">
+          <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=300&auto=format&fit=crop" class="w-full h-full object-cover">
+          <div class="absolute bottom-2 left-2 right-2 text-white">
+            <span class="text-[8px] font-mono bg-[#9B4D36] px-1 py-0.5 rounded font-bold">KHO-A1</span>
+          </div>
+        </div>
+        <span class="text-xs font-semibold text-[#35483C]">Gáy sách dập bóng 3D</span>
+        <span class="text-[10px] text-[#64705C] font-mono">Gradient mô phỏng gáy sách da/vải</span>
+      </div>
+
+      <!-- Bookmark Ribbon Demo -->
+      <div class="flex flex-col items-center justify-center p-6 bg-[#F8F5EC] rounded-lg border border-[#DCDED0] relative h-full">
+        <div class="flex gap-4 items-start">
+          <div class="bg-[#365E4B] text-white text-[10px] font-bold px-2.5 pt-1.5 pb-3 ribbon-tag shadow-md">
+            CÒN 3 BẢN
+          </div>
+          <div class="bg-[#9B4D36] text-white text-[10px] font-bold px-2.5 pt-1.5 pb-3 ribbon-tag shadow-md">
+            HOT NHẤT
+          </div>
+          <div class="bg-[#A87A4C] text-white text-[10px] font-bold px-2.5 pt-1.5 pb-3 ribbon-tag shadow-md">
+            ĐẶC BIỆT
+          </div>
+        </div>
+        <span class="text-xs font-semibold text-[#35483C] mt-6">Dải Ruy Băng Đánh Dấu (Bookmark)</span>
+        <span class="text-[10px] text-[#64705C] font-mono">clip-path vạt đuôi cá thư viện</span>
+      </div>
+
+      <!-- Status Badges -->
+      <div class="p-4 bg-[#F8F5EC] rounded-lg border border-[#DCDED0] space-y-3">
+        <span class="text-xs font-semibold text-[#35483C] block mb-2">Huy Hiệu Trạng Thái Kho (Status Badges)</span>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <span class="px-2.5 py-1 rounded bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#365E4B]"></span> Còn Sách (Có Sẵn)
+          </span>
+          <span class="px-2.5 py-1 rounded bg-[#F4EAD2] text-[#A87A4C] border border-[#A87A4C]/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#A87A4C]"></span> Đang Mượn
+          </span>
+          <span class="px-2.5 py-1 rounded bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#9B4D36]"></span> Đến Hạn Trả
+          </span>
+          <span class="px-2.5 py-1 rounded bg-[#9B4D36] text-white flex items-center gap-1">
+            ⚠️ Cần Kiểm Tra
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="max-w-7xl mx-auto mt-12 pt-6 border-t border-[#DCDED0] text-center text-xs text-[#64705C] font-mono">
+  Yêu Sách Bách Khoa Design System Specimen · Bản Thiết Kế Concept Stitch 2026
+</footer>
+
+</body>
+</html>

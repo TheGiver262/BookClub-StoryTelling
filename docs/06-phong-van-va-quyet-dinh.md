@@ -1,5 +1,23 @@
 # Phỏng vấn và sổ quyết định
 
+## Quyết định bổ sung 20–21/10/2026
+
+Các mã D01–D61 bên dưới giữ nguyên để truy vết. Bổ sung hiện hành, không đánh lại mã cũ:
+
+| Mã | Trạng thái | Nội dung |
+|---|---|---|
+| S21-01 | Đã chốt | Công khai/nội bộ tách quyền; landing cuốn sách; `/sach/` sáu tab, 50 đầu sách/trang. |
+| S21-02 | Đã chốt | Đặt không tài khoản/OTP, CAPTCHA, một quyển/đơn, giữ hết buổi trực đã chọn. |
+| S21-03 | Đã chốt | Ba đơn/IP/24 giờ; hủy/hết hạn/trả không hoàn IP. Ba suất giữ/mượn chưa trả/SĐT; trả một mở một suất. |
+| S21-04 | Đã chốt | Bản giữ không giao được: cảnh báo nội bộ, gọi/xử lý thủ công; chưa email/SMS. |
+| S21-05 | Đã chốt | Local Docker trước, beta Supabase + Cloudflare Free sau; chưa deploy. |
+| S21-06 | Đã chốt | Chỉ ADMIN xuất bản sách/ảnh/tóm tắt/lịch/nghỉ/sự kiện/tuyển. |
+| S21-07 | Đã chốt | CTV một tháng lịch, quyền MEMBER; quản lý đánh giá đạt mới công nhận, chỉ quản lý xóa mềm CTV; thành viên chính thức rời chuyển cựu. |
+| S21-08 | Đã chốt | Tên đầy đủ Hà Nội, thành lập 16/09/2013, slogan “Mở sách, đọc tương lai”; màu giữ nguyên, UI mềm vintage áp dụng công khai và nội bộ. |
+| S21-09 | Đang thảo luận | “Sách của tôi”, tài khoản bạn đọc tùy chọn, khôi phục/email, đổi sách nguyên tử và xem lại chính sách IP. Chưa phê duyệt implementation. |
+
+[Tóm tắt hiện hành](CURRENT-STATE.md), [chi tiết nghiệp vụ giữ chỗ](technical/public-reservation-design.md), [CTV/publishing](technical/public-portal-publishing.md), [nguồn nghiên cứu UX](technical/public-reservation-ux-research-2026-10-21.md). Tài khoản khách cho review đã bàn trước không tự cấp quyền quản lý toàn bộ đơn theo SĐT.
+
 Ngày 18/10/2026. Nguồn xác nhận: câu trả lời trực tiếp của chủ sản phẩm trong chat. Tài liệu ghi quy tắc mới nhất; diễn giải chưa chắc chắn được đánh dấu rõ. Không yêu cầu gửi dữ liệu người thật trong chat để khảo sát.
 
 ## 1. Quyết định đã xác nhận

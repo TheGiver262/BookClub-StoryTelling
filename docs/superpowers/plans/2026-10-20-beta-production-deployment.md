@@ -1,5 +1,9 @@
 # YSBK — Kế hoạch beta và triển khai thật
 
+## Handoff ngày 21/10/2026
+
+Tiếp tục local trước; chưa có lệnh triển khai beta trong lượt bàn giao. Xem [trạng thái hiện hành](../../CURRENT-STATE.md), [session handoff](../../SESSION-HANDOFF.md) và [beta guide](../../technical/beta-deployment-guide.md). Cổng bạn đọc/publishing/CTV có thay đổi sau kế hoạch này; backup và kiểm tra migration theo hướng dẫn hiện hành. Chưa bật signup, email hoặc đổi guard IP từ nghiên cứu UX chưa duyệt.
+
 > **Ưu tiên mới:** Hoàn thiện/test local trước; không triển khai beta cho đến khi local đủ chức năng và không còn lỗi chặn. Môi trường và checklist hiện hành: [local-development.md](../../technical/local-development.md).
 
 > **Cập nhật quyết định 20/10/2026:** Người dùng đã cho phép chuẩn bị code/config beta, chọn **Free trước**; sách vài nghìn cuốn, quầy tập trung thứ Ba/thứ Năm. Sự cố bản đã giữ: cảnh báo nội bộ và xử lý thủ công, chưa email/SMS. Chat mới tính chi phí, chưa triển khai. Các giả định hoạt động đều mỗi ngày và đề xuất Paid phía dưới là phương án dự phòng cũ, không phải cấu hình đã chọn. Hướng dẫn hiện hành: [beta-deployment-guide.md](../../technical/beta-deployment-guide.md); bằng chứng: [beta-verification.md](../../technical/beta-verification.md). Các checkbox cũ chưa tự động chứng nhận đã đạt cloud acceptance.

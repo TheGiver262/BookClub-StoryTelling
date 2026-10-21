@@ -1,5 +1,9 @@
 # Antigravity - Tiếp tục sửa lỗi hậu chặng 22 và triển khai đặt sách công khai
 
+## Cảnh báo tiếp tục theo trạng thái 21/10/2026
+
+Prompt bên dưới thuộc đợt giữ chỗ trước. Đọc [session handoff](../../SESSION-HANDOFF.md) và [trạng thái hiện hành](../../CURRENT-STATE.md) trước khi thực thi; không làm lại chức năng đã có hoặc coi các đề xuất UX chưa chốt là yêu cầu mới. Kế hoạch UI mới ở `docs/superpowers/plans/2026-10-21-ysbk-soft-ui.md`; giữ mọi thay đổi của người dùng/Antigravity và chưa commit/push/deploy.
+
 Làm việc tại `F:\Codex Project\YSBK`. Người dùng yêu cầu lượt tiếp theo vừa giữ/sửa phần còn lỗi của implementation cũ, vừa cập nhật và thực hiện kế hoạch đặt sách mới. Hãy sửa implementation, caller, schema/migration và tests theo các bước dưới đây; không chỉ trả về kế hoạch khác. Làm tuần tự, có checkpoint rồi tự tiếp tục phần được phép, không chờ giao lại từng bước.
 
 ## 1. Đọc trước và xác định hiện trạng

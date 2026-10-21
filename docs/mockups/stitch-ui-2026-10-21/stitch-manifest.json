@@ -1,0 +1,61 @@
+{
+  "project": "projects/18002116813589247564",
+  "designSystem": "assets/14145913114696790624",
+  "screens": [
+    {
+      "title": "01 — Tủ sách · PC (Refined)",
+      "name": "projects/18002116813589247564/screens/548e9afa90d648fc9b999d798aafcc81",
+      "width": "2560",
+      "height": "4920"
+    },
+    {
+      "title": "07 — Bản tin câu lạc bộ · PC",
+      "name": "projects/18002116813589247564/screens/0b00960d005f4271a64ce9da315a5c11",
+      "width": "2560",
+      "height": "4144"
+    },
+    {
+      "title": "03 — Chi tiết & giữ chỗ · PC",
+      "name": "projects/18002116813589247564/screens/60b297ba486d4d468167fda0ba469e95",
+      "width": "2560",
+      "height": "2574"
+    },
+    {
+      "title": "02 — Tủ sách · Điện thoại",
+      "name": "projects/18002116813589247564/screens/d5a0c472ed3f435495efa58e4b0fcd67",
+      "width": "780",
+      "height": "3568"
+    },
+    {
+      "title": "08 — Bộ UI & trạng thái",
+      "name": "projects/18002116813589247564/screens/c00a30f61e2042de9fc771247f9c64ca",
+      "width": "1280",
+      "height": "1024"
+    },
+    {
+      "title": "01 — Tủ sách · PC",
+      "name": "projects/18002116813589247564/screens/66a8cd666ac04c5c90250ddae44e8091",
+      "width": "2560",
+      "height": "4798"
+    },
+    {
+      "title": "05 — Quầy mượn–trả · PC",
+      "name": "projects/18002116813589247564/screens/70a63599ddf2439f96a5af784a2a1e98",
+      "width": "2560",
+      "height": "3278"
+    },
+    {
+      "title": "06 — Sổ trực · Điện thoại",
+      "name": "projects/18002116813589247564/screens/f5eaf32ecc0645ad8bdca9f7f08c29d9",
+      "width": "780",
+      "height": "3150"
+    },
+    {
+      "title": "04 — Phiếu giữ chỗ · Điện thoại",
+      "name": "projects/18002116813589247564/screens/e341eb663d1c4fe1a7e6a764621011bd",
+      "width": "780",
+      "height": "2740"
+    }
+  ],
+  "generationNote": "Final batch tool timed out after 300 seconds; recovered all four completed screens through list_screens/get_screen without retrying generation."
+}

@@ -85,6 +85,10 @@ export function toMemberDto(rawMember: Record<string, any>): MemberDto {
 
   return {
     id: String(rawMember.id),
+    isCollaborator: Boolean(rawMember.is_collaborator ?? rawMember.isCollaborator),
+    probationStartedOn: rawMember.probation_started_on ?? rawMember.probationStartedOn ?? null,
+    probationEndsOn: rawMember.probation_ends_on ?? rawMember.probationEndsOn ?? null,
+    collaboratorDeletedAt: rawMember.collaborator_deleted_at ?? rawMember.collaboratorDeletedAt ?? null,
     fullName: String(rawMember.full_name || rawMember.fullName),
     username: String(rawMember.username),
     team: String(rawMember.team),

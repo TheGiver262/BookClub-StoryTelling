@@ -1,5 +1,15 @@
 # Chạy và kiểm thử YSBK local
 
+## Cập nhật tài khoản bạn đọc sau chat tiếp nối 21/10
+
+Đã áp dụng migration 21 cộng thêm sau backup; runtime 4321 build lại đúng source. Đơn mới bắt buộc phiên bạn đọc Google, phiên mới thu hồi phiên cũ; chưa có Google OAuth client nên hiện đặt mới bị chặn, danh mục vẫn hoạt động. [Runbook và bằng chứng](reader-accounts-local-and-access.md) thay hướng dẫn đặt không login/smoke cũ phía dưới. `local:smoke` trả PARTIAL/exit 2 khi chưa có phiên QA Google thật. Chưa deploy; Browser Use bị tắt trong Work settings ở bước kiểm tra cuối.
+
+## Snapshot runtime và handoff 21/10/2026
+
+Lúc viết handoff: `http://localhost:4321/health/ready` HTTP 200, database/Auth provider connected; landing `http://localhost:4321/?public=1` HTTP 200; preview concept `http://127.0.0.1:4323/` HTTP 200. Đây là kiểm tra HTTP, chưa bảo đảm runtime đang phục vụ mọi source diff mới nhất.
+
+Giữ Docker volume/tài khoản hiện có; không reset hoặc in `.local/ysbk/accounts.json`. Nếu cổng có tiến trình, kiểm tra PID/đường chạy trước khi dừng; ưu tiên script local có sẵn. 4322 là mockup lịch sử, không web chính. Browser Use cần kiểm tra lại quyền tại chat mới. [Session handoff](../SESSION-HANDOFF.md); chưa chạy lại suite nghiệp vụ trong lượt đồng bộ tài liệu.
+
 Quyết định 20/10/2026: ưu tiên hoàn thiện và kiểm thử local. **Chưa triển khai beta**; chỉ chuyển sang beta sau khi các chức năng cần dùng được nghiệm thu, không còn lỗi chặn.
 
 ## Địa chỉ cố định

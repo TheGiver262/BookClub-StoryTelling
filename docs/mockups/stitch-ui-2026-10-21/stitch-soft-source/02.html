@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>02 — Tủ sách · Điện thoại | Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Newsreader for editorial serif titles & Be Vietnam Pro for body/UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            // Strict Locked Brand Palette
+            "page": "#F8F5EC",
+            "paper": "#FFFDF5",
+            "ink": "#35483C",
+            "muted-ink": "#64705C",
+            "border-line": "#DCDED0",
+            "brand-green": "#365E4B",
+            "brand-green-hover": "#294C3A",
+            "brand-green-pale": "#E8EDDF",
+            "terracotta": "#9B4D36",
+            "terracotta-hover": "#813C2A",
+            "terracotta-pale": "#F7E7DB",
+            "antique-gold": "#A87A4C",
+            "pale-gold": "#F4EAD2",
+            "logo-sage": "#819079",
+
+            // Mapped Design System Tokens to brand lock
+            "error": "#9B4D36",
+            "on-secondary-container": "#78321d",
+            "on-secondary": "#ffffff",
+            "surface-container": "#F8F5EC",
+            "inverse-primary": "#a5d0b8",
+            "surface": "#FFFDF5",
+            "surface-variant": "#E8EDDF",
+            "secondary": "#9B4D36",
+            "surface-dim": "#dddad1",
+            "secondary-fixed-dim": "#ffb5a0",
+            "on-tertiary-container": "#f8c28e",
+            "on-primary-fixed": "#002114",
+            "surface-bright": "#FFFDF5",
+            "on-error-container": "#813C2A",
+            "tertiary-container": "#754e24",
+            "tertiary-fixed": "#ffdcbe",
+            "tertiary": "#A87A4C",
+            "on-error": "#ffffff",
+            "surface-container-low": "#F8F5EC",
+            "inverse-on-surface": "#F8F5EC",
+            "secondary-container": "#F7E7DB",
+            "secondary-fixed": "#ffdbd1",
+            "on-background": "#35483C",
+            "on-secondary-fixed": "#3b0a00",
+            "surface-tint": "#365E4B",
+            "outline-variant": "#DCDED0",
+            "on-tertiary-fixed": "#2c1600",
+            "surface-container-high": "#ebe8df",
+            "on-surface-variant": "#64705C",
+            "on-primary-fixed-variant": "#264e3c",
+            "background": "#F8F5EC",
+            "primary-container": "#365E4B",
+            "on-primary-container": "#FFFDF5",
+            "on-primary": "#ffffff",
+            "on-surface": "#35483C",
+            "primary-fixed": "#E8EDDF",
+            "outline": "#64705C",
+            "primary-fixed-dim": "#a5d0b8",
+            "primary": "#365E4B",
+            "surface-container-highest": "#e5e2da",
+            "tertiary-fixed-dim": "#f2bc89",
+            "on-tertiary": "#ffffff",
+            "inverse-surface": "#35483C",
+            "error-container": "#F7E7DB",
+            "surface-container-lowest": "#FFFDF5",
+            "on-secondary-fixed-variant": "#77311d",
+            "on-tertiary-fixed-variant": "#633f16"
+          },
+          borderRadius: {
+            "DEFAULT": "2px",
+            "sm": "2px",
+            "md": "3px",
+            "lg": "4px",
+            "xl": "6px",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Newsreader", "Georgia", "serif"],
+            "display": ["Newsreader", "Georgia", "serif"],
+            "body": ["Be Vietnam Pro", "sans-serif"],
+            "label": ["Be Vietnam Pro", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Card pressed onto paper physical offset shadow */
+    .btn-press {
+      box-shadow: 0 2px 0 #35483C;
+      transition: all 0.12s ease-in-out;
+    }
+    .btn-press:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #35483C;
+    }
+    .card-paper-shadow {
+      box-shadow: 0 2px 0 #DCDED0, 0 6px 18px rgba(53, 72, 60, 0.06);
+    }
+    /* Double ruled editorial lines */
+    .double-rule-top {
+      border-top: 3px double #DCDED0;
+    }
+    .double-rule-bottom {
+      border-bottom: 3px double #DCDED0;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-page text-on-surface font-body antialiased min-h-screen flex flex-col justify-between items-center selection:bg-brand-green-pale selection:text-ink">
+<!-- Mobile Screen Shell Container (Standard 390px Viewport) -->
+<div class="w-full max-w-[390px] bg-page min-h-screen flex flex-col relative shadow-md">
+<!-- TOP HEADER: Mobile Editorial Bar -->
+<header class="bg-paper border-b border-border-line sticky top-0 z-40 px-4 py-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<!-- Stamp-style brand logo -->
+<div class="w-9 h-9 border border-brand-green p-0.5 bg-paper flex items-center justify-center rounded-[2px] shadow-[1px_1px_0_#365E4B]">
+<div class="w-full h-full border border-dashed border-brand-green flex flex-col items-center justify-center bg-brand-green-pale text-brand-green">
+<span class="font-headline font-bold text-xs tracking-tighter leading-none">YS</span>
+<span class="font-headline font-semibold text-[8px] tracking-widest leading-none">BK</span>
+</div>
+</div>
+<div>
+<div class="text-xs font-bold text-brand-green tracking-tight font-body leading-tight">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</div>
+<div class="text-[11px] text-muted-ink italic font-headline leading-none mt-0.5">Mở sách, đọc tương lai</div>
+</div>
+</div>
+<!-- Action buttons: Internal login & Menu Drawer Trigger -->
+<div class="flex items-center gap-1.5">
+<a class="text-xs font-semibold text-brand-green bg-brand-green-pale hover:bg-brand-green hover:text-paper px-2 py-1.5 rounded-[2px] border border-brand-green transition-colors leading-none flex items-center gap-1" href="#login">
+<span>Nội bộ</span>
+</a>
+<button aria-label="Mở menu" class="w-8 h-8 flex items-center justify-center text-ink hover:text-brand-green rounded-[2px] border border-border-line hover:border-brand-green bg-paper transition-colors" id="menu-btn">
+<span class="material-symbols-outlined text-[20px]" data-icon="menu">menu</span>
+</button>
+</div>
+</header>
+<!-- MOBILE NAVIGATION DRAWER (Hidden by default, slides down) -->
+<nav class="hidden bg-paper border-b-2 border-brand-green px-4 py-3 z-30 transition-all" id="mobile-drawer">
+<div class="text-[11px] uppercase tracking-wider font-semibold text-muted-ink pb-2 mb-2 border-b border-border-line">Danh mục tra cứu &amp; tiện ích</div>
+<ul class="flex flex-col space-y-1 text-sm font-medium">
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] bg-brand-green text-paper font-semibold" href="#">
+<span>Tra cứu sách</span>
+<span class="text-[10px] bg-paper text-brand-green px-1.5 py-0.5 rounded-[2px]">Hiện hành</span>
+</a>
+</li>
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] text-ink hover:bg-brand-green-pale hover:text-brand-green transition-colors" href="#">
+<span>Đặt giữ chỗ</span>
+<span class="material-symbols-outlined text-sm text-muted-ink" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</li>
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] text-ink hover:bg-brand-green-pale hover:text-brand-green transition-colors" href="#">
+<span>Tra cứu đơn</span>
+<span class="material-symbols-outlined text-sm text-muted-ink" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</li>
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] text-ink hover:bg-brand-green-pale hover:text-brand-green transition-colors" href="#">
+<span>Lịch trực &amp; sự kiện</span>
+<span class="material-symbols-outlined text-sm text-muted-ink" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</li>
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] text-ink hover:bg-brand-green-pale hover:text-brand-green transition-colors" href="#">
+<span>Góc review</span>
+<span class="material-symbols-outlined text-sm text-muted-ink" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</li>
+<li>
+<a class="flex items-center justify-between py-2 px-2.5 rounded-[2px] text-ink hover:bg-brand-green-pale hover:text-brand-green transition-colors" href="#">
+<span>Tuyển thành viên</span>
+<span class="material-symbols-outlined text-sm text-muted-ink" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- MAIN EDITORIAL CONTENT AREA -->
+<main class="flex-1 px-4 pt-4 pb-20">
+<!-- Editorial Headline Section -->
+<div class="mb-4">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-[11px] font-semibold text-antique-gold tracking-widest uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-antique-gold"></span>
+            Tủ sách cộng đồng BK
+          </span>
+<span class="text-[11px] font-normal text-muted-ink px-1.5 py-0.5 bg-paper border border-border-line rounded-[2px]">
+            Phiên bản 02 · Di động
+          </span>
+</div>
+<h1 class="font-headline text-[32px] leading-[1.15] text-ink font-bold tracking-tight">
+          Bạn muốn mang câu chuyện nào về nhà?
+        </h1>
+<p class="text-[14px] text-muted-ink mt-2 leading-relaxed">
+          Tra cứu ấn bản tại phòng đọc YSBK. Đăng ký giữ sách trước khi đến mượn vào các buổi trực thứ Ba và thứ Năm.
+        </p>
+</div>
+<!-- Quick Rule / Duty Notice Banner -->
+<div class="mb-4 p-3.5 bg-brand-green-pale/80 border border-brand-green/20 rounded-2xl relative overflow-hidden shadow-sm">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-brand-green text-[18px] shrink-0 mt-0.5" data-icon="info">info</span>
+<div class="text-[12px] leading-relaxed text-ink">
+<span class="font-bold text-brand-green">Quy chế mượn giữ:</span> Giữ sách đến hết buổi trực đã chọn; khi nhận, đọc họ tên và số điện thoại. <span class="font-medium underline decoration-brand-green decoration-1">Lịch trực: Thứ Ba &amp; Thứ Năm.</span>
+</div>
+</div>
+</div>
+<!-- Search & Filters Container -->
+<section class="mb-5 space-y-2.5">
+<!-- Full-width Search Bar with smooth rounded-2xl corners & subtle shadow -->
+<div class="relative w-full">
+<input class="w-full h-11 bg-paper text-ink placeholder:text-muted-ink text-[14px] pl-10 pr-3 border border-border-line rounded-2xl focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green shadow-sm transition-all" placeholder="Nhập tên sách, tác giả hoặc từ khóa..." type="search"/>
+<span class="material-symbols-outlined absolute left-3.5 top-2.5 text-muted-ink text-[20px]" data-icon="search">search</span>
+</div>
+<!-- Filter bar with rounded-full pill buttons -->
+<div class="flex items-center justify-between gap-2 text-[14px]">
+<button class="h-9 px-3.5 flex items-center gap-1.5 bg-paper border border-border-line text-ink rounded-full font-medium shadow-sm hover:border-brand-green active:bg-brand-green-pale transition-all">
+<span class="material-symbols-outlined text-[18px] text-muted-ink" data-icon="tune">tune</span>
+<span class="text-xs">Bộ lọc</span>
+</button>
+<div class="flex items-center gap-1.5 overflow-hidden">
+<div class="flex items-center gap-1 bg-paper border border-border-line px-3 py-1.5 rounded-full text-muted-ink text-[13px] truncate shadow-sm">
+<span class="text-[11px] text-muted-ink">Phân loại:</span>
+<span class="font-semibold text-ink text-xs">Tất cả danh mục</span>
+</div>
+<span class="text-[11px] font-medium text-antique-gold bg-pale-gold border border-antique-gold/30 px-2.5 py-1 rounded-full shrink-0 shadow-sm">
+Minh họa
+</span>
+</div>
+</div>
+</section>
+<!-- 2-COLUMN BOOK GRID (Responsive, Strictly Mobile 390px Optimized) -->
+<section class="grid grid-cols-2 gap-3 mb-6">
+<!-- CỘT 1: Dế Mèn phiêu lưu ký -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame with gentle corners -->
+<div class="aspect-[3/4] w-full bg-[#E5E9E2] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-VN-01</span>
+<span class="px-2 py-0.5 bg-brand-green text-paper text-[10px] font-semibold rounded-full shadow-xs">Còn sẵn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Dế Mèn phiêu lưu ký</h2>
+<div class="w-8 h-0.5 bg-brand-green mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Tô Hoài</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Văn học kinh điển</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Dế Mèn phiêu lưu ký</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Tô Hoài</p>
+</div>
+<!-- 48px Soft Rounded Action Button -->
+<button class="w-full h-12 bg-brand-green hover:bg-brand-green-hover text-paper text-[14px] font-semibold rounded-xl border border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="book_online">book_online</span>
+<span>Xem &amp; Đặt</span>
+</button>
+</article>
+<!-- CỘT 2: Số đỏ -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame -->
+<div class="aspect-[3/4] w-full bg-[#EFE8DF] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-VN-02</span>
+<span class="px-2 py-0.5 bg-brand-green text-paper text-[10px] font-semibold rounded-full shadow-xs">Còn sẵn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Số đỏ</h2>
+<div class="w-8 h-0.5 bg-terracotta mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Vũ Trọng Phụng</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Văn học hiện thực</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Số đỏ</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Vũ Trọng Phụng</p>
+</div>
+<!-- 48px Soft Rounded Action Button -->
+<button class="w-full h-12 bg-brand-green hover:bg-brand-green-hover text-paper text-[14px] font-semibold rounded-xl border border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="book_online">book_online</span>
+<span>Xem &amp; Đặt</span>
+</button>
+</article>
+<!-- CỘT 3: Hoàng tử bé -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame -->
+<div class="aspect-[3/4] w-full bg-[#E6ECE8] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-TG-03</span>
+<span class="px-2 py-0.5 bg-brand-green text-paper text-[10px] font-semibold rounded-full shadow-xs">Còn sẵn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Hoàng tử bé</h2>
+<div class="w-8 h-0.5 bg-antique-gold mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Saint-Exupéry</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Triết lý &amp; Thiếu nhi</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Hoàng tử bé</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Saint-Exupéry</p>
+</div>
+<!-- 48px Soft Rounded Action Button -->
+<button class="w-full h-12 bg-brand-green hover:bg-brand-green-hover text-paper text-[14px] font-semibold rounded-xl border border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="book_online">book_online</span>
+<span>Xem &amp; Đặt</span>
+</button>
+</article>
+<!-- CỘT 4: Nỗi buồn chiến tranh -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame -->
+<div class="aspect-[3/4] w-full bg-[#F3EBE6] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-VN-04</span>
+<span class="px-2 py-0.5 bg-terracotta text-paper text-[10px] font-semibold rounded-full shadow-xs">Đang mượn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Nỗi buồn chiến tranh</h2>
+<div class="w-8 h-0.5 bg-terracotta mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Bảo Ninh</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Tiểu thuyết hậu chiến</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Nỗi buồn chiến tranh</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Bảo Ninh</p>
+</div>
+<!-- 48px Soft Secondary Action Button -->
+<button class="w-full h-12 bg-paper hover:bg-brand-green-pale text-ink text-[14px] font-semibold rounded-xl border border-border-line hover:border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-muted-ink" data-icon="visibility">visibility</span>
+<span>Xem chi tiết</span>
+</button>
+</article>
+<!-- CỘT 5: Nhà giả kim -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame -->
+<div class="aspect-[3/4] w-full bg-[#F6EEDF] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-TG-05</span>
+<span class="px-2 py-0.5 bg-brand-green text-paper text-[10px] font-semibold rounded-full shadow-xs">Còn sẵn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Nhà giả kim</h2>
+<div class="w-8 h-0.5 bg-antique-gold mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Paulo Coelho</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Truyền cảm hứng</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Nhà giả kim</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Paulo Coelho</p>
+</div>
+<!-- 48px Soft Rounded Action Button -->
+<button class="w-full h-12 bg-brand-green hover:bg-brand-green-hover text-paper text-[14px] font-semibold rounded-xl border border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="book_online">book_online</span>
+<span>Xem &amp; Đặt</span>
+</button>
+</article>
+<!-- CỘT 6: Chiếc thuyền ngoài xa -->
+<article class="bg-paper border border-border-line/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_5px_16px_rgba(53,72,60,0.07)] relative transition-all">
+<div>
+<!-- Book Cover Minimalist Art Frame -->
+<div class="aspect-[3/4] w-full bg-[#E7EDE8] border border-border-line/70 rounded-lg p-2 flex flex-col justify-between relative overflow-hidden mb-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-mono text-muted-ink">YSBK-VN-06</span>
+<span class="px-2 py-0.5 bg-terracotta text-paper text-[10px] font-semibold rounded-full shadow-xs">Đang mượn</span>
+</div>
+<div class="my-auto text-center px-1">
+<h2 class="font-headline font-bold text-ink text-base leading-snug line-clamp-2">Chiếc thuyền ngoài xa</h2>
+<div class="w-8 h-0.5 bg-brand-green mx-auto my-1.5 opacity-60 rounded-full"></div>
+<p class="text-[13px] text-muted-ink italic font-headline">Nguyễn Minh Châu</p>
+</div>
+<div class="text-[10px] text-muted-ink text-center tracking-tighter">Tập truyện ngắn</div>
+</div>
+<!-- Book Info -->
+<h3 class="font-bold text-ink text-[14px] line-clamp-1 leading-snug px-0.5">Chiếc thuyền ngoài xa</h3>
+<p class="text-[13px] text-muted-ink mb-3 px-0.5">Nguyễn Minh Châu</p>
+</div>
+<!-- 48px Soft Secondary Action Button -->
+<button class="w-full h-12 bg-paper hover:bg-brand-green-pale text-ink text-[14px] font-semibold rounded-xl border border-border-line hover:border-brand-green shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-muted-ink" data-icon="visibility">visibility</span>
+<span>Xem chi tiết</span>
+</button>
+</article>
+</section>
+<!-- Pagination Component: 50 books/page • Page 1 (minh họa) -->
+<nav aria-label="Phân trang tủ sách" class="p-3.5 bg-paper border border-border-line/80 rounded-2xl mb-6 flex flex-col items-center gap-2.5 shadow-sm">
+<div class="text-[13px] text-muted-ink font-medium">
+50 cuốn/trang • Trang 1 (minh họa)
+</div>
+<div class="flex items-center gap-2 w-full justify-between">
+<button class="flex-1 h-10 px-3 bg-page border border-border-line/70 text-muted-ink/60 rounded-xl text-xs font-medium flex items-center justify-center gap-1 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_left">chevron_left</span>
+<span>Trang trước</span>
+</button>
+<span class="w-9 h-10 border border-brand-green bg-brand-green text-paper font-semibold text-xs flex items-center justify-center rounded-xl shadow-xs">
+1
+</span>
+<button class="flex-1 h-10 px-3 bg-paper border border-border-line/80 text-ink hover:border-brand-green hover:bg-brand-green-pale rounded-xl text-xs font-medium flex items-center justify-center gap-1 shadow-sm transition-colors active:translate-y-0.5">
+<span>Trang sau</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</nav>
+<!-- Colophon & Disclaimer Footer -->
+<footer class="double-rule-top pt-4 pb-2 text-center text-muted-ink space-y-1">
+<div class="font-headline italic text-xs">YSBK — Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</div>
+<div class="text-[11px] tracking-tight">Thành lập 16/09/2013 • Bản concept • Nội dung minh họa</div>
+</footer>
+</main>
+<!-- FIXED MOBILE BOTTOM NAVIGATION (4 Tabs: Tủ sách [Active], Đơn của tôi, Hoạt động, Thêm) -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-paper/95 backdrop-blur-sm border-t border-border-line/80 shadow-[0_-4px_16px_rgba(53,72,60,0.07)] z-50 px-2 py-1">
+<div class="grid grid-cols-4 h-14 items-center">
+<!-- Tab 1: Tủ sách (Active - Soft Rounded Pill Indicator) -->
+<a class="flex flex-col items-center justify-center text-brand-green py-1 px-2 rounded-xl bg-brand-green-pale/70 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_stories" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="text-[11px] font-bold mt-0.5 tracking-tight">Tủ sách</span>
+</a>
+<!-- Tab 2: Đơn của tôi -->
+<a class="flex flex-col items-center justify-center text-muted-ink hover:text-brand-green py-1 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="receipt_long">receipt_long</span>
+<span class="text-[11px] font-medium mt-0.5 tracking-tight">Đơn của tôi</span>
+</a>
+<!-- Tab 3: Hoạt động -->
+<a class="flex flex-col items-center justify-center text-muted-ink hover:text-brand-green py-1 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="event_note">event_note</span>
+<span class="text-[11px] font-medium mt-0.5 tracking-tight">Hoạt động</span>
+</a>
+<!-- Tab 4: Thêm -->
+<a class="flex flex-col items-center justify-center text-muted-ink hover:text-brand-green py-1 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span>
+<span class="text-[11px] font-medium mt-0.5 tracking-tight">Thêm</span>
+</a>
+</div>
+</nav>
+</div>
+<!-- Inline Script for mobile hamburger menu toggle -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuBtn = document.getElementById('menu-btn');
+      const mobileDrawer = document.getElementById('mobile-drawer');
+
+      if (menuBtn && mobileDrawer) {
+        menuBtn.addEventListener('click', () => {
+          mobileDrawer.classList.toggle('hidden');
+          const isOpen = !mobileDrawer.classList.contains('hidden');
+          menuBtn.setAttribute('aria-expanded', isOpen);
+          menuBtn.innerHTML = isOpen 
+            ? '<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>'
+            : '<span class="material-symbols-outlined text-[20px]" data-icon="menu">menu</span>';
+        });
+      }
+    });
+  </script>
+</body></html>

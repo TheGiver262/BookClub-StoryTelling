@@ -66,7 +66,7 @@ export class ReservationQuotaExceededError extends AppError {
 /**
  * Chuyển đổi hàng database sang PublicReservationDto an toàn
  */
-function toPublicReservationDto(row: any): PublicReservationDto {
+export function toPublicReservationDto(row: any): PublicReservationDto {
   const safeCreated = row.created_at ? new Date(row.created_at) : new Date();
   const safeExpires = row.expires_at ? new Date(row.expires_at) : new Date();
   let shiftDateStr = '2026-10-20';
@@ -185,6 +185,7 @@ export async function createReservation(
       const existing = existingRes.rows[0];
       // Kiểm tra toàn diện tính nhất quán của canonical payload (PRF-09)
       const isConsistent =
+        (!context.readerAccountId || existing.reader_account_id === context.readerAccountId) &&
         existing.title_id === input.titleId &&
         existing.phone === normalizedPhone &&
         existing.schedule_id === input.scheduleId &&
@@ -369,11 +370,11 @@ export async function createReservation(
     `INSERT INTO reservations (
       code, title_id, copy_id, schedule_id, full_name, phone, student_id, university, email,
       ip_hash, token_hash, idempotency_key, status, shift_date, shift_time, pickup_location,
-      expires_at, estimated_deposit, created_at, updated_at, payload_hash
+      expires_at, estimated_deposit, created_at, updated_at, payload_hash, reader_account_id
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9,
       $10, $11, $12, 'HELD', $13, $14, $15,
-      $16, $17, $18, $18, $19
+      $16, $17, $18, $18, $19, $20
     ) RETURNING id`,
     [
       code,
@@ -395,6 +396,7 @@ export async function createReservation(
       calculatedDeposit,
       now.toISOString(),
       payloadHash,
+      context.readerAccountId || null,
     ]
   );
 
@@ -425,7 +427,7 @@ export async function createReservation(
 /**
  * 2. Tra cứu chi tiết đơn bằng token bí mật riêng (PRF-03 canonical schema)
  */
-export async function getReservationByToken(db: Queryable, token: string): Promise<PublicReservationDto> {
+export async function getReservationByToken(db: Queryable, token: string, readerAccountId?:string): Promise<PublicReservationDto> {
   const tokenHash = hashLookupToken(token);
   const res = await db.query<any>(
     `SELECT r.*, bt.title AS book_title, bc.barcode AS copy_barcode,
@@ -445,6 +447,7 @@ export async function getReservationByToken(db: Queryable, token: string): Promi
   }
 
   const row = res.rows[0];
+  if(row.reader_account_id && row.reader_account_id!==readerAccountId) throw new ReservationNotFoundError();
   // Kiểm tra hết hạn hiệu lực: nếu HELD mà expires_at <= NOW() -> tự động coi là EXPIRED
   if (row.status === 'HELD' && new Date(row.expires_at).getTime() <= Date.now()) {
     row.status = 'EXPIRED';
@@ -458,7 +461,7 @@ export async function getReservationByToken(db: Queryable, token: string): Promi
  */
 export async function cancelReservation(
   db: Queryable,
-  selector: { id?: string; token?: string },
+  selector: { id?: string; token?: string; readerAccountId?:string },
   actor?: AuthenticatedActor | null,
   reason?: string
 ): Promise<PublicReservationDto> {
@@ -480,7 +483,7 @@ export async function cancelReservation(
       [tokenHash]
     );
   } else if (selector.id) {
-    if (!actor || (!actor.isActive || actor.isAlumni || actor.role === 'GUEST')) {
+    if (!selector.readerAccountId && (!actor || (!actor.isActive || actor.isAlumni || actor.role === 'GUEST'))) {
       throw new ForbiddenError('Yêu cầu quyền thành viên trực để hủy đơn.', 'FORBIDDEN');
     }
     res = await db.query<any>(
@@ -505,6 +508,7 @@ export async function cancelReservation(
   }
 
   const reservation = res.rows[0];
+  if(selector.id && selector.readerAccountId && reservation.reader_account_id!==selector.readerAccountId || selector.token && reservation.reader_account_id && reservation.reader_account_id!==selector.readerAccountId) throw new ReservationNotFoundError();
   if (reservation.status !== 'HELD') {
     throw new ConflictError(
       `Chỉ có thể hủy đơn đang ở trạng thái Chờ nhận (HELD). Trạng thái hiện tại: ${reservation.status}.`,
@@ -770,14 +774,14 @@ export async function expireReservations(
  */
 export async function listPublicReservationBooks(
   db: Queryable,
-  params?: { search?: string; category?: string; page?: number; limit?: number; includeUnavailable?: boolean; onlyAvailable?: boolean }
+  params?: { search?: string; category?: string; page?: number; limit?: number; includeUnavailable?: boolean; onlyAvailable?: boolean; readerAccountId?:string }
 ): Promise<{ items: PublicReservationBookDto[]; total: number; page: number; limit: number; categories?: string[] }> {
   const page = Number.isSafeInteger(params?.page) && params!.page! > 0 ? params!.page! : 1;
   const limit = Number.isSafeInteger(params?.limit) && params!.limit! > 0 ? Math.min(100, params!.limit!) : 20;
   const search = params?.search?.trim() || '';
   const category = params?.category?.trim() || '';
   const available = `WITH matching_copies AS (
-    SELECT bt.id AS title_id, bt.title, bc.barcode, bc.cover_price, be.cover_image_url,
+    SELECT bt.id AS title_id, bt.title, bt.description, bc.barcode, bc.cover_price, be.cover_image_url,
       COALESCE(bc.status = 'AVAILABLE'
       AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.copy_id = bc.id AND r.status = 'HELD' AND r.expires_at > clock_timestamp())
       AND NOT EXISTS (SELECT 1 FROM loan_items li WHERE li.copy_id = bc.id AND li.returned_at IS NULL AND li.carried_forward_at IS NULL), FALSE) AS is_available
@@ -792,18 +796,18 @@ export async function listPublicReservationBooks(
   const rows = await db.query<any>(`${available}, chosen AS (
     SELECT DISTINCT ON (title_id) *, COUNT(*) FILTER (WHERE is_available) OVER (PARTITION BY title_id) AS available_copies_count
     FROM available ORDER BY title_id, is_available DESC, barcode NULLS LAST
-  ) SELECT chosen.*,
+  ) SELECT chosen.*, EXISTS(SELECT 1 FROM reader_bookmarks bm WHERE bm.title_id=chosen.title_id AND bm.reader_account_id=$5::uuid) AS is_bookmarked,
     (SELECT string_agg(a.name, ', ' ORDER BY a.name) FROM book_title_authors bta JOIN authors a ON a.id = bta.author_id WHERE bta.title_id = chosen.title_id) AS author,
     (SELECT string_agg(c.name, ', ' ORDER BY c.name) FROM book_title_categories btc JOIN categories c ON c.id = btc.category_id WHERE btc.title_id = chosen.title_id) AS category
-    FROM chosen ORDER BY title, title_id LIMIT $3 OFFSET $4`, [search, category, limit, (page - 1) * limit]);
+    FROM chosen ORDER BY CASE WHEN $2='' THEN EXISTS(SELECT 1 FROM reader_bookmarks bm WHERE bm.title_id=chosen.title_id AND bm.reader_account_id=$5::uuid) ELSE FALSE END DESC, title, title_id LIMIT $3 OFFSET $4`, [search, category, limit, (page - 1) * limit, params?.readerAccountId || null]);
   const categories = params?.includeUnavailable
     ? (await db.query<{ name: string }>('SELECT DISTINCT c.name FROM categories c JOIN book_title_categories btc ON btc.category_id = c.id ORDER BY c.name')).rows.map(row => row.name)
     : undefined;
   return {
-    items: rows.rows.map(r => ({ titleId: r.title_id, title: r.title, author: r.author || '', category: r.category || '',
+    items: rows.rows.map(r => ({ titleId: r.title_id, title: r.title, description: r.description || '', author: r.author || '', category: r.category || '',
       coverPrice: r.cover_price == null ? null : Number(r.cover_price),
       coverImageUrl: r.cover_image_url || undefined, standardDeposit: Number(calculateDeposit(r.cover_price == null ? null : BigInt(r.cover_price))),
-      availableCopiesCount: Number(r.available_copies_count) })),
+      availableCopiesCount: Number(r.available_copies_count), isBookmarked:!!r.is_bookmarked })),
     total: Number(count.rows[0]?.total || 0), page, limit, categories,
   };
 }

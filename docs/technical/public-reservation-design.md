@@ -1,8 +1,16 @@
 # Thiết kế cổng công khai và đặt sách không cần đăng nhập
 
+**Chính sách mới sau chat tiếp nối 21/10:** đơn mới bắt buộc tài khoản bạn đọc Google, một phiên trình duyệt hiện hành; xem [thiết kế tài khoản](reader-accounts-design-2026-10-21.md) và [vận hành](reader-accounts-local-and-access.md). Tiêu đề/đoạn không đăng nhập phía dưới là thiết kế lịch sử đã bị thay thế ở điểm xác thực. Một quyển/đơn, CAPTCHA, quota IP/SĐT, cọc và các transaction giữ nguyên. Token đơn cũ vẫn hợp lệ; đơn mới yêu cầu đúng chủ tài khoản.
+
+## Cập nhật trạng thái 21/10/2026
+
+Quy tắc tại mục 1 vẫn là quyết định hiện hành. Bản đặt giữ chỗ đã có implementation và bằng chứng local ở [bàn giao](public-reservation-handoff.md), [landing](book-landing-local.md) và [publishing](public-portal-publishing.md); nhãn chưa triển khai trong bản thiết kế ban đầu không còn mô tả trạng thái source.
+
+Đang thảo luận lại [UX đặt/hủy](public-reservation-ux-research-2026-10-21.md). “Sách của tôi”, tài khoản tùy chọn, đổi sách, khôi phục bằng email và sửa hạn mức IP **chưa chốt**, không ghi thành API/schema hoặc hành vi bắt buộc. Hủy vẫn không hoàn lượt IP; không tự nới guard. [Session handoff](../SESSION-HANDOFF.md).
+
 Ngày chốt nghiệp vụ: 20/10/2026. Múi giờ nghiệp vụ: `Asia/Ho_Chi_Minh`.
 
-Trạng thái: đã chốt các quy tắc tại mục 1; chưa triển khai hoặc kiểm chứng runtime. Tên trạng thái, cấu trúc dữ liệu và cách tích hợp dưới đây là thiết kế đề xuất để triển khai các quy tắc đó, chưa phải API hoặc schema đang tồn tại.
+Trạng thái: đã chốt các quy tắc tại mục 1 và đã có implementation local. Tài liệu này mô tả thiết kế; hợp đồng API/schema và bằng chứng thực thi đọc cùng bàn giao triển khai. Các đề xuất UX mới chưa được duyệt không thay thiết kế này.
 
 ## 1. Phạm vi và các quyết định đã chốt
 
@@ -22,7 +30,7 @@ Trạng thái: đã chốt các quy tắc tại mục 1; chưa triển khai ho�
 | Hoàn lượt IP | Trả sách, hủy hoặc hết hạn đơn không hoàn lượt IP trong cửa sổ 24 giờ. |
 | Điều kiện đặt lại | Đồng thời còn suất SĐT, còn lượt IP, có sách khả dụng, có buổi trực hợp lệ và CAPTCHA hợp lệ. |
 
-Đợt công việc này chỉ ghi tài liệu. Không sửa ứng dụng, migration, hợp đồng OpenAPI, cấu hình nhà cung cấp, dữ liệu hoặc môi trường triển khai. Không thêm tài khoản bạn đọc, mật khẩu bạn đọc hoặc OTP. Các cơ chế guest login hiện có của chức năng khác không được tự động mở vào khu nội bộ hoặc thay đổi bởi thiết kế này.
+Phạm vi ở lần lập thiết kế ban đầu ngày 20/10/2026 là chỉ ghi tài liệu. Không sửa ứng dụng, migration, hợp đồng OpenAPI, cấu hình nhà cung cấp, dữ liệu hoặc môi trường triển khai. Không thêm tài khoản bạn đọc, mật khẩu bạn đọc hoặc OTP. Các cơ chế guest login hiện có của chức năng khác không được tự động mở vào khu nội bộ hoặc thay đổi bởi thiết kế này.
 
 ## 2. Cách tính hạn mức
 

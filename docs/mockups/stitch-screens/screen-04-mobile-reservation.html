@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=390, initial-scale=1.0"/>
+<title>04 — Phiếu giữ chỗ · Điện thoại | Thư Quán Bách Khoa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        'ysbk-bg': '#F8F5EC', 'ysbk-paper': '#FFFDF5', 'ysbk-ink': '#35483C', 'ysbk-muted': '#64705C',
+        'ysbk-border': '#DCDED0', 'ysbk-primary': '#365E4B', 'ysbk-primary-hover': '#294C3A', 'ysbk-primary-pale': '#E8EDDF',
+        'ysbk-terracotta': '#9B4D36', 'ysbk-terracotta-pale': '#F7E7DB', 'ysbk-gold': '#A87A4C', 'ysbk-gold-pale': '#F4EAD2'
+      },
+      fontFamily: { serif: ['Newsreader', 'Lora', 'serif'], sans: ['Be Vietnam Pro', 'sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+body { background-color: #F8F5EC; color: #35483C; font-family: 'Be Vietnam Pro', sans-serif; }
+.btn-press { box-shadow: 0 2px 0 #35483C; }
+.btn-press:active { transform: translateY(2px); box-shadow: 0 0 0 #35483C; }
+.ticket-edge {
+  background-image: radial-gradient(#F8F5EC 6px, transparent 0);
+  background-size: 16px 16px;
+  background-position: -8px -8px;
+}
+.book-spine-sm {
+  box-shadow: -4px 0 8px -2px rgba(0,0,0,0.25), 2px 4px 10px rgba(53,72,60,0.15);
+  position: relative;
+}
+.book-spine-sm::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0.15) 70%, rgba(255,255,255,0.1) 100%);
+  pointer-events: none;
+}
+</style>
+</head>
+<body class="max-w-[390px] mx-auto min-h-screen bg-[#F8F5EC] border-x border-[#DCDED0] pb-28 shadow-sm relative">
+
+<!-- TOP BAR -->
+<header class="sticky top-0 z-30 bg-[#FFFDF5]/95 backdrop-blur border-b border-[#DCDED0] px-4 py-3 flex items-center justify-between">
+  <a href="#" class="flex items-center gap-1.5 text-xs font-semibold text-[#365E4B]">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    Chi tiết
+  </a>
+  <span class="font-serif font-bold text-sm text-[#35483C]">Phiếu Đặt Giữ Sách</span>
+  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E8EDDF] text-[#365E4B] font-bold">KHO-C6</span>
+</header>
+
+<!-- SELECTED BOOK SUMMARY CARD -->
+<section class="p-4 bg-[#FFFDF5] border-b border-[#DCDED0]">
+  <div class="flex gap-3.5 items-center">
+    <div class="w-16 h-22 aspect-[2/3] rounded-r rounded-l-[1px] overflow-hidden book-spine-sm bg-[#294C3A] shrink-0 relative">
+      <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=300&auto=format&fit=crop" alt="Dế Mèn" class="w-full h-full object-cover">
+    </div>
+    <div class="flex-1">
+      <div class="flex items-center gap-1.5 mb-0.5">
+        <span class="text-[9px] font-bold uppercase tracking-wider text-[#9B4D36] bg-[#F7E7DB] px-1.5 py-0.5 rounded">Văn học</span>
+        <span class="text-[10px] text-[#64705C] font-mono">#YSBK-VH-042</span>
+      </div>
+      <h1 class="font-serif font-bold text-base text-[#35483C] leading-snug">Dế Mèn Phiêu Lưu Ký</h1>
+      <p class="text-xs text-[#64705C] italic">Tô Hoài · NXB Kim Đồng</p>
+      <div class="mt-1.5 flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#365E4B]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#365E4B]"></span>
+          Còn 2 cuốn sẵn sàng
+        </span>
+        <span class="text-[10px] text-[#64705C]">· Kệ A3</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESERVATION TICKET FORM -->
+<main class="p-4">
+  <div class="bg-[#FFFDF5] border border-[#DCDED0] rounded-xl p-4 shadow-sm relative">
+    
+    <!-- Ticket Header -->
+    <div class="border-b border-dashed border-[#DCDED0] pb-3 mb-4 flex items-center justify-between">
+      <div>
+        <span class="text-[9px] font-mono uppercase tracking-widest text-[#9B4D36] font-bold block">PHIẾU GIỮ CHỖ TẠI BÀN TRỰC</span>
+        <span class="font-serif font-bold text-sm text-[#35483C]">Thông Tin Bạn Đọc</span>
+      </div>
+      <div class="text-right">
+        <span class="text-[9px] font-mono text-[#64705C] block">Mã giữ chỗ: TỰ ĐỘNG</span>
+        <span class="text-[10px] text-[#365E4B] font-semibold">Giữ trong 48h</span>
+      </div>
+    </div>
+
+    <!-- Alert Note -->
+    <div class="p-2.5 rounded bg-[#F4EAD2]/80 border border-[#A87A4C]/30 text-xs text-[#35483C] mb-4">
+      📌 Sách sẽ được giữ riêng cho bạn tại bàn trực. Bạn đến nhận sách chỉ cần báo tên và SĐT, không cần tài khoản đăng nhập.
+    </div>
+
+    <form class="space-y-3.5 text-xs">
+      <div>
+        <label class="block font-semibold text-[#35483C] mb-1">
+          Họ và tên bạn đọc <span class="text-[#9B4D36]">*</span>
+        </label>
+        <input type="text" value="Nguyễn Hải Đăng" class="w-full px-3 py-2 bg-[#F8F5EC] border border-[#DCDED0] rounded text-[#35483C] font-medium focus:outline-none focus:border-[#365E4B]">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-[#35483C] mb-1">
+          Số điện thoại nhận thông báo <span class="text-[#9B4D36]">*</span>
+        </label>
+        <input type="tel" value="0984 123 456" class="w-full px-3 py-2 bg-[#F8F5EC] border border-[#DCDED0] rounded text-[#35483C] font-medium focus:outline-none focus:border-[#365E4B]">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-[#35483C] mb-1">
+          Ca trực đến nhận sách <span class="text-[#9B4D36]">*</span>
+        </label>
+        <select class="w-full px-3 py-2 bg-[#F8F5EC] border border-[#DCDED0] rounded text-[#35483C] font-medium focus:outline-none focus:border-[#365E4B]">
+          <option selected>Chiều Thứ Ba, 22/10 (14:00 – 17:30) · Ca gần nhất</option>
+          <option>Chiều Thứ Năm, 24/10 (14:00 – 17:30)</option>
+        </select>
+        <span class="text-[10px] text-[#64705C] mt-1 block">Địa điểm: P.202 KTX B7, ĐHBK Hà Nội</span>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-[#35483C] mb-1">
+          Ghi chú cho thủ thư trực bàn
+        </label>
+        <textarea rows="2" placeholder="Ví dụ: Em qua tầm 16h45..." class="w-full px-3 py-1.5 bg-[#F8F5EC] border border-[#DCDED0] rounded text-[#35483C] focus:outline-none focus:border-[#365E4B]"></textarea>
+      </div>
+
+      <!-- DEPOSIT NOTICE -->
+      <div class="p-3 bg-[#E8EDDF]/70 rounded border border-[#365E4B]/20">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[#64705C] text-xs">Tiền đặt cọc bảo quản:</span>
+          <span class="font-serif font-bold text-sm text-[#9B4D36]">50.000 đ</span>
+        </div>
+        <p class="text-[10px] text-[#365E4B] leading-tight">
+          ✓ Hoàn trả 100% khi gửi lại sách nguyên vẹn. Mượn sách hoàn toàn miễn phí.
+        </p>
+      </div>
+
+      <!-- TURNSTILE MOCKUP -->
+      <div class="p-2.5 bg-[#F8F5EC] border border-[#DCDED0] rounded flex items-center justify-between text-xs">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" checked class="w-4 h-4 rounded text-[#365E4B]">
+          <span class="text-[#35483C]">Tôi là bạn đọc thực sự</span>
+        </label>
+        <span class="text-[9px] text-[#64705C] font-mono">Turnstile ✓</span>
+      </div>
+    </form>
+
+    <div class="mt-4 pt-3 border-t border-dashed border-[#DCDED0] text-center text-[10px] text-[#64705C] font-mono">
+      Bản concept • Nội dung minh họa
+    </div>
+  </div>
+</main>
+
+<!-- FIXED BOTTOM ACTION BAR -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-[#FFFDF5]/95 backdrop-blur border-t border-[#DCDED0] p-3 shadow-lg z-40">
+  <button type="button" class="w-full py-3.5 rounded bg-[#365E4B] text-[#FFFDF5] font-semibold text-sm btn-press flex items-center justify-center gap-2 shadow-[0_2px_0_#294C3A]">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    Xác Nhận Giữ Chỗ (Giữ 48 Giờ)
+  </button>
+  <p class="text-center text-[10px] text-[#64705C] mt-1.5">
+    Không trừ tiền online • Đặt cọc trực tiếp tại bàn trực P.202 KTX B7
+  </p>
+</div>
+
+</body>
+</html>

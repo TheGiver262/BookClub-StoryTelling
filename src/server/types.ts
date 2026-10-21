@@ -14,9 +14,15 @@ export interface Env {
   TURNSTILE_EXPECTED_HOSTNAME?: string;
   NODE_ENV?: string;
   LOCAL_TESTING?: string;
+  READER_GOOGLE_ENABLED?: string;
+  PUBLIC_ORIGIN?: string;
+  INTERNAL_ORIGIN?: string;
+  CF_ACCESS_TEAM_DOMAIN?: string;
+  CF_ACCESS_AUD?: string;
 }
 
 export interface AuthenticatedActor {
+  isCollaborator?: boolean;
   userId: string;
   memberId?: string;
   username?: string;
@@ -37,6 +43,10 @@ export interface AlumniActivityDto {
 }
 
 export interface MemberDto {
+  isCollaborator?: boolean;
+  probationStartedOn?: string | null;
+  probationEndsOn?: string | null;
+  collaboratorDeletedAt?: string | null;
   id: string;
   fullName: string;
   username: string;

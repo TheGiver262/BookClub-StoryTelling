@@ -51,6 +51,7 @@ export interface PublicPost {
  * Tuyệt đối KHÔNG chứa email cá nhân, ghi chú kiểm duyệt nội bộ hoặc IP của người gửi (R13).
  */
 export interface SafePublicReviewDto {
+  isClubReview: boolean;
   id: string;
   bookId: string;
   readerName: string;

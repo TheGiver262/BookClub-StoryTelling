@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quản trị Thành viên &amp; CTV · YSBK Bách Khoa</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-low": "#F8F5EC",
+            "on-secondary-fixed": "#35483C",
+            "on-error": "#FFFDF5",
+            "secondary-fixed": "#F7E7DB",
+            "surface-variant": "#E8EDDF",
+            "primary-fixed": "#DCDED0",
+            "secondary-fixed-dim": "#DCDED0",
+            "error": "#9B4D36",
+            "tertiary-fixed-dim": "#DCDED0",
+            "surface-container-highest": "#E8EDDF",
+            "inverse-surface": "#35483C",
+            "on-primary-fixed": "#294C3A",
+            "inverse-on-surface": "#F8F5EC",
+            "surface-bright": "#F8F5EC",
+            "background": "#F8F5EC",
+            "tertiary": "#813C2A",
+            "secondary": "#9B4D36",
+            "on-tertiary": "#FFFDF5",
+            "on-tertiary-fixed": "#35483C",
+            "on-primary-container": "#DCDED0",
+            "error-container": "#F7E7DB",
+            "on-background": "#35483C",
+            "tertiary-container": "#813C2A",
+            "primary": "#365E4B",
+            "on-secondary": "#FFFDF5",
+            "on-tertiary-fixed-variant": "#813C2A",
+            "on-primary": "#FFFDF5",
+            "surface-container-high": "#E8EDDF",
+            "primary-fixed-dim": "#DCDED0",
+            "on-primary-fixed-variant": "#294C3A",
+            "surface-dim": "#DCDED0",
+            "on-secondary-container": "#813C2A",
+            "surface": "#FFFDF5",
+            "on-error-container": "#813C2A",
+            "on-surface": "#35483C",
+            "surface-tint": "#365E4B",
+            "surface-container": "#E8EDDF",
+            "secondary-container": "#A87A4C",
+            "inverse-primary": "#DCDED0",
+            "outline-variant": "#DCDED0",
+            "on-tertiary-container": "#DCDED0",
+            "on-secondary-fixed-variant": "#813C2A",
+            "outline": "#64705C",
+            "tertiary-fixed": "#F4EAD2",
+            "surface-container-lowest": "#FFFDF5",
+            "primary-container": "#365E4B",
+            "on-surface-variant": "#64705C",
+            /* Direct locked palette overrides */
+            "ysbk-green": "#365E4B",
+            "ysbk-green-hover": "#294C3A",
+            "ysbk-green-pale": "#E8EDDF",
+            "ysbk-terracotta": "#9B4D36",
+            "ysbk-terracotta-hover": "#813C2A",
+            "ysbk-terracotta-pale": "#F7E7DB",
+            "ysbk-gold": "#A87A4C",
+            "ysbk-gold-pale": "#F4EAD2",
+            "ysbk-sage": "#819079",
+            "ysbk-paper": "#FFFDF5",
+            "ysbk-ink": "#35483C",
+            "ysbk-muted-ink": "#64705C",
+            "ysbk-border": "#DCDED0"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "soft-input": "14px",
+            "card-soft": "22px",
+            "overlay-soft": "24px",
+            "full": "9999px"
+          },
+          fontFamily: {
+            headline: ["Newsreader", "serif"],
+            display: ["Newsreader", "serif"],
+            body: ["Be Vietnam Pro", "sans-serif"],
+            label: ["Be Vietnam Pro", "sans-serif"]
+          },
+          boxShadow: {
+            "ysbk-soft": "0 5px 18px rgba(53, 72, 60, 0.08)",
+            "ysbk-paper": "0 2px 0 #DCDED0, 0 8px 24px rgba(53, 72, 60, 0.08)",
+            "ysbk-press": "0 2px 0 #294C3A",
+            "ysbk-btn": "0 2px 0 rgba(53, 72, 60, 0.15)"
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #F8F5EC;
+      color: #35483C;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .book-tab-active {
+      border-left: 3.5px solid #365E4B;
+      background: #E8EDDF;
+      color: #365E4B;
+      font-weight: 600;
+    }
+    /* Subtle paper texture highlight */
+    .paper-panel {
+      background-color: #FFFDF5;
+      border: 1px solid #DCDED0;
+      border-radius: 22px;
+      box-shadow: 0 5px 18px rgba(53, 72, 60, 0.07);
+    }
+    .input-vintage {
+      background-color: #FFFDF5;
+      border: 1px solid #DCDED0;
+      border-radius: 14px;
+      font-size: 14px;
+      color: #35483C;
+      transition: all 0.2s ease;
+    }
+    .input-vintage:focus {
+      border-color: #365E4B;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(54, 94, 75, 0.15);
+    }
+  </style>
+<style>small,.text-xs,[class*="text-[10px]"],[class*="text-[11px]"],[class*="text-[12px]"],[class*="text-[13px]"]{font-size:14px!important;line-height:1.5}button{min-height:44px}@media(max-width:767px){button{min-height:48px}}</style><link rel="stylesheet" href="soft-ui.css?v=3">
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-[#E8EDDF] selection:text-[#365E4B]">
+<!-- TOP HEADER / BANNER QUẢN TRỊ NỘI BỘ -->
+<header class="w-full bg-[#FFFDF5] border-b border-[#DCDED0] sticky top-0 z-40 shadow-sm">
+<div class="w-full px-6 py-2.5 flex items-center justify-between">
+<!-- Brand block & Identity -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-[14px] bg-[#365E4B] flex items-center justify-center text-[#FFFDF5] shadow-sm">
+<span class="material-symbols-outlined text-[22px]">auto_stories</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline text-lg font-bold tracking-tight text-[#365E4B]">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+                YSBK • Est. Ngày minh họa
+              </span>
+</div>
+<p class="font-headline italic text-xs text-[#64705C] -mt-0.5">Mở sách, đọc tương lai — Phân hệ Quản trị Nhân sự &amp; Thủ thư</p>
+</div>
+</div>
+<div class="hidden lg:flex items-center gap-2 pl-4 border-l border-[#DCDED0]">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F4EAD2] text-[#A87A4C] border border-[#A87A4C]/30">
+<span class="w-1.5 h-1.5 rounded-full bg-[#A87A4C] animate-pulse"></span>
+            Bản thiết kế • Dữ liệu minh họa
+          </span>
+</div>
+</div>
+<!-- Right controls: Duty Shift Info + Logout -->
+<div class="flex items-center gap-4">
+<!-- Ca trực minh họa -->
+<div class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-[#F8F5EC] border border-[#DCDED0] rounded-[14px]">
+<span class="material-symbols-outlined text-[18px] text-[#365E4B]">calendar_today</span>
+<div class="text-xs">
+<span class="text-[#64705C]">Ca trực hiện tại:</span>
+<span class="font-semibold text-[#35483C] ml-1">Thứ Năm (Giờ trực minh họa)</span>
+</div>
+</div>
+<!-- Trưởng ca / Người phụ trách -->
+<div class="flex items-center gap-3 pl-3 border-l border-[#DCDED0]">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-semibold text-[#35483C]">Lê Thu Ngân</p>
+<p class="text-[11px] text-[#64705C]">Ban Điều Hành (Thủ thư ca)</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-[#E8EDDF] border border-[#365E4B]/30 flex items-center justify-center text-xs font-semibold text-[#365E4B]">
+            TN
+          </div>
+<!-- Đăng xuất nội bộ button -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-[14px] text-xs font-medium text-[#9B4D36] hover:bg-[#F7E7DB] border border-[#9B4D36]/20 transition-all duration-150 active:translate-y-px" title="Đăng xuất khỏi phân hệ thủ thư">
+<span class="material-symbols-outlined text-[16px]">logout</span>
+<span>Đăng xuất nội bộ</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- BODY SHELL: SIDEBAR + MAIN CONTENT CANVAS -->
+<div class="flex flex-1 w-full max-w-[1440px] mx-auto">
+<!-- 1. SIDEBAR NỘI BỘ (Chuẩn 240px cố định bên trái) -->
+<aside class="w-[240px] shrink-0 border-r border-[#DCDED0] bg-[#FFFDF5] min-h-[calc(100vh-65px)] flex flex-col justify-between py-5 px-3">
+<div>
+<div class="px-3 mb-3">
+<span class="text-[11px] font-semibold text-[#64705C] tracking-wider uppercase">Cây thư mục nội bộ</span>
+</div>
+<nav class="space-y-1">
+<!-- Tổng quan -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Tổng quan</span>
+</a>
+<!-- Quầy mượn–trả -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">book_online</span>
+<span>Quầy mượn–trả</span>
+</a>
+<!-- Kho sách & Biên mục -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">shelves</span>
+<span>Kho sách &amp; Biên mục</span>
+</a>
+<!-- Lịch trực & Nghỉ -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">event_available</span>
+<span>Lịch trực &amp; Nghỉ</span>
+</a>
+<!-- Bản tin & Sự kiện -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+<span>Bản tin &amp; Sự kiện</span>
+</a>
+<!-- Thành viên & Tuyển (ACTIVE TAB) -->
+<a aria-current="page" class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm book-tab-active shadow-sm" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Thành viên &amp; Tuyển</span>
+</a>
+<!-- Quỹ & báo cáo -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-[14px] text-sm text-[#64705C] hover:bg-[#F8F5EC] hover:text-[#35483C] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+<span>Quỹ &amp; báo cáo</span>
+</a>
+</nav>
+</div>
+<!-- Quick mini colophon / status block in sidebar -->
+<div class="px-3 pt-4 border-t border-[#DCDED0] space-y-2">
+<div class="p-3 bg-[#F8F5EC] rounded-[14px] border border-[#DCDED0]">
+<div class="flex items-center gap-1.5 text-xs font-medium text-[#365E4B]">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span>Quy chuẩn thử thách</span>
+</div>
+<p class="text-[11px] text-[#64705C] mt-1 leading-relaxed">
+            CTV cần đủ một tháng thử thách và được quản lý đánh giá đạt trước khi công nhận chính thức.
+          </p>
+</div>
+<p class="text-[11px] text-[#64705C] text-center">
+          YSBK Hà Nội © 2013
+        </p>
+</div>
+</aside>
+<!-- 2. MAIN CONTENT AREA -->
+<main class="flex-1 p-8 space-y-7 overflow-y-auto">
+<!-- Tiêu đề trang & Header văn phong hoài niệm -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[#DCDED0]">
+<div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#64705C] mb-1">
+<span>Quản trị nội bộ</span>
+<span class="text-[#DCDED0]">/</span>
+<span class="text-[#365E4B] font-semibold">Thành viên &amp; Cộng tác viên</span>
+</div>
+<h1 class="font-headline text-3xl md:text-4xl font-bold tracking-tight text-[#35483C]">
+            Quản lý nhân sự &amp; Thành viên CLB
+          </h1>
+<p class="text-sm text-[#64705C] mt-1.5 max-w-2xl leading-relaxed">
+            Phân định quyền hạn, theo dõi tiến độ thử thách 1 tháng của CTV; công nhận chính thức do quản lý đánh giá.
+          </p>
+</div>
+<!-- Thêm hồ sơ CTV mới button -->
+<button class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#365E4B] hover:bg-[#294C3A] text-[#FFFDF5] font-medium text-sm rounded-[14px] shadow-ysbk-btn transition-all duration-150 active:translate-y-0.5 shrink-0">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>Thêm hồ sơ CTV mới</span>
+</button>
+</div>
+<!-- THANH ĐIỀU KHIỂN & BỘ LỌC (Pill Chips & Input 14px) -->
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-[#FFFDF5] p-3.5 rounded-[22px] border border-[#DCDED0] shadow-ysbk-soft">
+<!-- Ô tìm kiếm bo 14px -->
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#64705C] text-[20px]">
+            search
+          </span>
+<input class="w-full pl-10 pr-4 py-2 input-vintage text-sm placeholder:text-[#64705C]/70" placeholder="Tìm theo họ tên, username hoặc mã hồ sơ..." type="text" value=""/>
+</div>
+<!-- Bộ lọc Chips dạng Viên Thuốc (Pill) -->
+<div class="flex items-center gap-2 flex-wrap">
+<span class="text-xs font-medium text-[#64705C] mr-1">Bộ lọc:</span>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#365E4B] text-[#FFFDF5] border border-[#365E4B] transition-colors shadow-sm">
+            Tất cả (28)
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#FFFDF5] text-[#35483C] hover:bg-[#E8EDDF] border border-[#DCDED0] transition-colors">
+            Thành viên chính thức (19)
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30 hover:bg-[#F7E7DB]/80 transition-colors">
+            Cộng tác viên (CTV thử thách) (6)
+          </button>
+<button class="px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#FFFDF5] text-[#64705C] hover:bg-[#E8EDDF] border border-[#DCDED0] transition-colors">
+            Cựu thành viên (3)
+          </button>
+</div>
+</div>
+<!-- BẢNG NHÂN SỰ RỘNG RÃI (Spacious Table, phong cách giấy thư viện lưu trữ) -->
+<div class="paper-panel overflow-hidden border border-[#DCDED0]">
+<div class="px-6 py-4 bg-[#FFFDF5] border-b border-[#DCDED0] flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#365E4B] text-[20px]">badge</span>
+<h2 class="font-headline text-lg font-bold text-[#35483C]">Sổ bộ Nhân sự &amp; Tình trạng Hoạt động</h2>
+</div>
+<span class="text-xs text-[#64705C]">Hiển thị 5 / 28 nhân sự phân công</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#F8F5EC] text-xs font-semibold text-[#64705C] uppercase tracking-wider border-b border-[#DCDED0]">
+<th class="py-3.5 px-6">Họ và tên &amp; Mã hồ sơ</th>
+<th class="py-3.5 px-6">Tên đăng nhập / Email</th>
+<th class="py-3.5 px-6">Vai trò / Ban chuyên môn</th>
+<th class="py-3.5 px-6">Thời gian thử thách</th>
+<th class="py-3.5 px-6">Trạng thái</th>
+<th class="py-3.5 px-6 text-right">Thao tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#DCDED0] text-sm">
+<!-- HÀNG 1: CTV Trần Hoàng Long (Đang được chọn để đánh giá chi tiết) -->
+<tr class="bg-[#F4EAD2]/40 hover:bg-[#F4EAD2]/60 transition-colors">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#E8EDDF] border border-[#365E4B]/40 flex items-center justify-center font-semibold text-xs text-[#365E4B]">
+                      TL
+                    </div>
+<div>
+<span class="font-semibold text-[#35483C] block">Trần Hoàng Long</span>
+<span class="text-xs text-[#A87A4C] font-mono tracking-tight bg-[#F4EAD2] px-1.5 py-0.5 rounded border border-[#A87A4C]/30">CTV-042</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<span class="font-mono text-xs">ctv.minhhoa</span>
+<span class="block text-xs text-[#64705C]">thanhvien@example.invalid</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-medium bg-[#E8EDDF] text-[#365E4B]">
+<span class="material-symbols-outlined text-[14px]">inventory_2</span>
+                    Ban Kho sách
+                  </span>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<div class="flex items-center gap-1.5 text-xs text-[#9B4D36] font-medium">
+<span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+<span>Đủ tháng đánh giá</span>
+</div>
+<span class="text-[11px] text-[#64705C]">Đang chờ quản lý đánh giá</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30">
+<span class="w-1.5 h-1.5 rounded-full bg-[#9B4D36]"></span>
+                    Đang thử thách
+                  </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="px-3 py-1.5 bg-[#365E4B] text-[#FFFDF5] text-xs font-medium rounded-[14px] hover:bg-[#294C3A] transition-colors inline-flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">rate_review</span>
+<span>Đang duyệt hồ sơ</span>
+</button>
+</td>
+</tr>
+<!-- HÀNG 2: Nguyễn Diệu Linh (CTV mới vào) -->
+<tr class="hover:bg-[#F8F5EC] transition-colors">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#F8F5EC] border border-[#DCDED0] flex items-center justify-center font-semibold text-xs text-[#64705C]">
+                      DL
+                    </div>
+<div>
+<span class="font-semibold text-[#35483C] block">Nguyễn Diệu Linh</span>
+<span class="text-xs text-[#64705C] font-mono tracking-tight bg-[#F8F5EC] px-1.5 py-0.5 rounded border border-[#DCDED0]">CTV-045</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<span class="font-mono text-xs">dieulinh.ysbk</span>
+<span class="block text-xs text-[#64705C]">thanhvien@example.invalid</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-medium bg-[#F8F5EC] text-[#35483C] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+                    Ban Nội dung &amp; Review
+                  </span>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<div class="text-xs text-[#64705C]">
+<span>Bắt đầu thử thách</span>
+</div>
+<span class="text-[11px] text-[#64705C]">Mới phân 1 ca làm quen</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30">
+<span class="w-1.5 h-1.5 rounded-full bg-[#9B4D36]"></span>
+                    Đang thử thách
+                  </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="px-3 py-1.5 bg-[#FFFDF5] text-[#365E4B] hover:bg-[#E8EDDF] border border-[#365E4B]/40 text-xs font-medium rounded-[14px] transition-colors inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">visibility</span>
+<span>Xem hồ sơ</span>
+</button>
+</td>
+</tr>
+<!-- HÀNG 3: Phạm Quang Huy (Thành viên chính thức) -->
+<tr class="hover:bg-[#F8F5EC] transition-colors">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#E8EDDF] border border-[#365E4B]/40 flex items-center justify-center font-semibold text-xs text-[#365E4B]">
+                      QH
+                    </div>
+<div>
+<span class="font-semibold text-[#35483C] block">Phạm Quang Huy</span>
+<span class="text-xs text-[#365E4B] font-mono tracking-tight bg-[#E8EDDF] px-1.5 py-0.5 rounded border border-[#365E4B]/30">TNV-018</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<span class="font-mono text-xs">quanghuy.lib</span>
+<span class="block text-xs text-[#64705C]">thanhvien@example.invalid</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-medium bg-[#E8EDDF] text-[#365E4B]">
+<span class="material-symbols-outlined text-[14px]">desktop_windows</span>
+                    Ban Kỹ thuật &amp; Quầy mượn
+                  </span>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<div class="text-xs text-[#365E4B] font-medium">
+<span>Đã hoàn thành thử thách</span>
+</div>
+<span class="text-[11px] text-[#64705C]">Chứng nhận định kỳ MẪU</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+<span class="w-1.5 h-1.5 rounded-full bg-[#365E4B]"></span>
+                    Đang trực tiếp
+                  </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="px-3 py-1.5 bg-[#FFFDF5] text-[#35483C] hover:bg-[#E8EDDF] border border-[#DCDED0] text-xs font-medium rounded-[14px] transition-colors inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">assignment_ind</span>
+<span>Chi tiết</span>
+</button>
+</td>
+</tr>
+<!-- HÀNG 4: Lê Thị Mai Chi (CTV còn 1 tuần) -->
+<tr class="hover:bg-[#F8F5EC] transition-colors">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#F8F5EC] border border-[#DCDED0] flex items-center justify-center font-semibold text-xs text-[#64705C]">
+                      MC
+                    </div>
+<div>
+<span class="font-semibold text-[#35483C] block">Lê Thị Mai Chi</span>
+<span class="text-xs text-[#64705C] font-mono tracking-tight bg-[#F8F5EC] px-1.5 py-0.5 rounded border border-[#DCDED0]">CTV-043</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<span class="font-mono text-xs">maichi.ysbk</span>
+<span class="block text-xs text-[#64705C]">thanhvien@example.invalid</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-medium bg-[#F8F5EC] text-[#35483C] border border-[#DCDED0]">
+<span class="material-symbols-outlined text-[14px]">celebration</span>
+                    Ban Sự kiện &amp; Bạn đọc
+                  </span>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<div class="text-xs text-[#A87A4C] font-medium">
+<span>Còn 1 tuần thử thách</span>
+</div>
+<span class="text-[11px] text-[#64705C]">Đang trong thời gian thử thách</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30">
+<span class="w-1.5 h-1.5 rounded-full bg-[#9B4D36]"></span>
+                    Đang thử thách
+                  </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="px-3 py-1.5 bg-[#FFFDF5] text-[#365E4B] hover:bg-[#E8EDDF] border border-[#365E4B]/40 text-xs font-medium rounded-[14px] transition-colors inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">rate_review</span>
+<span>Đánh giá</span>
+</button>
+</td>
+</tr>
+<!-- HÀNG 5: Vũ Đình Khoa (Cựu thành viên) -->
+<tr class="hover:bg-[#F8F5EC] transition-colors opacity-80">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#E8EDDF] border border-[#DCDED0] flex items-center justify-center font-semibold text-xs text-[#64705C]">
+                      VK
+                    </div>
+<div>
+<span class="font-semibold text-[#35483C] block">Vũ Đình Khoa</span>
+<span class="text-xs text-[#64705C] font-mono tracking-tight bg-[#E8EDDF] px-1.5 py-0.5 rounded">ALUMNI-007</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-[#35483C]">
+<span class="font-mono text-xs">khoa.alumni</span>
+<span class="block text-xs text-[#64705C]">thanhvien@example.invalid</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-medium bg-[#E8EDDF] text-[#64705C]">
+<span class="material-symbols-outlined text-[14px]">school</span>
+                    Nguyên Thủ thư trưởng
+                  </span>
+</td>
+<td class="py-4 px-6 text-[#64705C]">
+<div class="text-xs">
+<span>Đã tốt nghiệp K64</span>
+</div>
+<span class="text-[11px] text-[#64705C]">Bảo lưu sổ bộ danh dự</span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#E8EDDF] text-[#64705C] border border-[#DCDED0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#64705C]"></span>
+                    Cựu thành viên
+                  </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="px-3 py-1.5 bg-[#FFFDF5] text-[#64705C] hover:bg-[#E8EDDF] border border-[#DCDED0] text-xs font-medium rounded-[14px] transition-colors inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history_edu</span>
+<span>Hồ sơ cựu</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- 3. KHU VỰC CHI TIẾT HỒ SƠ & ĐÁNH GIÁ CTV (Đặt bên dưới bảng rộng rãi, không chèn co cụm) -->
+<section class="paper-panel p-7 space-y-6">
+<!-- Header phần đánh giá CTV -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#DCDED0] gap-3">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-[14px] bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/30 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline text-xl font-bold text-[#35483C]">
+                  Phiếu Nhận xét &amp; Đánh giá Hoàn thành Thử thách
+                </h3>
+<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F7E7DB] text-[#9B4D36] border border-[#9B4D36]/20">
+                  Đang mở xét duyệt
+                </span>
+</div>
+<p class="text-xs text-[#64705C] mt-0.5">
+                Quản lý đánh giá và công nhận theo hồ sơ thử thách hiện có
+              </p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-[#64705C]">Đối tượng xem xét:</span>
+<span class="font-semibold text-sm text-[#35483C] bg-[#E8EDDF] px-3 py-1 rounded-[14px] border border-[#365E4B]/20">
+              Trần Hoàng Long (CTV-042)
+            </span>
+</div>
+</div>
+<!-- Bố cục 2 cột thông tin chi tiết CTV + Phiếu nhận xét -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Cột trái: Thẻ chi tiết hồ sơ CTV (4 cols) -->
+<div class="lg:col-span-5 bg-[#F8F5EC] p-5 rounded-[22px] border border-[#DCDED0] space-y-4">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-xs font-medium text-[#A87A4C] uppercase tracking-wide">Cộng tác viên nhiệm kỳ hiện tại</span>
+<h4 class="font-headline text-2xl font-bold text-[#35483C] mt-0.5">Trần Hoàng Long</h4>
+<p class="text-xs text-[#64705C]">MSSV: 20210542 • Viện CNTT&amp;TT (ĐHBK Hà Nội)</p>
+</div>
+<span class="px-2.5 py-1 rounded-[10px] bg-[#FFFDF5] border border-[#DCDED0] font-mono text-xs font-semibold text-[#365E4B]">
+                CTV-042
+              </span>
+</div>
+<!-- Tiến độ thử thách -->
+<div class="p-3.5 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0] space-y-2">
+<div class="flex items-center justify-between text-xs">
+<span class="font-medium text-[#35483C]">Tiến độ thời gian thử thách:</span>
+<span class="font-bold text-[#9B4D36]">1 tháng thử thách (Đủ điều kiện)</span>
+</div>
+<!-- Progress bar -->
+<div class="w-full bg-[#E8EDDF] h-2 rounded-full overflow-hidden">
+<div class="bg-[#365E4B] h-full rounded-full" style="width: 100%;"></div>
+</div>
+<p class="text-[11px] text-[#64705C] italic">
+                Nội dung tập huấn: Thử thách ca trực phòng đọc, bảo quản sách &amp; quy trình thủ thư.
+              </p>
+</div>
+<!-- Chỉ số thực tế qua các ca trực minh họa -->
+<div class="grid grid-cols-2 gap-3 text-xs">
+<div class="p-3 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0]">
+<span class="text-[#64705C] block">Số ca đã trực:</span>
+<span class="font-headline text-xl font-bold text-[#365E4B]">4 ca (minh họa)</span>
+<span class="text-[10px] text-[#819079] block mt-0.5">Không vắng, đúng giờ</span>
+</div>
+<div class="p-3 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0]">
+<span class="text-[#64705C] block">Sách đã bao bọc &amp; xếp:</span>
+<span class="font-headline text-xl font-bold text-[#A87A4C]">38 cuốn</span>
+<span class="text-[10px] text-[#819079] block mt-0.5">Đạt chuẩn kệ DDC</span>
+</div>
+</div>
+<div class="text-xs text-[#64705C] space-y-1.5 pt-1">
+<div class="flex justify-between">
+<span>Trưởng ca bảo trợ:</span>
+<span class="font-medium text-[#35483C]">Lê Thu Ngân (Ban Điều Hành)</span>
+</div>
+<div class="flex justify-between">
+<span>Phân công chuyên môn:</span>
+<span class="font-medium text-[#35483C]">Ban Kho sách &amp; Bảo quản tài liệu</span>
+</div>
+</div>
+</div>
+<!-- Cột phải: Phiếu nhận xét & Checkbox tiêu chuẩn (7 cols) -->
+<div class="lg:col-span-7 space-y-4">
+<!-- Checkbox tiêu chuẩn -->
+<div class="space-y-3">
+<label class="block text-xs font-semibold text-[#64705C] uppercase tracking-wider">
+                1. Thẩm định tiêu chuẩn thực tế
+              </label>
+<div class="space-y-2.5">
+<label class="flex items-start gap-3 p-3 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0] cursor-pointer hover:bg-[#F8F5EC] transition-colors">
+<input checked="" class="mt-0.5 rounded text-[#365E4B] focus:ring-[#365E4B] border-[#DCDED0] w-4 h-4" type="checkbox"/>
+<div class="text-xs">
+<span class="font-semibold text-[#35483C] block">Đã đủ một tháng thử thách theo hồ sơ</span>
+<span class="text-[#64705C]">Đã tham gia xếp sách giá DDC phòng đọc Bách Khoa, nắm rõ quy trình mượn - trả và giữ cọc.</span>
+</div>
+</label>
+<label class="flex items-start gap-3 p-3 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0] cursor-pointer hover:bg-[#F8F5EC] transition-colors">
+<input checked="" class="mt-0.5 rounded text-[#365E4B] focus:ring-[#365E4B] border-[#DCDED0] w-4 h-4" type="checkbox"/>
+<div class="text-xs">
+<span class="font-semibold text-[#35483C] block">Đạt tiêu chuẩn kỷ luật &amp; tinh thần phục vụ bạn đọc</span>
+<span class="text-[#64705C]">Giao tiếp hòa nhã, giữ yên lặng phòng đọc, tuân thủ đúng nội quy không mang đồ ăn vào kho sách.</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Textarea Nhận xét -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs font-semibold text-[#64705C] uppercase tracking-wider" for="eval-comment">
+                  2. Nhận xét của Trưởng ca / Ban điều hành
+                </label>
+<span class="text-[11px] text-[#64705C]">Bắt buộc để hoàn tất hồ sơ</span>
+</div>
+<textarea class="w-full input-vintage p-3.5 leading-relaxed placeholder:text-[#64705C]/70" id="eval-comment" placeholder="Ghi nhận đánh giá thái độ, độ chính xác trong kiểm kê và mức độ hòa nhập cùng CLB..." rows="3">Bạn Long có thái độ trực rất nghiêm túc, tỉ mỉ khi phân loại mã gáy sách văn học kinh điển và luôn hỗ trợ bạn đọc tra cứu đơn giữ chỗ nhanh chóng. Đề xuất kết nạp chính thức vào Ban Kho sách.</textarea>
+</div>
+<!-- Nút hành động chính và lưu tạm -->
+<div class="pt-2 flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center gap-2">
+<button class="px-5 py-2.5 bg-[#365E4B] hover:bg-[#294C3A] text-[#FFFDF5] font-semibold text-xs md:text-sm rounded-[14px] shadow-ysbk-btn transition-all duration-150 active:translate-y-px inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Xác nhận chuyển thành Thành viên chính thức</span>
+</button>
+<button class="px-4 py-2.5 bg-[#FFFDF5] hover:bg-[#F8F5EC] text-[#35483C] border border-[#DCDED0] font-medium text-xs md:text-sm rounded-[14px] transition-colors inline-flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">save</span>
+<span>Lưu tạm nhận xét</span>
+</button>
+</div>
+<span class="text-[11px] text-[#819079] italic">
+                * Quyết định sẽ đồng bộ quyền thủ thư trên hệ thống mượn–trả
+              </span>
+</div>
+</div>
+</div>
+<!-- VÙNG CẢNH BÁO / KHU VỰC NGUY HIỂM (DANGER ZONE) -->
+<div class="mt-6 pt-6 border-t border-[#DCDED0]">
+<div class="p-5 rounded-[22px] bg-[#F7E7DB]/50 border border-[#9B4D36]/30 space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#9B4D36] text-[22px]">warning</span>
+<h4 class="font-headline text-base font-bold text-[#813C2A]">
+                  Khu vực Quản trị Đặc quyền &amp; Xử lý Nhân sự (Danger Zone)
+                </h4>
+</div>
+<span class="text-[11px] font-mono text-[#813C2A] bg-[#F7E7DB] px-2 py-0.5 rounded border border-[#9B4D36]/20">
+                Chỉ dành riêng cho Trưởng ban / Quản lý
+              </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+<!-- Khung 1: Quy định hủy tài khoản CTV -->
+<div class="p-4 bg-[#FFFDF5] rounded-[14px] border border-[#9B4D36]/20 space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#813C2A] flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">person_remove</span>
+                    Hủy hồ sơ CTV thử thách
+                  </span>
+<span class="text-[10px] text-[#64705C]">Yêu cầu xác thực</span>
+</div>
+<p class="text-[#64705C] leading-relaxed">
+                  Quy định hủy tài khoản CTV đòi hỏi nhập chính xác username <code class="bg-[#F8F5EC] text-[#813C2A] px-1 py-0.5 rounded font-mono">ctv.minhhoa</code> để xác nhận. Hệ thống sẽ tự động bảo lưu toàn bộ lịch sử giao dịch ca trực và lập tức hủy bỏ các phiên đăng nhập.
+                </p>
+<div class="flex items-center gap-2 pt-1">
+<input class="input-vintage flex-1 py-1.5 px-3 text-xs border-[#9B4D36]/30 text-[#813C2A] placeholder:text-[#64705C]/60" placeholder="Nhập 'ctv.minhhoa' để xác nhận" type="text"/>
+<button class="px-3 py-1.5 bg-[#9B4D36] hover:bg-[#813C2A] text-[#FFFDF5] font-medium text-xs rounded-[14px] transition-colors whitespace-nowrap shadow-sm disabled:opacity-50">
+                    Xác nhận hủy
+                  </button>
+</div>
+</div>
+<!-- Khung 2: Chuyển cựu thành viên (Không xóa vĩnh viễn) -->
+<div class="p-4 bg-[#FFFDF5] rounded-[14px] border border-[#DCDED0] space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#35483C] flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">history_edu</span>
+                    Chuyển thành Cựu thành viên (Alumni)
+                  </span>
+<span class="text-[10px] text-[#365E4B] bg-[#E8EDDF] px-1.5 py-0.5 rounded">Bảo tồn lịch sử</span>
+</div>
+<p class="text-[#64705C] leading-relaxed">
+                  Đối với Thành viên chính thức hoàn thành nhiệm kỳ hoặc ra trường: Chỉ có tùy chọn <strong class="text-[#35483C]">"Chuyển thành cựu thành viên"</strong>. Tuyệt đối không xóa vĩnh viễn dữ liệu nhằm lưu giữ kỷ yếu đóng góp cho CLB Sách Bách Khoa.
+                </p>
+<div class="pt-1 flex items-center justify-end">
+<button class="px-3.5 py-1.5 bg-[#FFFDF5] hover:bg-[#F8F5EC] text-[#64705C] hover:text-[#35483C] border border-[#DCDED0] font-medium text-xs rounded-[14px] transition-colors inline-flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">archive</span>
+<span>Quy chế chuyển cựu thành viên</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- VINTAGE FOOTER / COLOPHON (Theo JSON: Vintage colophon layout) -->
+<footer class="w-full bg-[#F8F5EC] border-t border-[#DCDED0] mt-auto">
+<div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#64705C]">
+<!-- Brand & Copyright text -->
+<div class="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+<span class="font-headline text-base font-bold text-[#365E4B]">YSBK</span>
+<span class="hidden sm:inline text-[#DCDED0]">|</span>
+<span>© 2013 Câu lạc bộ Yêu Sách Bách Khoa Hà Nội (YSBK). Mở sách, đọc tương lai. Thành lập Ngày minh họa.</span>
+</div>
+<!-- Links & status badge -->
+<div class="flex items-center gap-4 flex-wrap justify-center">
+<a class="hover:text-[#365E4B] hover:underline underline-offset-4 transition-colors" href="#">Quy chế mượn trả</a>
+<a class="hover:text-[#365E4B] hover:underline underline-offset-4 transition-colors" href="#">Lịch trực tuần</a>
+<a class="hover:text-[#365E4B] hover:underline underline-offset-4 transition-colors" href="#">Góp ý kho sách</a>
+<a class="hover:text-[#365E4B] hover:underline underline-offset-4 transition-colors" href="#">Liên hệ CLB</a>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono bg-[#E8EDDF] text-[#365E4B] border border-[#365E4B]/20">
+<span class="w-1.5 h-1.5 rounded-full bg-[#365E4B]"></span>
+          Bản thiết kế • Dữ liệu minh họa
+        </span>
+</div>
+</div>
+</footer>
+</body></html>

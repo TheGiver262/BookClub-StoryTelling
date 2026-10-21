@@ -1,5 +1,9 @@
 # Prompt giao Antigravity: thiết kế hệ thống, diagram và backend YSBK
 
+## Hướng dẫn đọc lại trước khi tiếp tục
+
+Prompt kiến trúc ban đầu được giữ làm lịch sử. Đọc [session handoff](../SESSION-HANDOFF.md), [trạng thái hiện hành](../CURRENT-STATE.md) và tài liệu chuyên đề hiện hành trước khi thực thi. Không tạo lại schema, reset dữ liệu, thay Auth hoặc triển khai đề xuất tài khoản bạn đọc/đổi sách/IP chưa được duyệt. Đã có nhiều implementation local sau mốc tạo prompt này.
+
 Mở workspace `F:\Codex Project\YSBK` trong Antigravity rồi sao chép phần dưới. Prompt này bổ sung phần thiết kế phần mềm/backend cho prompt nhận diện và UI trước đó. Lượt giao việc này cần bộ thiết kế kỹ thuật có thể triển khai và bằng chứng thử kỹ thuật ở local; chưa phải lệnh xây xong toàn sản phẩm hoặc triển khai production.
 
 ---

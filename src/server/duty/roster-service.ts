@@ -409,13 +409,16 @@ export async function publishSchedule(
   actorId: string
 ): Promise<DutyScheduleDto> {
   const schedRes = await db.query<any>(
-    `SELECT * FROM duty_schedules WHERE id = $1`,
+    `SELECT * FROM duty_schedules WHERE id = $1 FOR UPDATE`,
     [scheduleId]
   );
   if (schedRes.rows.length === 0) {
     throw new NotFoundError(`Không tìm thấy ca trực với mã ${scheduleId}`, 'SCHEDULE_NOT_FOUND');
   }
   const sched = schedRes.rows[0];
+
+  const holiday = await db.query('SELECT holiday_date FROM calendar_holidays WHERE holiday_date=$1',[sched.schedule_date]);
+  if (holiday.rows.length) throw new BadRequestError('Ngày này đã được đánh dấu nghỉ, không thể công bố buổi trực.', 'DUTY_ON_HOLIDAY');
 
   await db.query(
     `UPDATE duty_schedules

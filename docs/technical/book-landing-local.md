@@ -1,13 +1,19 @@
 # Landing cuốn sách — bản chính local
 
+## Cập nhật thiết kế và phạm vi bàn giao
+
+[Bộ Stitch](../mockups/stitch-ui-2026-10-21/HANDOFF.md) chốt hướng UI mềm cho công khai/nội bộ; workspace đã có `ui.css`, thay đổi font/theme/component và ảnh QA sau concept. Chưa review đầy đủ diff mới trong lượt bàn giao này; mô tả Lora hoặc số test ở phần cũ là snapshot đợt tích hợp, không phủ nhận lựa chọn Newsreader/Be Vietnam Pro mới.
+
+Landing cuốn sách, ảnh/timeline/bìa được duyệt vẫn giữ. Sau cuốn sách là hướng dẫn và liên kết chung sáu tab, không công khai quy tắc kỹ thuật IP/hạn mức. [Handoff](../SESSION-HANDOFF.md) ghi bằng chứng và [câu hỏi UX chưa chốt](public-reservation-ux-research-2026-10-21.md).
+
 Ngày 21/10/2026. Đã tích hợp vào web tại **http://localhost:4321/?public=1**. `public=1` cho thành viên xem landing mà không bị session chuyển sang nội bộ. Trang `/` bình thường vẫn đưa thành viên có session hợp lệ thẳng đến `/noi-bo`.
 
 ## Các trang
 
 - `/`: bìa cứng → bìa phụ không đánh số → 10 chương/20 trang nội dung. Bìa phụ có trang trái trắng và trang phải in lại thiết kế bìa trên giấy, không mang bản lề/bóng bìa cứng. Bìa cứng mở qua bản lề, nhô khỏi ruột giấy ở ba cạnh. Giấy bên trong giữ hiệu ứng lật cong từ góc dưới phải.
 - Cuộn hết chương 10: thoát vùng sticky và tiếp tục đến `#cach-muon`, với ba bước mượn và hạn mức đã chốt.
-- `/sach/`: tab riêng từ landing, chỉ có tra cứu, đặt giữ chỗ, tra/hủy đơn. 50 đầu sách/trang; tìm tên/tác giả không dấu, thể loại từ database, lọc bản còn khả dụng. Danh mục đầy đủ có cả sách hết bản hoặc chưa có bản; các sách đó không được đặt.
-- `/cong-dong`: giữ các chức năng hoạt động, review, tuyển thành viên cũ trong theme mới. Liên kết `/?tab=...`, `?sach=...`, `#token=...` cũ được chuyển đến trang tương ứng; token vẫn nằm trong hash, không gửi lên máy chủ khi điều hướng.
+- `/sach/`: cổng bạn đọc chung, đủ sáu tab sách/đặt/tra đơn/lịch và sự kiện/review/tuyển thành viên. 50 đầu sách/trang; tìm tên/tác giả không dấu, thể loại từ database, lọc bản còn khả dụng. Danh mục đầy đủ có cả sách hết bản hoặc chưa có bản; các sách đó không được đặt. Modal hiển thị mô tả từ database.
+- `/cong-dong`: chuyển đến `/sach/`, giữ query/hash. Liên kết `/?tab=...`, `?sach=...`, `#token=...` cũ được giữ; token vẫn nằm trong hash, không gửi lên máy chủ khi điều hướng.
 - Login, chi tiết sách/404 và toàn bộ khu nội bộ dùng chung màu xanh rêu, đất nung, giấy kem; serif Lora/sans Be Vietnam Pro. Giữ màu cảnh báo nghiệp vụ. Logo CLB dùng SVG, chữ viết tay ở bìa/trang kết dùng Dancing Script có đủ dấu Việt.
 
 ## Tương tác
@@ -33,3 +39,5 @@ Tham khảo hình học bìa: [Lulu – Anatomy of a Hardcover](https://help.lul
 - Bằng chứng local được giữ trong `.local/ysbk/verification/landing/`, log `landing-unit.log`, `landing-pg.log`, `landing-smoke.log`, `landing-start.log`, `title-page-unit.log`, `title-page-start.log`. Không đưa tài khoản/cookie/token vào tài liệu.
 
 Chưa deploy, commit/push, đo FPS, thử tải đồng thời hoặc kiểm thử thiết bị di động thật. Những kết quả local trên không thay cho nghiệm thu toàn bộ nghiệp vụ hoặc beta cloud.
+
+Cập nhật cùng ngày: bìa phụ nhạt màu, bỏ dòng địa danh/ngày ở bìa, giãn hai logo; ẩn thông tin hạn mức khỏi landing và form. Các liên kết cuối sách dùng chung tab cổng bạn đọc. Xem [quản lý nội dung và vòng đời cộng tác viên](public-portal-publishing.md) cho form quản trị, migration 19–20 và các kiểm thử bổ sung.

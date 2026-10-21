@@ -891,3 +891,54 @@ test('PRF-10: BoundedAtomicTicketStore.atomicConsumeAsync tiêu thụ vé nguyê
   const consumedSecond = await store.atomicConsumeAsync(ticketId, expiresAt, mockDb as any);
   assert.equal(consumedSecond, false, 'Lần thứ hai cùng ticketId phải trả false');
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// S1 & F2 UI Regression Tests: Canonical Badges and Mobile Loan Card Integrity
+// ─────────────────────────────────────────────────────────────────────────────
+test('S1 UI Regression: getStatusBadge in ReservationSection has exactly one case per canonical status and no dead code', () => {
+  const filePath = path.resolve('src/components/ReservationSection.tsx');
+  const fileContent = fs.readFileSync(filePath, 'utf8');
+
+  // Verify getStatusBadge existence
+  const badgeFnMatch = fileContent.match(/const getStatusBadge = \(([^)]+)\) => \{([\s\S]*?)\n  \};/);
+  assert.ok(badgeFnMatch, 'getStatusBadge phải được định nghĩa');
+  const badgeFnBody = badgeFnMatch[2];
+
+  // Canonical statuses
+  const canonicalStatuses = ['HELD', 'BORROWED', 'RETURNED', 'EXPIRED', 'CANCELLED'];
+  for (const status of canonicalStatuses) {
+    const caseRegex = new RegExp(`case\\s+['"]${status}['"]\\s*:`, 'g');
+    const matches = badgeFnBody.match(caseRegex);
+    assert.equal(matches?.length, 1, `Trạng thái ${status} phải xuất hiện đúng 1 lần trong getStatusBadge, không được trùng lặp`);
+  }
+
+  // Ensure non-canonical PENDING is not present
+  assert.equal(badgeFnBody.includes("'PENDING'"), false, 'Trạng thái PENDING không thuộc ReservationStatus và không được có trong switch');
+
+  // Verify consistent badge usage in confirmation card and lookup card
+  const getStatusBadgeCalls = fileContent.match(/getStatusBadge\(/g);
+  assert.ok(getStatusBadgeCalls && getStatusBadgeCalls.length >= 2, 'getStatusBadge phải được gọi ở cả thẻ xác nhận đặt đơn và thẻ tra cứu đơn');
+});
+
+test('F2 UI Regression: Mobile ticket cards in InternalWorkspace retain all loan statuses, item flags, and parent loan indicator', () => {
+  const filePath = path.resolve('src/components/InternalWorkspace.tsx');
+  const fileContent = fs.readFileSync(filePath, 'utf8');
+
+  // Extract mobile tickets view block
+  const mobileBlockMatch = fileContent.match(/{\/\* Mobile Ticket Cards View \*\/}([\s\S]*?){\/\* Mobile Actions 1-Touch \*\/}/);
+  assert.ok(mobileBlockMatch, 'Khối Mobile Ticket Cards View phải tồn tại trong InternalWorkspace');
+  const mobileBlock = mobileBlockMatch[1];
+
+  // All 5 loan statuses must be handled on mobile
+  assert.ok(mobileBlock.includes("loan.status === 'ACTIVE'"), 'Mobile phải xử lý trạng thái ACTIVE');
+  assert.ok(mobileBlock.includes("loan.status === 'RETURNED'"), 'Mobile phải xử lý trạng thái RETURNED');
+  assert.ok(mobileBlock.includes("loan.status === 'PARTIAL_SETTLED'"), 'Mobile phải xử lý trạng thái PARTIAL_SETTLED');
+  assert.ok(mobileBlock.includes("loan.status === 'PENDING_DEPOSIT'"), 'Mobile phải xử lý trạng thái PENDING_DEPOSIT');
+
+  // Item status flags must be preserved on mobile
+  assert.ok(mobileBlock.includes('it.isLost'), 'Mobile phải hiển thị nhãn sách đã mất (it.isLost)');
+  assert.ok(mobileBlock.includes('it.returnedAt'), 'Mobile phải hiển thị nhãn sách đã trả (it.returnedAt)');
+
+  // Transitional parent loan indicator must be preserved on mobile
+  assert.ok(mobileBlock.includes('loan.parentLoanId'), 'Mobile phải hiển thị dấu hiệu phiếu chuyển tiếp (loan.parentLoanId)');
+});

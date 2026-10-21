@@ -13,6 +13,25 @@ async function renderer(name = 'pageMarkup') {
   });
 }
 
+test('reload reserves the book before modules load and resets scroll before parsing the body', async () => {
+  const home = await readFile(new URL('../../src/pages/index.astro', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../../src/styles/book-landing.css', import.meta.url), 'utf8');
+  const head = home.slice(home.indexOf('<head>'), home.indexOf('</head>'));
+  const boot = head.match(/<script is:inline>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(boot, 'Scroll policy must run inline in head, before module fetches and layout restoration');
+  const calls = [];
+  const history = {scrollRestoration:'auto'};
+  runInNewContext(boot, {history,window:{scrollTo:options=>calls.push(options)}});
+  assert.equal(history.scrollRestoration, 'manual');
+  assert.equal(calls[0].top, 0);
+  assert.equal(calls[0].behavior, 'instant');
+  assert(!/<body[^>]*class="no-js"/.test(home));
+  assert(!/\.no-js\s+\.scroll-track\s*\{\s*display:none/.test(css));
+  assert.match(head, /<noscript>[\s\S]*?\.scroll-track\s*\{\s*display:\s*none\s*;?\s*\}[\s\S]*?<\/noscript>/);
+  assert.match(head, /<noscript><style is:inline>/, 'Astro must leave fallback CSS inside noscript instead of hoisting it into the active stylesheet');
+  assert(home.indexOf('<BookLanding') < home.indexOf('id="cach-muon"'));
+});
+
 test('mở bìa tới bìa phụ: trái trắng, phải cùng thiết kế bìa nhưng là giấy; sau đó mới giới thiệu', async () => {
   const render = await renderer('spreadMarkup');
   const left = render(0, 'left');
@@ -21,7 +40,7 @@ test('mở bìa tới bìa phụ: trái trắng, phải cùng thiết kế bìa 
   assert(right.includes('paper-cover'));
   assert(right.includes('Mở sách, đọc tương lai'));
   assert(right.includes('club-logo-v8.svg'));
-  assert(right.includes('partner-logos-clean-v8.svg'));
+  assert.equal((right.match(/partner-logos-clean-v8\.svg/g) || []).length, 1, 'bìa phụ giữ một cặp logo ở chân bìa');
   assert(!right.includes('leaf-face'));
   assert(!right.includes('class="page-num"'));
   assert.notEqual(right.match(/id="(paper-tagline-[^"]+)"/)[1], render(0, 'right').match(/id="(paper-tagline-[^"]+)"/)[1]);
@@ -63,9 +82,27 @@ test('trang chính nối hướng dẫn sau sách và tủ sách mở tab riêng
   const home = await readFile(new URL('../../src/pages/index.astro', import.meta.url), 'utf8');
   const book = await readFile(new URL('../../src/components/BookLanding.astro', import.meta.url), 'utf8');
   assert(home.indexOf('<BookLanding') < home.indexOf('id="cach-muon"'));
-  assert.match(home, /href="\/sach\/" target="_blank" rel="noopener"/);
-  assert.match(book, /href="\/sach\/" target="_blank" rel="noopener"/);
+  assert.match(home, /href="\/sach\/" target="ysbk-public" rel="noopener"/);
+  assert.match(book, /href="\/sach\/" target="ysbk-public" rel="noopener"/);
   assert(!/Bản trước|BẢN THỬ|editorial-v1|book-v2/.test(book));
+
+  // Kiểm tra yêu cầu giao diện chân trang & các nút hướng dẫn
+  assert(home.includes('<h3>Đặt trước sách và hẹn lịch</h3>'));
+  assert(home.includes('href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</a>'));
+  assert(!home.includes('Lịch trực & hoạt động'));
+  assert(!/<footer class="site-end"[\s\S]*?Đăng nhập bạn đọc[\s\S]*?<\/footer>/.test(home));
+  assert.match(home, /href="https:\/\/www\.facebook\.com\/CLBYeuSachBachKhoaHaNoi\/"/);
+  assert.match(home, /href="https:\/\/www\.instagram\.com\/clb\.yeusachbachkhoahanoi\/"/);
+  assert.match(home, /href="https:\/\/www\.tiktok\.com\/@yeusachbachkhoahanoi"/);
+  assert.match(home, /class="guide-button"[^>]*>Khám phá tủ sách/);
+  assert.match(home, /class="guide-secondary"[^>]*>Tra cứu đơn đã đặt/);
+
+  // Kiểm tra các nút góc trên và góc dưới BookLanding
+  assert.match(book, /class="top-actions"[\s\S]*?>[\s\S]*?Tủ sách CLB[\s\S]*?Đăng nhập[\s\S]*?<\/nav>/);
+  assert(!/<nav class="top-actions"[\s\S]*?Đăng nhập bạn đọc[\s\S]*?<\/nav>/.test(book));
+  assert(!/<div class="bottom-right"[\s\S]*?Facebook YSBK[\s\S]*?<\/div>/.test(book));
+  assert(book.includes('id="motion-toggle"'));
+  assert(!book.includes('id="bg-toggle"'));
 });
 
 test('cuộn ngoài animation ngắt điều hướng, sai số subpixel của chính animation không ngắt', async () => {

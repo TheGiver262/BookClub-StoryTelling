@@ -1,5 +1,11 @@
 # Bảo mật, dữ liệu cá nhân và SEO v0.11
 
+## Cập nhật ranh giới bảo mật 21/10/2026
+
+Giữ chỗ công khai dùng CAPTCHA và quyền theo liên kết/token bí mật; mã đơn/SĐT không cấp quyền tra cứu hoặc hủy. Không log token/cookie, không đưa token vào query/analytics, không cache công khai PII. Không tự gắn lịch sử giữ chỗ vào tài khoản mới theo SĐT tự khai.
+
+Quyền xuất bản chỉ ADMIN; CTV dùng quyền nghiệp vụ MEMBER với cờ riêng, xóa mềm/thu hồi phiên/giữ lịch sử; cựu tiếp tục bị giới hạn. [Nghiên cứu UX](technical/public-reservation-ux-research-2026-10-21.md) nêu rủi ro IP chung và khôi phục quyền nhưng chưa thay guard hoặc mở email/OTP. Xem [trạng thái hiện hành](CURRENT-STATE.md); kiểm thử local không thay nghiệm thu cloud.
+
 Ngày 18/10/2026. Đây là yêu cầu thiết kế và cổng nghiệm thu, chưa phải báo cáo kiểm thử hệ thống đã tồn tại. Ưu tiên bảo mật không đồng nghĩa có thể hứa “không bao giờ bị hack hoặc DDoS”.
 
 ## 1. Dữ liệu và bề mặt tấn công

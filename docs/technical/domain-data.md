@@ -1,5 +1,11 @@
 # YSBK — Mô Hình Domain, Từ Điển Dữ Liệu & Toàn Vẹn PostgreSQL (domain-data.md)
 
+## Bổ sung domain và dữ liệu 21/10/2026
+
+Giữ riêng bạn đọc, tài khoản khách, hồ sơ thành viên và danh tính nội bộ. Một đơn giữ chỗ gồm một bản sách và một ca nhận; tối đa hai cuốn/phiếu mượn không đổi. [Thiết kế giữ chỗ](public-reservation-design.md) điều phối HELD/FULFILLED/CANCELLED/EXPIRED và hạn mức.
+
+[Publishing/CTV](public-portal-publishing.md) mô tả migration 19–20, nội dung công khai/media và cờ CTV/mốc thử thách/đánh giá/xóa mềm. Chưa thêm bảng hoặc cột cho tài khoản bạn đọc hay đổi sách từ [đề xuất UX](public-reservation-ux-research-2026-10-21.md). Lịch sử chứng từ/khóa ngoại phải được giữ; không gộp danh tính chỉ vì trùng SĐT. [Trạng thái hiện hành](../CURRENT-STATE.md).
+
 Tài liệu từ điển dữ liệu, quan hệ bảng, ràng buộc toàn vẹn và chiến lược đánh index cho website YSBK.  
 Ngày lập: 18/10/2026. Múi giờ: `Asia/Ho_Chi_Minh`.
 

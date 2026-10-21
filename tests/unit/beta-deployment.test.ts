@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import worker from '../../src/server/index.ts';
 import { getDatabasePool, closeDatabasePool, checkDatabaseReadiness } from '../../src/server/db/client.ts';
 import { apiClient } from '../../src/lib/api-client.ts';
+const access={PUBLIC_ORIGIN:'https://ysbk.test',INTERNAL_ORIGIN:'https://manage.ysbk.test',CF_ACCESS_TEAM_DOMAIN:'ysbk-test.cloudflareaccess.com',CF_ACCESS_AUD:'test-app'};
 
 test('Beta serves assets without opening a database and preserves API JSON errors', async () => {
   let assets = 0;
-  const env = { NODE_ENV: 'production', ASSETS: { fetch: async () => { assets++; return new Response('<html>YSBK</html>', { headers: { 'Content-Type': 'text/html' } }); } } };
+  const env = { ...access,NODE_ENV: 'production', ASSETS: { fetch: async () => { assets++; return new Response('<html>YSBK</html>', { headers: { 'Content-Type': 'text/html' } }); } } };
   const home = await worker.fetch(new Request('https://ysbk.test/'), env as any);
   assert.equal(home.status, 200);
   assert.match(await home.text(), /<html>/);
@@ -35,8 +36,8 @@ test('Production fails closed without Hyperdrive even when a fallback URL exists
 test('Incident reporting API rejects anonymous callers before any stock mutation', async () => {
   const response = await worker.fetch(new Request('https://ysbk.test/api/v1/reservations/00000000-0000-0000-0000-000000000001/issue', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'Missing copy' }),
-  }), { NODE_ENV: 'production' });
-  assert.equal(response.status, 401);
+  }), { ...access,NODE_ENV: 'production' });
+  assert.equal(response.status, 404);
 });
 
 test('Availability adapter asks for fresh data and preserves paging parameters', async () => {

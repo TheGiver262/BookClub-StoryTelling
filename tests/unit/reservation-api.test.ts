@@ -8,9 +8,10 @@ process.env.RESERVATION_IP_SECRET = 'synthetic-reservation-unit-secret-2026';
 import test from 'node:test';
 import assert from 'node:assert';
 import { handleRequest } from '../../src/server/router.ts';
+import {readerHeaders,withReaderSession} from '../helpers/reader-session.ts';
 
 function createMockRouterDb() {
-  return {
+  return withReaderSession({
     query: async (sql: string, params?: any[]) => {
       // Khóa quota
       if (sql.includes('INSERT INTO reservation_quota_locks')) {
@@ -91,14 +92,14 @@ function createMockRouterDb() {
       }
       return { rows: [] };
     },
-  };
+  });
 }
 
 test('PUB-02: POST /api/v1/public/reservations thiếu trường bắt buộc -> 400 Bad Request', async () => {
   const db = createMockRouterDb();
   const req = new Request('http://localhost:8787/api/v1/public/reservations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',...readerHeaders },
     body: JSON.stringify({
       titleId: '', // thiếu
       scheduleId: 'sched-01',
@@ -123,7 +124,7 @@ test('SEC-01: POST /api/v1/public/reservations với CAPTCHA không hợp lệ -
   const db = createMockRouterDb();
   const req = new Request('http://localhost:8787/api/v1/public/reservations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json',...readerHeaders },
     body: JSON.stringify({
       titleId: 'title-01',
       scheduleId: 'sched-01',
@@ -154,6 +155,7 @@ test('PUB-04 & SEC-03: POST /api/v1/public/reservations thành công tạo đơn
     headers: {
       'Content-Type': 'application/json',
       'cf-connecting-ip': '203.0.113.195',
+      ...readerHeaders,
     },
     body: JSON.stringify({
       titleId: 'title-01',
@@ -209,11 +211,12 @@ test('SEC-03: GET /api/v1/public/reservation thiếu token trả 401 LOOKUP_TOKE
   assert.equal(data.error.code, 'LOOKUP_TOKEN_MISSING');
 });
 
-test('PUB-07: POST /api/v1/public/reservation/cancel khách tự hủy đơn bằng Bearer token', async () => {
-  const db = createMockRouterDb();
+test('PUB-07: POST /api/v1/public/reservation/cancel bạn đọc đã đăng nhập hủy đơn cũ bằng Bearer token', async () => {
+  const db = withReaderSession(createMockRouterDb());
   const req = new Request('http://localhost:8787/api/v1/public/reservation/cancel', {
     method: 'POST',
     headers: {
+      ...readerHeaders,
       'Content-Type': 'application/json',
       Authorization: 'Bearer rsv_tok_valid_test_lookup_token_12345',
     },
@@ -224,6 +227,12 @@ test('PUB-07: POST /api/v1/public/reservation/cancel khách tự hủy đơn b�
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.equal(data.data.status, 'CANCELLED');
+});
+
+test('hủy đơn bằng mã bí mật vẫn yêu cầu đăng nhập trước khi đọc/ghi đơn',async()=>{
+  const statements:string[]=[];
+  const response=await handleRequest(new Request('http://localhost:8787/api/v1/public/reservation/cancel',{method:'POST',headers:{Authorization:'Bearer secret-token','Content-Type':'application/json'},body:'{}'}),{}, {queryable:{query:async(sql:string)=>{statements.push(sql);return {rows:[],rowCount:0};}} as any});
+  assert.equal(response.status,401);assert.deepEqual(statements,['BEGIN','ROLLBACK']);
 });
 
 test('SEC-07: GET /api/v1/reservations yêu cầu quyền thành viên trực (chặn anonymous/guest)', async () => {

@@ -700,11 +700,14 @@ test('G-policy/HTTP 8: Catalog endpoints - Public search & detail; Internal copy
   const guestCreateRes = await handleRequest(guestCreateReq, TEST_ENV, fixtures);
   assert.strictEqual(guestCreateRes.status, 403);
 
-  // 4. Thành viên tạo bản sách vật lý -> Thành công 201 Created
+  assert.equal((await handleRequest(new Request('http://localhost:8787/api/v1/books/copies',{method:'POST',headers:{Authorization:`Bearer ${memberToken}`,'Content-Type':'application/json'},body:JSON.stringify({editionId:'ed-http-01',barcode:'FORBIDDEN-COPY'})}),TEST_ENV,fixtures)).status,403);
+
+  // 4. Chỉ quản lý được nhập bản sách; nghiệp vụ cập nhật vị trí vẫn dành cho thành viên
+  const catalogAdminToken = await signSessionToken({...memberActor,memberId:'00000000-0000-0000-0000-000000000001',role:'ADMIN'}, TEST_SECRET);
   const memberCreateReq = new Request('http://localhost:8787/api/v1/books/copies', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${memberToken}`,
+      Authorization: `Bearer ${catalogAdminToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

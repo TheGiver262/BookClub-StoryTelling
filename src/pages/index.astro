@@ -1,46 +1,47 @@
 ---
 import BookLanding from '../components/BookLanding.astro';
 import '../styles/global.css';
+import '../styles/book-backdrop.css';
 ---
 
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class="book-landing-page">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      history.scrollRestoration = 'manual';
+      window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+    </script>
+    <noscript><style is:inline>.scroll-track { display: none; }</style></noscript>
     <link rel="icon" type="image/svg+xml" href="/book/assets/club-logo-v8.svg" />
     <link rel="preload" as="font" href="/book/assets/dancing-script.ttf" type="font/ttf" crossorigin />
     <link rel="preload" as="image" href="/book/assets/cover-minimal-v4.png" />
     <title>CLB Yêu Sách Bách Khoa Hà Nội (YSBK) — Mở sách, đọc tương lai</title>
     <meta name="description" content="Trang thông tin tra cứu sách, lịch trực bàn và kết nối bạn đọc của Câu lạc bộ Yêu Sách Bách Khoa Hà Nội." />
   </head>
-  <body class="no-js">
+  <body>
     <BookLanding />
+    <script is:inline type="module" src="/book/book-backdrop.mjs"></script>
     <section class="loan-guide" id="cach-muon" aria-labelledby="guide-title">
       <span class="eyebrow">Một cuốn sách đang chờ bạn</span>
       <h2 id="guide-title">Đọc tiếp câu chuyện của mình.<br />Bắt đầu bằng một cuốn sách.</h2>
-      <p class="guide-intro">Tủ sách chung của Yêu Sách dành cho bạn đọc muốn khám phá, học hỏi và sẻ chia. Bạn không cần tài khoản để đặt trước; hãy chọn một cuốn và hẹn gặp chúng mình tại buổi trực.</p>
+      <p class="guide-intro">Tủ sách chung của Yêu Sách dành cho bạn đọc muốn khám phá, học hỏi và sẻ chia. Đăng nhập Google để tạo tài khoản bạn đọc, chọn sách và hẹn gặp chúng mình tại buổi trực.</p>
       <div class="guide-steps">
-        <article><span>01</span><h3>Tìm cuốn sách của bạn</h3><p>Mở tủ sách, tìm theo tên hoặc tác giả, lọc thể loại và xem số bản còn có thể giữ chỗ. Mỗi đơn dành cho một quyển.</p></article>
-        <article><span>02</span><h3>Giữ chỗ và chọn buổi trực</h3><p>Điền đầy đủ thông tin, chọn buổi trực thứ Ba hoặc thứ Năm còn nhận đặt, xác nhận tiền cọc và hoàn tất CAPTCHA. Lưu mã và liên kết tra đơn sau khi đặt thành công.</p></article>
+        <article><span>01</span><h3>Tìm cuốn sách của bạn</h3><p>Mở tủ sách, tìm theo tên hoặc tác giả, lọc thể loại và xem số bản còn có thể giữ chỗ.</p></article>
+        <article><span>02</span><h3>Đặt trước sách và hẹn lịch</h3><p>Chọn cuốn sách bạn thích, hẹn một buổi chiều thứ Ba hoặc thứ Năm tiện ghé qua bàn trực, rồi gửi thông tin để chúng mình giữ sách sẵn chờ bạn nhé.</p></article>
         <article><span>03</span><h3>Gặp nhau ở bàn sách</h3><p>Đến đúng buổi trực đã chọn, đọc tên và số điện thoại để thành viên đối chiếu, làm thủ tục nhận sách. Đơn online mới là giữ chỗ; sách được giữ đến hết buổi trực.</p></article>
       </div>
-      <p class="guide-rules">Mỗi số điện thoại có tối đa <strong>3 đơn đang giữ hoặc sách đang mượn</strong>. Trả một quyển sẽ mở lại một suất của số điện thoại. Mỗi IP chỉ tạo tối đa <strong>3 đơn trong 24 giờ</strong>, kể cả khi bạn vừa trả sách. Không đến nhận trước khi buổi trực kết thúc, đơn hết hạn và sách được mở lại để người khác đặt. Tình trạng sách được kiểm tra lại khi xác nhận.</p>
-      <div class="guide-actions"><a class="guide-button" href="/sach/" target="_blank" rel="noopener">Khám phá tủ sách <span aria-hidden="true">↗</span></a><a class="guide-secondary" href="/sach/?tab=tra-don" target="_blank" rel="noopener">Tra cứu đơn đã đặt ↗</a></div>
-      <footer class="site-end"><p>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội<br />Mở sách, đọc tương lai</p><nav aria-label="Kết nối CLB"><a href="/cong-dong?tab=hoat-dong">Lịch trực & hoạt động</a><a href="/cong-dong?tab=tuyen">Tuyển thành viên</a><a href="https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/" target="_blank" rel="noreferrer">Facebook ↗</a><a href="/login">Thành viên đăng nhập</a></nav></footer>
+      <div class="guide-actions"><a class="guide-button" href="/sach/" target="ysbk-public" rel="noopener">Khám phá tủ sách <span aria-hidden="true">↗</span></a><a class="guide-secondary" href="/sach/?tab=tra-don" target="ysbk-public" rel="noopener">Tra cứu đơn đã đặt <span aria-hidden="true">↗</span></a></div>
+      <footer class="site-end"><p>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội<br />Mở sách, đọc tương lai</p><nav aria-label="Kết nối CLB"><a href="/sach/?tab=dat-sach" target="ysbk-public" rel="noopener">Đặt trước sách</a><a href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</a><a href="/sach/?tab=review" target="ysbk-public" rel="noopener">Góc review</a><a href="/sach/?tab=tuyen" target="ysbk-public" rel="noopener">Tuyển thành viên</a><div class="site-socials" aria-label="Mạng xã hội CLB"><a class="social-link" href="https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/" target="_blank" rel="noreferrer" aria-label="Facebook CLB Yêu Sách Bách Khoa" title="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a><a class="social-link" href="https://www.instagram.com/clb.yeusachbachkhoahanoi/" target="_blank" rel="noreferrer" aria-label="Instagram CLB Yêu Sách Bách Khoa" title="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a><a class="social-link" href="https://www.tiktok.com/@yeusachbachkhoahanoi" target="_blank" rel="noreferrer" aria-label="TikTok CLB Yêu Sách Bách Khoa" title="TikTok"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg></a></div></nav></footer>
     </section>
     <script>
-      import { apiClient } from '../lib/api-client';
       const current = new URL(window.location.href);
       const tab = current.searchParams.get('tab');
       // Giữ liên kết đặt/tra đơn cũ, đặc biệt token trong hash không gửi lên máy chủ.
       if (tab || current.searchParams.has('sach') || current.hash.startsWith('#token=')) {
-        const path = !tab || ['sach', 'dat-sach', 'tra-don'].includes(tab) ? '/sach/' : '/cong-dong';
+        const path = '/sach/';
         window.location.replace(path + current.search + current.hash);
-      } else if (current.searchParams.get('public') !== '1') {
-        apiClient.getMe().then(actor => {
-          if (actor.isActive && !actor.isAlumni && ['ADMIN', 'MEMBER'].includes(actor.role)) window.location.replace('/noi-bo');
-        }).catch(() => {});
       }
     </script>
   </body>

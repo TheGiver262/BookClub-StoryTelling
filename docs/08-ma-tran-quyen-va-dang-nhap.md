@@ -1,5 +1,17 @@
 # Ma trận quyền và đăng nhập v0.11
 
+## Cập nhật quyền 21/10/2026
+
+Quyết định mới bên dưới ưu tiên các ô quyền của bản khảo sát 18/10 nếu khác nhau. Backend/local Auth đã có; câu “chưa có ứng dụng” chỉ mô tả thời điểm khảo sát.
+
+- Khách không đăng nhập được đặt giữ chỗ qua CAPTCHA; chỉ xem/hủy đúng đơn có token riêng. Không tra tất cả đơn theo SĐT.
+- CTV dùng quyền nghiệp vụ MEMBER với cờ riêng; cùng điều kiện năng lực trực chính. Thử thách một tháng lịch, quản lý đánh giá/công nhận; không tự lên chính thức.
+- Chỉ ADMIN xuất bản sách/ảnh/tóm tắt, lịch trực/nghỉ, sự kiện và tuyển; MEMBER/CTV không được gọi API ghi xuất bản.
+- Chỉ ADMIN xóa mềm CTV, xác nhận username, giữ chứng từ, thu hồi phiên. Thành viên chính thức rời chuyển ALUMNI, không dùng xóa CTV.
+- Tài khoản bạn đọc quản lý giữ chỗ còn đang thảo luận; không suy từ tài khoản khách review hoặc quyền GUEST thành chức năng đã có. Không tự cấp quyền nội bộ hoặc nhận đơn cũ theo SĐT.
+
+Chi tiết [publishing/CTV](technical/public-portal-publishing.md), [quy tắc giữ chỗ](technical/public-reservation-design.md), [trạng thái hiện hành](CURRENT-STATE.md).
+
 Ngày 18/10/2026. Nguồn: quyết định D16, D38, D50–D55 trong [sổ phỏng vấn](06-phong-van-va-quyet-dinh.md). Đây là đặc tả dự thảo, chưa có ứng dụng hoặc bài thử Auth đã chạy.
 
 ## 1. Danh tính và trạng thái
@@ -8,7 +20,7 @@ Ba loại người dùng: khách, thành viên CLB và admin. Khách có thể c
 
 | Đối tượng | Đăng nhập | Quyền tổng quát |
 |---|---|---|
-| Khách chưa có phiên | Không cần | Xem nội dung công khai đã duyệt |
+| Khách chưa có phiên | Không cần | Xem công khai, đặt qua CAPTCHA; xem/hủy đúng đơn có quyền riêng |
 | Khách có tài khoản | Google hoặc email/mật khẩu | Như khách; gửi đánh giá/nhận xét/cảm nhận vào hàng chờ duyệt |
 | Thành viên đang hoạt động | Tên đăng nhập riêng + mật khẩu, admin cấp | Quản lý toàn bộ nghiệp vụ, không phân quyền theo ban |
 | Cựu thành viên | Vẫn tên đăng nhập riêng + mật khẩu được cấp | Chỉ xem hoạt động CLB; không dữ liệu nhạy cảm/tiền/xuất file hoặc ghi nghiệp vụ |
@@ -25,7 +37,8 @@ Không dùng email, tên hiển thị hoặc provider do trình duyệt gửi đ
 |---|---|---|---|---|---|
 | Sách, review đã duyệt, trạng thái khả dụng công khai | Xem | Xem | Xem/quản lý | Xem công khai | Xem/quản lý |
 | Gửi đánh giá/nhận xét/cảm nhận | Không | Gửi chờ duyệt | Quản lý nội dung | Không ghi qua tài khoản cựu | Quản lý nội dung |
-| Duyệt nội dung, sửa metadata/tồn sách | Không | Không | Quản lý | Không | Quản lý |
+| Xuất bản sách/ảnh/lịch/nghỉ/sự kiện/tuyển | Không | Không | Không; gồm CTV | Không | Quản lý |
+| Thao tác kho/lưu thông theo nghiệp vụ | Không | Không | Quản lý; gồm CTV theo điều kiện nghiệp vụ | Không | Quản lý |
 | Phiếu mượn, người mượn, cọc/phạt, nhắc trả | Không | Không | Quản lý | Không | Quản lý |
 | Hồ sơ thành viên, số điện thoại, lịch bận cá nhân | Không | Không | Quản lý | Không | Quản lý |
 | Lịch trực, phân công và điểm danh nghiệp vụ | Không, trừ phần được công bố | Không, trừ phần được công bố | Quản lý | Chỉ thông tin hoạt động được phép | Quản lý |

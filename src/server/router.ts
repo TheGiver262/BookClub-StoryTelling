@@ -1,4 +1,8 @@
 import * as crypto from 'node:crypto';
+import {handleReaderRequest,resolveReader,assertReaderOrigin} from './readers/service.ts';
+import {listBookmarks,setBookmark} from './readers/library.ts';
+import { changeMembership } from './members/lifecycle.ts';
+import { saveBook, savePickup, saveRecruitment, closePickupDay } from './publishing/service.ts';
 import type { Env, AuthenticatedActor, MemberDto } from './types.ts';
 import {
   formatErrorResponse,
@@ -185,6 +189,7 @@ import {
   listPublicPickupSchedules,
   listStaffReservations,
   reportReservationIssue,
+  toPublicReservationDto,
 } from './reservations/service.ts';
 import { verifyTurnstileToken } from './reservations/captcha.ts';
 
@@ -196,6 +201,7 @@ export interface TestFixtures extends AuthTestInjection {
   clientIp?: string;
   now?: Date;
   turnstileFetch?: typeof fetch;
+  readerAuthFetch?: typeof fetch;
 }
 
 function getDb(injected?: TestFixtures, env?: Env): Queryable {
@@ -297,7 +303,7 @@ export async function resolveActorFromRequest(
     try {
       const pool = getDatabasePool(env);
       const res = await pool.query(
-        'SELECT id, username, is_active, is_alumni, is_admin, token_version FROM members WHERE id = $1',
+        'SELECT id, username, is_active, is_alumni, is_admin, is_collaborator, token_version FROM members WHERE id = $1',
         [claims.memberId]
       );
       if (res.rows.length > 0) {
@@ -329,6 +335,7 @@ export async function resolveActorFromRequest(
     username: liveMember.username,
     role: liveMember.is_admin ? 'ADMIN' : 'MEMBER',
     isAlumni: Boolean(liveMember.is_alumni),
+    isCollaborator: Boolean(liveMember.is_collaborator),
     isActive: Boolean(liveMember.is_active),
     tokenVersion: liveMember.token_version,
   };
@@ -346,6 +353,65 @@ export async function handleRequest(
   const isProduction = env?.NODE_ENV === 'production';
 
   try {
+    if(path.startsWith('/api/v1/readers/')) {
+      const response=await handleReaderRequest(request,env,()=>getDb(injected,env),injected?.readerAuthFetch);
+      if(response) return response;
+      const reader=(await resolveReader(request,()=>getDb(injected,env)))!;
+      if(method==='GET'&&path==='/api/v1/readers/bookmarks') {
+        return Response.json({data:await listBookmarks(getDb(injected,env),reader.id)},{headers:{'Cache-Control':'no-store'}});
+      }
+      const bookmark=path.match(/^\/api\/v1\/readers\/bookmarks\/([^/]+)$/);
+      if(bookmark&&(method==='PUT'||method==='DELETE')) {
+        assertReaderOrigin(request);
+        const data=await withTransaction(getDb(injected,env),async tx=>{
+          const current=(await resolveReader(request,()=>tx,true,true))!;
+          return setBookmark(tx,current.id,bookmark[1],method==='PUT');
+        });
+        return Response.json({data},{headers:{'Cache-Control':'no-store'}});
+      }
+      if(method==='GET'&&path==='/api/v1/readers/reservations') {
+        const rows=await getDb(injected,env).query<any>('SELECT r.*,bt.title AS book_title FROM reservations r JOIN book_titles bt ON bt.id=r.title_id WHERE r.reader_account_id=$1 ORDER BY r.created_at DESC LIMIT 100',[reader.id]);
+        return Response.json({data:rows.rows.map(toPublicReservationDto)},{headers:{'Cache-Control':'no-store'}});
+      }
+      const cancel=path.match(/^\/api\/v1\/readers\/reservations\/([0-9a-f-]{36})\/cancel$/);
+      if(method==='POST'&&cancel) {
+        assertReaderOrigin(request);
+        const result=await withTransaction(getDb(injected,env),async(tx:Queryable)=>{
+          const current=(await resolveReader(request,()=>tx,true,true))!;
+          return cancelReservation(tx,{id:cancel[1],readerAccountId:current.id},null,'Bạn đọc chủ động hủy trong tài khoản');
+        });
+        return Response.json({data:result},{headers:{'Cache-Control':'no-store'}});
+      }
+    }
+    const mediaMatch = path.match(/^\/api\/v1\/public\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/);
+    if (method === 'GET' && mediaMatch) {
+      const result = await getDb(injected,env).query<any>('SELECT mime_type,content FROM public_media WHERE id=$1',[mediaMatch[1]]);
+      if (!result.rows.length) throw new NotFoundError('Không tìm thấy ảnh.', 'IMAGE_NOT_FOUND');
+      return new Response(new Uint8Array(result.rows[0].content),{headers:{'Content-Type':result.rows[0].mime_type,'Cache-Control':'public,max-age=31536000,immutable','X-Content-Type-Options':'nosniff'}});
+    }
+    if (method === 'GET' && path === '/api/v1/public/recruitment-notice') {
+      const result = await getDb(injected,env).query<any>("SELECT value FROM club_public_settings WHERE key='recruitment' AND value->>'status' <> 'DRAFT'");
+      return Response.json({data:result.rows[0]?.value || null},{headers:{'Cache-Control':'no-store'}});
+    }
+    if (path.startsWith('/api/v1/admin/publishing')) {
+      const admin = requireAdmin(await resolveActorFromRequest(request,env,injected));
+      const db = getDb(injected,env);
+      if (method === 'GET' && path === '/api/v1/admin/publishing') {
+        const schedules = await db.query('SELECT id,schedule_date,shift_time,location,status FROM duty_schedules ORDER BY schedule_date DESC LIMIT 100');
+        const notice = await db.query<any>("SELECT value FROM club_public_settings WHERE key='recruitment'");
+        return Response.json({data:{schedules:schedules.rows,recruitment:notice.rows[0]?.value || null}},{headers:{'Cache-Control':'no-store'}});
+      }
+      if (method === 'POST') {
+        const content = await request.text();
+        if (content.length > 280000) throw new BadRequestError('Nội dung tải lên quá lớn.', 'PAYLOAD_TOO_LARGE');
+        let body;
+        try { body = JSON.parse(content); } catch { throw new BadRequestError('Nội dung không hợp lệ.', 'INVALID_JSON'); }
+        if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestError('Nội dung không hợp lệ.', 'INVALID_BODY');
+        const save = path === '/api/v1/admin/publishing/books' ? saveBook : path === '/api/v1/admin/publishing/schedules' ? savePickup : path === '/api/v1/admin/publishing/recruitment' ? saveRecruitment : null;
+        if (save) return Response.json({data:await withTransaction<unknown>(db, tx=>save(tx,admin,body))},{headers:{'Cache-Control':'no-store'}});
+      }
+      throw new NotFoundError('Không tìm thấy chức năng.', 'NOT_FOUND');
+    }
     // 1. Health Liveness: 200 OK (Clean, no internal database URLs or secrets)
     if (method === 'GET' && path === '/health') {
       return new Response(
@@ -527,7 +593,7 @@ export async function handleRequest(
         const pool = getDatabasePool(env);
         const res = await pool.query(
           `SELECT id, full_name, username, team, role_title, school_year, phone,
-                  is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, created_at
+                  is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, is_collaborator, probation_started_on, probation_ends_on, collaborator_deleted_at, created_at
            FROM members
            ORDER BY created_at ASC`
         );
@@ -681,6 +747,14 @@ export async function handleRequest(
       });
     }
 
+    const membershipMatch = path.match(/^\/api\/v1\/members\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/membership$/);
+    if (method === 'POST' && membershipMatch) {
+      const actor = requireAdmin(await resolveActorFromRequest(request,env,injected));
+      const body = await parseJsonObject(request,requestId);
+      const result = await withTransaction(getDb(injected,env),db=>changeMembership(db,actor,membershipMatch[1],body));
+      return Response.json({data:result},{headers:{'Cache-Control':'no-store'}});
+    }
+
     // 8. Admin Only: Update Member Status (S04-07: Invariant alumni/admin in DB and handler)
     if (method === 'PATCH' && path.startsWith('/api/v1/members/') && path.endsWith('/status')) {
       const actor = await resolveActorFromRequest(request, env, injected);
@@ -705,6 +779,8 @@ export async function handleRequest(
         if (!member) {
           throw new NotFoundError('Không tìm thấy thành viên.', 'MEMBER_NOT_FOUND', requestId);
         }
+        if (member.collaborator_deleted_at) throw new BadRequestError('Tài khoản cộng tác viên đã được xóa.','COLLABORATOR_DELETED');
+        if (member.is_collaborator && (body.isAdmin === true || body.isAlumni === true)) throw new BadRequestError('Cần hoàn tất đánh giá cộng tác viên trước khi đổi trạng thái.','COLLABORATOR_STAGE_REQUIRED');
 
         let targetAlumni: boolean;
         let targetAdmin: boolean;
@@ -739,11 +815,13 @@ export async function handleRequest(
         const pool = getDatabasePool(env);
 
         // S04-07: Check current member status first
-        const curRes = await pool.query('SELECT is_alumni, is_admin FROM members WHERE id = $1', [memberId]);
+        const curRes = await pool.query('SELECT is_alumni, is_admin, is_collaborator, collaborator_deleted_at FROM members WHERE id = $1', [memberId]);
         if (curRes.rows.length === 0) {
           throw new NotFoundError('Không tìm thấy thành viên.', 'MEMBER_NOT_FOUND', requestId);
         }
         const cur = curRes.rows[0];
+        if (cur.collaborator_deleted_at) throw new BadRequestError('Tài khoản cộng tác viên đã được xóa.','COLLABORATOR_DELETED');
+        if (cur.is_collaborator && (body.isAdmin === true || body.isAlumni === true)) throw new BadRequestError('Cần hoàn tất đánh giá cộng tác viên trước khi đổi trạng thái.','COLLABORATOR_STAGE_REQUIRED');
 
         let targetAlumni: boolean;
         let targetAdmin: boolean;
@@ -774,7 +852,8 @@ export async function handleRequest(
                token_version = token_version + 1
            WHERE id = $4
            RETURNING id, full_name, username, team, role_title, school_year, phone,
-                     is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, token_version, created_at`,
+                     is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, is_collaborator,
+                     probation_started_on, probation_ends_on, collaborator_deleted_at, token_version, created_at`,
           [
             typeof body.isActive === 'boolean' ? body.isActive : null,
             targetAlumni,
@@ -1105,7 +1184,7 @@ export async function handleRequest(
     // 17. Catalog: Internal Create Book Copy
     if (method === 'POST' && (path === '/api/v1/books/copies' || path === '/api/v1/catalog/books/copies')) {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const db = getDb(injected, env);
@@ -1303,7 +1382,7 @@ export async function handleRequest(
     // 25. Catalog: Create Book Title (Internal only: Member/Admin)
     if (method === 'POST' && (path === '/api/v1/books/titles' || path === '/api/v1/catalog/books/titles')) {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const db = getDb(injected, env);
@@ -1329,7 +1408,7 @@ export async function handleRequest(
         (path.startsWith('/api/v1/catalog/books/') && path.endsWith('/editions')))
     ) {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const db = getDb(injected, env);
@@ -1895,13 +1974,14 @@ export async function handleRequest(
     // 38. Circulation: Calendar Holidays Add/Update (Internal Member/Admin)
     if (method === 'POST' && path === '/api/v1/circulation/calendar/holidays') {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
 
       const holiday = await withTransaction(db, async (tx) => {
+        await closePickupDay(tx, body.holidayDate);
         return await addCalendarHoliday(tx, body as any, actorId);
       });
 
@@ -2125,7 +2205,7 @@ export async function handleRequest(
     // 45. Duty Roster: Generate Draft Schedules (Chặng 15)
     if (method === 'POST' && path === '/api/v1/duty/schedules/generate') {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const db = getDb(injected, env);
@@ -2193,7 +2273,7 @@ export async function handleRequest(
     // 48. Duty Roster: Manual Edit Schedule (Chặng 15)
     if (method === 'PUT' && path.endsWith('/manual-edit') && path.startsWith('/api/v1/duty/schedules/')) {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const scheduleId = path.replace('/api/v1/duty/schedules/', '').replace('/manual-edit', '');
@@ -2217,7 +2297,7 @@ export async function handleRequest(
     // 49. Duty Roster: Publish Schedule (Chặng 15)
     if (method === 'POST' && path.endsWith('/publish') && path.startsWith('/api/v1/duty/schedules/')) {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const actorId = member.memberId || member.userId;
 
       const scheduleId = path.replace('/api/v1/duty/schedules/', '').replace('/publish', '');
@@ -2933,7 +3013,7 @@ export async function handleRequest(
     // 77. Events: Tạo mới hoạt động / sự kiện (Chỉ Thành viên hoạt động / Admin)
     if (method === 'POST' && path === '/api/v1/events') {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
       const activity = await createActivity(db, member, body as any);
@@ -2970,7 +3050,7 @@ export async function handleRequest(
     if (method === 'PATCH' && eventDetailMatch) {
       const eventId = eventDetailMatch[1];
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
       const updated = await updateActivity(db, eventId, member, body as any);
@@ -3092,7 +3172,7 @@ export async function handleRequest(
     if (method === 'GET' && (path === '/api/v1/public/reviews' || path === '/api/v1/reviews')) {
       const bookId = url.searchParams.get('bookId') || undefined;
       const db = getDb(injected, env);
-      const reviews = await getPublicReviews(db, bookId);
+      const reviews = await getPublicReviews(db, bookId, Number(url.searchParams.get('page') || 1));
       return new Response(JSON.stringify({ data: reviews, total: reviews.length }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'public, max-age=60' },
@@ -3104,7 +3184,7 @@ export async function handleRequest(
     if (method === 'GET' && bookReviewsMatch) {
       const bookId = bookReviewsMatch[2];
       const db = getDb(injected, env);
-      const reviews = await getPublicReviews(db, bookId);
+      const reviews = await getPublicReviews(db, bookId, Number(url.searchParams.get('page') || 1));
       return new Response(JSON.stringify({ data: reviews, total: reviews.length }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'public, max-age=60' },
@@ -3113,10 +3193,17 @@ export async function handleRequest(
 
     // 90. Content: Submit Book Review (Guest có phiên hợp lệ hoặc Member)
     if (method === 'POST' && (path === '/api/v1/content/reviews' || path === '/api/v1/reviews')) {
-      const actor = await resolveActorFromRequest(request, env, injected);
+      assertReaderOrigin(request);
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
-      const review = await submitBookReview(db, actor, body as any);
+      if(Object.keys(body).some(key=>!['bookId','authorName','authorEmail','rating','content'].includes(key)) || typeof body.content!=='string' || /<\s*(img|picture|svg|video|iframe|object)\b|!\[[^\]]*\]\(|data:image\//i.test(body.content)) throw new BadRequestError('Nhận xét chỉ hỗ trợ chữ, không hỗ trợ ảnh hay tệp đính kèm.','TEXT_REVIEW_ONLY');
+      const internal = await resolveActorFromRequest(request, env, injected);
+      const review = await withTransaction(db,async tx=>{
+        if(internal&&!internal.isAlumni&&['ADMIN','MEMBER'].includes(internal.role)) return submitBookReview(tx,internal,{...body,authorName:internal.username||'CLB Yêu Sách Bách Khoa Hà Nội',authorEmail:internal.email} as any);
+        const reader=(await resolveReader(request,()=>tx,true,true))!;
+        const actor:AuthenticatedActor={userId:reader.id,email:reader.email,role:'GUEST',isActive:true,isAlumni:false,tokenVersion:1};
+        return submitBookReview(tx,actor,{...body,authorName:reader.fullName,authorEmail:reader.email} as any);
+      });
       return new Response(JSON.stringify({ data: review, message: 'Đánh giá đã được gửi và đang chờ kiểm duyệt.' }), {
         status: 201,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
@@ -3192,7 +3279,7 @@ export async function handleRequest(
     // 96. Content: Create Public Post (Member nội bộ)
     if (method === 'POST' && path === '/api/v1/moderation/posts') {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
       const post = await createPublicPost(db, member, body as any);
@@ -3207,7 +3294,7 @@ export async function handleRequest(
     if (method === 'POST' && postPublishMatch) {
       const postId = postPublishMatch[1];
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireInternalMember(actor);
+      const member = requireAdmin(actor);
       const db = getDb(injected, env);
       const post = await publishPublicPost(db, member, postId);
       return new Response(JSON.stringify({ data: post }), {
@@ -3413,6 +3500,7 @@ export async function handleRequest(
       const page = Number(url.searchParams.get('page') || 1);
       const limit = Number(url.searchParams.get('limit') || 20);
       const result = await listPublicReservationBooks(db, { search, category: url.searchParams.get('category') || undefined, page, limit,
+        readerAccountId: (await resolveReader(request,()=>db,false))?.id,
         includeUnavailable: url.searchParams.get('includeUnavailable') === 'true', onlyAvailable: url.searchParams.get('onlyAvailable') === 'true' });
       return new Response(JSON.stringify({ data: result.items, meta: { total: result.total, page: result.page, limit: result.limit, categories: result.categories } }), {
         status: 200,
@@ -3430,8 +3518,11 @@ export async function handleRequest(
       });
     }
 
-    // 107. Public: Create Reservation (1 cuốn / đơn, không đăng nhập, CAPTCHA, Transaction) (PRF-01, PRF-04, PRF-09)
+    // Tạo giữ chỗ: tài khoản bạn đọc, CAPTCHA và transaction.
     if (method === 'POST' && path === '/api/v1/public/reservations') {
+      assertReaderOrigin(request);
+      const reader=(await resolveReader(request,()=>getDb(injected,env)))!;
+      if(!reader.phone||!reader.fullName) throw new BadRequestError('Vui lòng bổ sung họ tên và số điện thoại trong tài khoản bạn đọc.','READER_PROFILE_REQUIRED');
       const clientIp = resolveClientIp(request, injected, env);
       const idempotencyKey = request.headers.get('idempotency-key') || undefined;
       const body = (await parseJsonObject(request, requestId)) as any;
@@ -3471,19 +3562,21 @@ export async function handleRequest(
 
       // 2. Tạo đơn giữ chỗ trong transaction (PRF-04)
       const result = await withTransaction(db, async (tx) => {
+        const current=(await resolveReader(request,()=>tx,true,true))!;
         return await createReservation(
           tx,
           {
             titleId: body?.titleId,
             scheduleId: body?.scheduleId,
-            fullName: body?.fullName,
-            phone: body?.phone,
+            fullName: current.fullName,
+            phone: current.phone!,
             studentId: body?.studentId,
             university: body?.university,
-            email: body?.email,
+            email: current.email,
           },
           {
             clientIp,
+            readerAccountId: current.id,
             idempotencyKey,
             captchaToken: captchaToken || 'replay-verified',
             now: injected?.now,
@@ -3507,7 +3600,8 @@ export async function handleRequest(
         throw new UnauthorizedError('Thiếu mã tra cứu đơn đặt trong Authorization header.', 'LOOKUP_TOKEN_MISSING');
       }
       const db = getDb(injected, env);
-      const reservation = await getReservationByToken(db, token);
+      const reader=await resolveReader(request,()=>db,false);
+      const reservation = await getReservationByToken(db, token,reader?.id);
       return new Response(JSON.stringify({ data: reservation }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Request-Id': requestId, 'Cache-Control': 'no-store' },
@@ -3516,6 +3610,7 @@ export async function handleRequest(
 
     // 109. Public: Cancel Reservation by Lookup Token (Transaction) (PRF-04)
     if (method === 'POST' && path === '/api/v1/public/reservation/cancel') {
+      assertReaderOrigin(request);
       const authHeader = request.headers.get('authorization') || '';
       const token = authHeader.replace(/^Bearer\s+/i, '').trim();
       if (!token) {
@@ -3524,7 +3619,8 @@ export async function handleRequest(
       const body = (await parseJsonObject(request, requestId)) as any;
       const db = getDb(injected, env);
       const reservation = await withTransaction(db, async (tx) => {
-        return await cancelReservation(tx, { token }, null, body?.reason);
+        const reader=await resolveReader(request,()=>tx,true,true);
+        return await cancelReservation(tx, { token,readerAccountId:reader?.id }, null, body?.reason);
       });
       return new Response(JSON.stringify({ data: reservation }), {
         status: 200,

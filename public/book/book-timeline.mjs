@@ -55,7 +55,7 @@ export function navigationSegments(from, to, count) {
     const state = timelineAt((start + end) / 2, count);
     const kind = state.mode;
     const phaseLength = kind === 'cover' ? OPEN : kind === 'turn' ? TURN : READ;
-    const phaseDuration = kind === 'cover' ? 1600 : kind === 'turn' ? 1400 : state.index === count - 1 ? 2400 : 700;
+    const phaseDuration = kind === 'cover' ? 1600 : kind === 'turn' ? 1400 : state.index === count - 1 ? 2400 : 2000;
     return { from: start, to: end, kind, duration: Math.abs(end - start) / phaseLength * phaseDuration };
   });
 }

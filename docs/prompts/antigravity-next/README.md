@@ -1,5 +1,11 @@
 # Kế hoạch tiếp tục YSBK sau review — 22 chặng
 
+## Điều phối bàn giao 21/10/2026
+
+Đây là bộ prompt lịch sử 22 chặng. Trước khi dùng, đọc [session handoff](../../SESSION-HANDOFF.md) và [trạng thái hiện hành](../../CURRENT-STATE.md); không chạy lại toàn bộ chặng hoặc áp hướng dẫn deploy cũ một cách máy móc. Giao diện có [bộ thiết kế/prompt mới](../../mockups/stitch-ui-2026-10-21/HANDOFF.md) và đã xuất hiện source UI/QA trong workspace.
+
+Các ý tài khoản bạn đọc, đổi sách và chỉnh IP đang thảo luận, chưa được giao Antigravity triển khai. Giữ chức năng và dirty work, không subagent/commit/push/deploy khi chưa có chỉ dẫn hiện tại.
+
 > Điểm vào mới nhất ngày 20/10/2026: dùng [prompt tiếp tục sửa lỗi và đặt sách công khai](./continue-repair-and-public-reservation.md), theo [kế hoạch PR-0…PR-9](../../superpowers/plans/2026-10-20-public-reservation.md) và [thiết kế đã chốt](../../technical/public-reservation-design.md). Bắt đầu bằng kiểm chứng sửa lỗi hậu chặng 22 hiện có; không làm lại phần đã sửa đúng. Các prompt 13–22 và repair bên dưới là lịch sử/phụ thuộc, không ghi đè quy tắc đặt sách mới. Chưa có thay đổi code trong lượt viết kế hoạch/prompt này.
 
 > Theo yêu cầu mới sau review12, dùng prompt tổng để sửa carryover rồi tự làm tuần tự13–22. Mỗi chặng có checkpoint/test/review nội bộ, không cần người dùng giao lại; không subagent/commit/deploy. Giới hạn dữ liệu thật và các gate kiểm chứng vẫn giữ.
