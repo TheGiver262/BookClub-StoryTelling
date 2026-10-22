@@ -8,7 +8,7 @@ export function requireAuthenticated(actor?: AuthenticatedActor | null): Authent
   if (!actor || actor.role === 'ANONYMOUS') {
     throw new UnauthorizedError('Yêu cầu đăng nhập để truy cập tài nguyên này.', 'UNAUTHENTICATED');
   }
-  if (!actor.isActive) {
+  if (!actor.isActive || actor.isAlumni || actor.role === 'ALUMNI') {
     throw new ForbiddenError('Tài khoản đã bị khóa hoặc vô hiệu hóa bởi Quản trị viên.', 'ACCOUNT_DISABLED');
   }
   return actor;
@@ -36,10 +36,16 @@ export function requireInternalMember(actor?: AuthenticatedActor | null): Authen
     );
   }
 
-  if (current.role !== 'MEMBER' && current.role !== 'ADMIN') {
+  if (!['MEMBER','COLLABORATOR','MANAGER','ADMIN'].includes(current.role)) {
     throw new ForbiddenError('Yêu cầu quyền thành viên nội bộ CLB.', 'MEMBER_ROLE_REQUIRED');
   }
 
+  return current;
+}
+
+export function requireContentManager(actor?: AuthenticatedActor | null): AuthenticatedActor {
+  const current = requireInternalMember(actor);
+  if (!['ADMIN','MANAGER'].includes(current.role)) throw new ForbiddenError('Chỉ Quản lý hoặc ADMIN được duyệt và công khai nội dung.', 'CONTENT_MANAGER_REQUIRED');
   return current;
 }
 
@@ -85,6 +91,7 @@ export function toMemberDto(rawMember: Record<string, any>): MemberDto {
 
   return {
     id: String(rawMember.id),
+    isManager: !isAlumni && Boolean(rawMember.is_manager ?? rawMember.isManager),
     isCollaborator: Boolean(rawMember.is_collaborator ?? rawMember.isCollaborator),
     probationStartedOn: rawMember.probation_started_on ?? rawMember.probationStartedOn ?? null,
     probationEndsOn: rawMember.probation_ends_on ?? rawMember.probationEndsOn ?? null,

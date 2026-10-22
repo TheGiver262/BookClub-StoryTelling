@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '../lib/api-client';
 
-async function prepareImage(file: File) {
+export async function prepareImage(file: File) {
   if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 12*1024*1024) throw new Error('Chọn ảnh PNG, JPEG hoặc WebP dưới 12 MB.');
   const bitmap = await createImageBitmap(file);
   try {
@@ -29,7 +29,7 @@ function Field({label,name,value,onChange,type='text',required=false}: {label:st
 }
 
 export default function PublishingManager() {
-  const [section,setSection] = useState('books');
+  const [section,setSection] = useState('schedules');
   const [book,setBook] = useState(emptyBook);
   const [shift,setShift] = useState(emptyShift);
   const [event,setEvent] = useState(emptyEvent);
@@ -81,7 +81,7 @@ export default function PublishingManager() {
   const saveButton = <button disabled={busy} className="rounded-[14px] bg-ysbk-primary hover:bg-[#294C3A] px-5 py-2.5 text-sm font-semibold text-white shadow-soft-btn transition disabled:opacity-50">{busy?'Đang xử lý…':'Lưu thay đổi'}</button>;
   return <section className="rounded-[22px] border border-[#DCDED0] bg-[#FFFDF5] p-6 sm:p-8 space-y-5 shadow-soft-card">
     <div><h2 className="font-serif text-2xl font-bold text-[#35483C]">Quản lý nội dung công khai</h2><p className="mt-1 text-sm text-[#64705C]">Cập nhật tủ sách, lịch hẹn và thông tin CLB tại đây.</p></div>
-    <nav aria-label="Quản lý nội dung" className="flex gap-2 flex-wrap">{[['books','Sách & ảnh bìa'],['schedules','Lịch trực / nghỉ'],['events','Sự kiện'],['recruitment','Tuyển thành viên']].map(([key,label])=><button type="button" key={key} disabled={busy} onClick={()=>{imageTaskIdRef.current++; setBusy(false); setSection(key);setImage('');setError('');setMessage('');}} className={'rounded-[12px] px-4 py-2 text-sm font-medium transition disabled:opacity-50 '+(section===key?'bg-ysbk-primary text-white shadow-xs':'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]')}>{label}</button>)}</nav>
+    <nav aria-label="Quản lý nội dung" className="flex gap-2 flex-wrap">{[['schedules','Lịch trực / nghỉ'],['events','Sự kiện'],['recruitment','Tuyển thành viên']].map(([key,label])=><button type="button" key={key} disabled={busy} onClick={()=>{imageTaskIdRef.current++; setBusy(false); setSection(key);setImage('');setError('');setMessage('');}} className={'rounded-[12px] px-4 py-2 text-sm font-medium transition disabled:opacity-50 '+(section===key?'bg-ysbk-primary text-white shadow-xs':'bg-[#E8EDDF] text-[#35483C] hover:bg-[#DCDED0]')}>{label}</button>)}</nav>
     {error && <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-[12px] p-3">{error}</p>}{message && <p role="status" className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[12px] p-3">{message}</p>}
     {section==='books' && <>
       <form className="flex gap-2" onSubmit={e=>{e.preventDefault();void run(async()=>setBooks((await apiClient.listPublicReservationBooks({search:query,includeUnavailable:true,limit:50})).items),'Đã tải danh sách. Chọn sách để sửa hoặc thêm sách mới.');}}><input aria-label="Tìm sách để sửa" className={inputClass} placeholder="Tìm sách đã có để chỉnh sửa" value={query} onChange={e=>setQuery(e.target.value)}/><button className="px-5 border border-[#DCDED0] bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] font-semibold rounded-[14px] text-sm transition" disabled={busy}>Tìm</button></form>

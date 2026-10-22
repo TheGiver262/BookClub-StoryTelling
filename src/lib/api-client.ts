@@ -11,7 +11,7 @@ export interface AuthenticatedActor {
   userId: string;
   username: string;
   fullName: string;
-  role: 'ADMIN' | 'MEMBER' | 'GUEST';
+  role: 'ADMIN' | 'MANAGER' | 'MEMBER' | 'COLLABORATOR' | 'GUEST';
   isAlumni: boolean;
   isActive: boolean;
   memberId?: string;
@@ -234,6 +234,7 @@ export interface AlumniActivityDto {
 }
 
 export interface MemberDto {
+  isManager?: boolean;
   isCollaborator?: boolean;
   probationStartedOn?: string | null;
   probationEndsOn?: string | null;
@@ -2535,9 +2536,9 @@ export const apiClient = {
   },
 
   async createPublicReservation(
-    input: { titleId: string; scheduleId: string; fullName: string; phone: string; studentId?: string; university?: string; email?: string; captchaToken: string },
+    input: { titleId: string; quantity?: number; scheduleId: string; fullName: string; phone: string; studentId?: string; university?: string; email?: string; captchaToken: string },
     idempotencyKey?: string
-  ): Promise<{ reservation: any; lookupToken: string; isReplay?: boolean }> {
+  ): Promise<{ reservation: import('../server/reservations/types').PublicReservationDto; reservations: import('../server/reservations/types').PublicReservationDto[]; isReplay?: boolean }> {
     const headers: Record<string, string> = {};
     if (idempotencyKey) {
       headers['Idempotency-Key'] = idempotencyKey;

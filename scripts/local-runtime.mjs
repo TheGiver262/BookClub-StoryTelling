@@ -62,8 +62,21 @@ function jwt(s, role) {
   return `${head}.${body}.${signature}`;
 }
 
-function configure(s) {
-  writeFileSync(resolve(local, 'docker.env'), `POSTGRES_PASSWORD=${s.postgresPassword}\nAUTH_DB_PASSWORD=${s.authDatabasePassword}\nAUTH_JWT_SECRET=${s.authJwtSecret}\n`, { mode: 0o600 });
+export function readLocalGoogleClient(file = resolve(local, 'google-oauth-client.json')) {
+  if (!existsSync(file)) return null;
+  try {
+    const {web: client} = readJson(file);
+    if (!client || !/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(client.client_id)
+      || typeof client.client_secret !== 'string' || !/^[A-Za-z0-9_-]{16,256}$/.test(client.client_secret)
+      || !Array.isArray(client.redirect_uris) || !client.redirect_uris.includes(auth + '/callback')) throw Error();
+    return {clientId: client.client_id, clientSecret: client.client_secret};
+  } catch { throw new Error('Invalid local Google OAuth client configuration.'); }
+}
+
+export function configureLocal(s) {
+  validateLocalSettings(s);
+  const google = readLocalGoogleClient();
+  writeFileSync(resolve(local, 'docker.env'), `POSTGRES_PASSWORD=${s.postgresPassword}\nAUTH_DB_PASSWORD=${s.authDatabasePassword}\nAUTH_JWT_SECRET=${s.authJwtSecret}\nGOOGLE_ENABLED=${Boolean(google)}\nAUTH_DISABLE_SIGNUP=${!google}\nGOOGLE_CLIENT_ID=${google?.clientId || ''}\nGOOGLE_CLIENT_SECRET=${google?.clientSecret || ''}\n`, { mode: 0o600 });
   writeFileSync(resolve(local, 'init.sql'), `CREATE ROLE ysbk_auth_admin LOGIN PASSWORD '${s.authDatabasePassword}';
 CREATE DATABASE ysbk_auth OWNER ysbk_auth_admin;
 ALTER ROLE ysbk_auth_admin SET search_path = auth, public;
@@ -77,7 +90,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
   config.assets.directory = resolve(root, config.assets.directory);
   writeJson(workerConfigPath, config);
   const env = { DATABASE_URL: databaseUrl(s, 'ysbk_app'), SUPABASE_URL: 'http://127.0.0.1:55321', SUPABASE_ANON_KEY: jwt(s, 'anon'),
-    JWT_SECRET: s.appJwtSecret, RESERVATION_IP_SECRET: s.ipSecret, TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA', TURNSTILE_EXPECTED_HOSTNAME: 'localhost' };
+    JWT_SECRET: s.appJwtSecret, RESERVATION_IP_SECRET: s.ipSecret, TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA', TURNSTILE_EXPECTED_HOSTNAME: 'localhost', READER_GOOGLE_ENABLED: String(Boolean(google)) };
   writeFileSync(resolve(local, '.dev.vars'), Object.entries(env).map(([key, value]) => `${key}=${value}`).join('\n') + '\n', { mode: 0o600 });
 }
 
@@ -152,7 +165,7 @@ async function waitReady(path, seconds = 60) {
 
 async function up() {
   const s = settings(true);
-  configure(s);
+  configureLocal(s);
   compose(['up', '-d', '--wait', '--wait-timeout', '120']);
   await prepareDatabase(s);
   console.log('Build giao diện local với Turnstile test key...');

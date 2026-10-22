@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import type { Queryable } from '../finance/types.ts';
 import type { AuthenticatedActor } from '../types.ts';
-import { requireAdmin } from '../auth/policy.ts';
+import { requireAdmin,requireContentManager } from '../auth/policy.ts';
 import { BadRequestError, NotFoundError } from '../errors.ts';
 import { createBookTitle, createBookEdition, createBookCopy } from '../catalog/service.ts';
 import { recordAuditLog } from '../shared/audit.ts';
@@ -43,7 +43,7 @@ export async function saveImage(db: Queryable, image: unknown) {
 }
 
 export async function saveBook(db: Queryable, actor: AuthenticatedActor, input: any) {
-  requireAdmin(actor);
+  requireContentManager(actor);
   const actorId = actor.memberId || actor.userId;
   const title = text(input.title,255,true), description = text(input.description,6000);
   const authors = text(input.authors,1000).split(',').map(v=>v.trim()).filter(Boolean);
@@ -73,6 +73,7 @@ export async function saveBook(db: Queryable, actor: AuthenticatedActor, input: 
     if (!updated.rows.length) throw new BadRequestError('Ấn bản không thuộc đầu sách này.', 'INVALID_EDITION');
   } else editionId = (await createBookEdition(db,{titleId:id,publisher,coverImageUrl:cover},actorId)).id;
   for (const barcode of barcodes) await createBookCopy(db,{editionId,barcode,coverPrice:price,location:'KHO_THU_VIEN'},actorId);
+  await db.query('UPDATE book_titles SET content_version=content_version+1 WHERE id=$1',[id]);
   await recordAuditLog(db,{actorId,action:'SAVE_PUBLIC_BOOK',targetResource:'BOOK_TITLE',targetId:id,details:{copiesAdded:barcodes.length}});
   return {id,editionId,copiesAdded:barcodes.length};
 }

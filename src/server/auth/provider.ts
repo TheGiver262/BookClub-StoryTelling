@@ -90,13 +90,13 @@ export async function loginInternalMember(
     if (!testUser || testUser.passwordHash !== req.password) {
       throw new UnauthorizedError('Username hoặc mật khẩu không chính xác.', 'INVALID_CREDENTIALS');
     }
-    if (!testUser.isActive) {
+    if (!testUser.isActive || testUser.isAlumni) {
       throw new ForbiddenError('Tài khoản đã bị vô hiệu hóa.', 'ACCOUNT_DISABLED');
     }
 
     const isAlumni = Boolean(testUser.isAlumni);
     const isAdmin = isAlumni ? false : Boolean(testUser.isAdmin || testUser.role === 'ADMIN');
-    const role = isAdmin ? 'ADMIN' : (isAlumni ? 'ALUMNI' : 'MEMBER');
+    const role = isAdmin ? 'ADMIN' : testUser.isManager ? 'MANAGER' : testUser.isCollaborator ? 'COLLABORATOR' : 'MEMBER';
 
     const actor: AuthenticatedActor = {
       userId: testUser.userId,
@@ -163,7 +163,7 @@ export async function loginInternalMember(
       try {
         const pool = getDatabasePool(env);
         const queryRes = await pool.query(
-          `SELECT m.id, m.full_name, m.team, m.is_admin, m.is_alumni, m.is_active, m.is_collaborator, m.token_version, ii.username
+          `SELECT m.id, m.full_name, m.team, m.is_admin, m.is_manager, m.is_alumni, m.is_active, m.is_collaborator, m.token_version, ii.username
            FROM internal_identities ii
            JOIN members m ON ii.member_id = m.id
            WHERE ii.provider_subject = $1 AND ii.normalized_username = $2`,
@@ -184,13 +184,13 @@ export async function loginInternalMember(
       );
     }
 
-    if (!memberRow.is_active) {
+    if (!memberRow.is_active || memberRow.is_alumni) {
       throw new ForbiddenError('Tài khoản đã bị khóa hoặc vô hiệu hóa bởi Quản trị viên.', 'ACCOUNT_DISABLED');
     }
 
     const isAlumni = Boolean(memberRow.is_alumni);
     const isAdmin = isAlumni ? false : Boolean(memberRow.is_admin);
-    const role = isAdmin ? 'ADMIN' : (isAlumni ? 'ALUMNI' : 'MEMBER');
+    const role = isAdmin ? 'ADMIN' : memberRow.is_manager ? 'MANAGER' : memberRow.is_collaborator ? 'COLLABORATOR' : 'MEMBER';
 
     const actor: AuthenticatedActor = {
       userId: providerSub,

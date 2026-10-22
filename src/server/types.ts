@@ -1,4 +1,5 @@
-export type ActorRole = 'ADMIN' | 'MEMBER' | 'ALUMNI' | 'GUEST' | 'ANONYMOUS';
+// ALUMNI is accepted only when decoding historical tokens, never as an active role.
+export type ActorRole = 'ADMIN' | 'MANAGER' | 'MEMBER' | 'COLLABORATOR' | 'ALUMNI' | 'GUEST' | 'ANONYMOUS';
 
 export interface Env {
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -43,6 +44,7 @@ export interface AlumniActivityDto {
 }
 
 export interface MemberDto {
+  isManager?: boolean;
   isCollaborator?: boolean;
   probationStartedOn?: string | null;
   probationEndsOn?: string | null;

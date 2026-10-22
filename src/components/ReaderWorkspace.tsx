@@ -8,10 +8,10 @@ import {formatVND} from '../data/mockData';
 export default function ReaderWorkspace({initialMode='create',initialBookId}:{initialMode?:'create'|'lookup';initialBookId?:string}){
   const {reader,loading,error:sessionError,refresh,update,logout:signOut,requestSignIn}=useReaderSession();
   const [orders,setOrders]=useState<PublicReservationDto[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
-  const [fullName,setFullName]=useState(''),[phone,setPhone]=useState(''),[editing,setEditing]=useState(false),[legacy,setLegacy]=useState(false),[cancelId,setCancelId]=useState('');
+  const [fullName,setFullName]=useState(''),[phone,setPhone]=useState(''),[editing,setEditing]=useState(false),[cancelId,setCancelId]=useState('');
   useEffect(()=>{
     let active=true;
-    setOrders([]);setLegacy(false);setEditing(false);setCancelId('');
+    setOrders([]);setEditing(false);setCancelId('');
     setFullName(reader?.fullName||'');setPhone(reader?.phone||'');
     if(reader&&initialMode==='lookup') void apiClient.listReaderReservations().then(list=>{if(active) setOrders(list);}).catch(e=>{if(active){setError(e.message);if(e.status===401) void refresh();}});
     return()=>{active=false;};
@@ -23,7 +23,7 @@ export default function ReaderWorkspace({initialMode='create',initialBookId}:{in
   }
   async function logout(){
     setBusy(true);setError('');
-    try{await signOut();setOrders([]);setLegacy(false);}
+    try{await signOut();setOrders([]);}
     catch(e:any){setError(e.message);}finally{setBusy(false);}
   }
   async function cancel(){
@@ -32,13 +32,13 @@ export default function ReaderWorkspace({initialMode='create',initialBookId}:{in
     catch(e:any){setError(e.message);if(e.status===401) void refresh();}finally{setBusy(false);}
   }
   const labels:Record<string,string>={HELD:'Đang giữ chỗ',BORROWED:'Đã nhận sách',RETURNED:'Đã trả',CANCELLED:'Đã hủy',EXPIRED:'Hết hạn'};
-  if(initialMode==='create'&&reader) return <ReservationSection key={reader.id} compact initialBookId={initialBookId} initialMode="create" reader={reader}/>;
+  if(initialMode==='create'&&reader) return <ReservationSection key={reader.id} compact initialBookId={initialBookId} reader={reader}/>;
   return <section className="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
     {(error||sessionError)&&<p role="alert" className="p-4 rounded-control bg-rose-50 text-rose-800">{error||sessionError}</p>}
     {loading?<p role="status">Đang kiểm tra phiên bạn đọc…</p>:!reader?<div className="ui-card p-6 space-y-4">
       <h2 className="font-serif text-2xl">Đăng nhập bạn đọc</h2>
       <p>Đăng nhập Google để tạo tài khoản, đặt sách và quản lý các đơn của bạn.</p>
-      <button className="ui-btn ui-btn-primary" onClick={()=>requestSignIn()}>Đăng ký / Đăng nhập</button>
+      <button className="ui-btn ui-btn-primary" onClick={()=>requestSignIn()}>Đăng nhập</button>
       <p className="text-sm">Phiên được ghi nhớ trên trình duyệt này tối đa 30 ngày. Đăng nhập mới sẽ kết thúc phiên cũ.</p>
     </div>:<>
       <div className="ui-card p-5 flex flex-wrap items-center gap-3 justify-between">
@@ -62,9 +62,5 @@ export default function ReaderWorkspace({initialMode='create',initialBookId}:{in
         </article>)}
       </div>}
     </>}
-    {!loading&&reader&&initialMode==='lookup'&&<div className="space-y-3">
-      <button className="ui-btn ui-btn-ghost" onClick={()=>setLegacy(!legacy)}>Tra đơn bằng liên kết / mã bí mật đã lưu</button>
-      {(legacy||typeof window!=='undefined'&&window.location.hash.startsWith('#token='))&&<ReservationSection key={reader.id} compact initialMode="lookup" reader={reader}/>}
-    </div>}
   </section>;
 }

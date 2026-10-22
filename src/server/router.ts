@@ -3,6 +3,7 @@ import {handleReaderRequest,resolveReader,assertReaderOrigin} from './readers/se
 import {listBookmarks,setBookmark} from './readers/library.ts';
 import { changeMembership } from './members/lifecycle.ts';
 import { saveBook, savePickup, saveRecruitment, closePickupDay } from './publishing/service.ts';
+import {previewCatalogImport,importCatalog,createCatalogSubmission,updateCatalogSubmission} from './catalog/submissions.ts';
 import type { Env, AuthenticatedActor, MemberDto } from './types.ts';
 import {
   formatErrorResponse,
@@ -15,6 +16,7 @@ import {
 import { extractBearerToken, extractSessionCookie, verifySessionToken } from './auth/tokens.ts';
 import {
   requireInternalMember,
+  requireContentManager,
   requireAdmin,
   requireAuthenticated,
   toAlumniActivityDto,
@@ -181,7 +183,7 @@ import {
   getAnalyticsSummary,
 } from '../modules/audit/queries.ts';
 import {
-  createReservation,
+  createReservationBatch,
   getReservationByToken,
   cancelReservation,
   fulfillReservation,
@@ -303,7 +305,7 @@ export async function resolveActorFromRequest(
     try {
       const pool = getDatabasePool(env);
       const res = await pool.query(
-        'SELECT id, username, is_active, is_alumni, is_admin, is_collaborator, token_version FROM members WHERE id = $1',
+        'SELECT id, username, is_active, is_alumni, is_admin, is_manager, is_collaborator, token_version FROM members WHERE id = $1',
         [claims.memberId]
       );
       if (res.rows.length > 0) {
@@ -319,6 +321,7 @@ export async function resolveActorFromRequest(
   }
 
   // Reject disabled accounts
+  if (liveMember.is_alumni) throw new ForbiddenError('Tài khoản đã bị khóa và chỉ còn lịch sử nghiệp vụ.', 'ACCOUNT_DISABLED');
   if (!liveMember.is_active) {
     return null;
   }
@@ -333,7 +336,7 @@ export async function resolveActorFromRequest(
     userId: claims.userId || (claims as any).sub || liveMember.id,
     memberId: liveMember.id,
     username: liveMember.username,
-    role: liveMember.is_admin ? 'ADMIN' : 'MEMBER',
+    role: liveMember.is_admin ? 'ADMIN' : liveMember.is_manager ? 'MANAGER' : liveMember.is_collaborator ? 'COLLABORATOR' : 'MEMBER',
     isAlumni: Boolean(liveMember.is_alumni),
     isCollaborator: Boolean(liveMember.is_collaborator),
     isActive: Boolean(liveMember.is_active),
@@ -392,6 +395,38 @@ export async function handleRequest(
     if (method === 'GET' && path === '/api/v1/public/recruitment-notice') {
       const result = await getDb(injected,env).query<any>("SELECT value FROM club_public_settings WHERE key='recruitment' AND value->>'status' <> 'DRAFT'");
       return Response.json({data:result.rows[0]?.value || null},{headers:{'Cache-Control':'no-store'}});
+    }
+    if (path.startsWith('/api/v1/catalog/submissions') || path.startsWith('/api/v1/catalog/import')) {
+      const actor=requireInternalMember(await resolveActorFromRequest(request,env,injected)),db=getDb(injected,env);
+      const json=(data:unknown)=>Response.json({data},{headers:{'Cache-Control':'no-store'}});
+      if(method==='GET'&&path==='/api/v1/catalog/submissions'){
+        const query=(url.searchParams.get('search')||'').slice(0,255),page=Math.max(1,Math.min(10000,Number(url.searchParams.get('page'))||1)),status=url.searchParams.get('status')||'';
+        const values=[null,'%'+query+'%',status];
+        const filter="WHERE ($1::uuid IS NULL OR created_by=$1) AND payload->>'title' ILIKE $2 AND ($3='' OR status=$3)";
+        const rows=await db.query('SELECT * FROM catalog_submissions '+filter+' ORDER BY updated_at DESC,id LIMIT 30 OFFSET $4',[...values,(page-1)*30]);
+        const total=(await db.query<{count:string}>('SELECT count(*) FROM catalog_submissions '+filter,values)).rows[0].count;
+        return json({items:rows.rows,total:Number(total),page});
+      }
+      if(method==='POST'&&(path==='/api/v1/catalog/import/preview'||path==='/api/v1/catalog/import/confirm')){
+        assertReaderOrigin(request);
+        const length=Number(request.headers.get('content-length'));if(length>5*1024*1024+200000)throw new BadRequestError('File quá lớn.','FILE_TOO_LARGE');
+        const form=await request.formData(),file=form.get('file');
+        if(!file||typeof file==='string'||!file.name.toLowerCase().endsWith('.xlsx')||file.size>5*1024*1024)throw new BadRequestError('Chọn file .xlsx dưới 5 MB.','INVALID_XLSX');
+        const bytes=Buffer.from(await file.arrayBuffer());
+        if(path.endsWith('/preview'))return json(await previewCatalogImport(db,actor,bytes));
+        if(form.get('confirm')!=='true')throw new BadRequestError('Cần xem trước và xác nhận nhập.','IMPORT_CONFIRMATION_REQUIRED');
+        return json(await withTransaction(db,tx=>importCatalog(tx,actor,bytes,file.name)));
+      }
+      if(method==='POST'){
+        assertReaderOrigin(request);
+        const raw=await request.text();if(raw.length>300000)throw new BadRequestError('Nội dung quá lớn.','PAYLOAD_TOO_LARGE');
+        let body:any;try{body=JSON.parse(raw);}catch{throw new BadRequestError('Nội dung không hợp lệ.','INVALID_JSON');}
+        if(!body||typeof body!=='object'||Array.isArray(body))throw new BadRequestError('Nội dung không hợp lệ.','INVALID_JSON');
+        if(path==='/api/v1/catalog/submissions')return json(await withTransaction(db,tx=>createCatalogSubmission(tx,actor,body)));
+        const match=path.match(/^\/api\/v1\/catalog\/submissions\/([a-f0-9-]{36})$/i);
+        if(match)return json(await withTransaction(db,tx=>updateCatalogSubmission(tx,actor,match[1],body)));
+      }
+      throw new NotFoundError('Không tìm thấy chức năng.','NOT_FOUND');
     }
     if (path.startsWith('/api/v1/admin/publishing')) {
       const admin = requireAdmin(await resolveActorFromRequest(request,env,injected));
@@ -593,7 +628,7 @@ export async function handleRequest(
         const pool = getDatabasePool(env);
         const res = await pool.query(
           `SELECT id, full_name, username, team, role_title, school_year, phone,
-                  is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, is_collaborator, probation_started_on, probation_ends_on, collaborator_deleted_at, created_at
+                  is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_manager, is_active, is_collaborator, probation_started_on, probation_ends_on, collaborator_deleted_at, created_at
            FROM members
            ORDER BY created_at ASC`
         );
@@ -762,6 +797,7 @@ export async function handleRequest(
 
       const memberId = path.replace('/api/v1/members/', '').replace('/status', '');
       const body = (await request.json().catch(() => ({}))) as any;
+      if(body?.isAlumni===true) throw new BadRequestError('Vai trò cựu thành viên đã bỏ. Hãy khóa tài khoản và giữ lịch sử.','RETIRED_ROLE_REMOVED');
 
       if (!body || typeof body !== 'object') {
         throw new BadRequestError('Dữ liệu yêu cầu không hợp lệ.', 'INVALID_BODY', requestId);
@@ -780,6 +816,7 @@ export async function handleRequest(
           throw new NotFoundError('Không tìm thấy thành viên.', 'MEMBER_NOT_FOUND', requestId);
         }
         if (member.collaborator_deleted_at) throw new BadRequestError('Tài khoản cộng tác viên đã được xóa.','COLLABORATOR_DELETED');
+        if (member.is_alumni) throw new BadRequestError('Tài khoản cũ đã khóa; không thể khôi phục qua thay đổi trạng thái.','RETIRED_ACCOUNT_LOCKED');
         if (member.is_collaborator && (body.isAdmin === true || body.isAlumni === true)) throw new BadRequestError('Cần hoàn tất đánh giá cộng tác viên trước khi đổi trạng thái.','COLLABORATOR_STAGE_REQUIRED');
 
         let targetAlumni: boolean;
@@ -808,6 +845,7 @@ export async function handleRequest(
         if (typeof body.isActive === 'boolean') member.is_active = body.isActive;
         member.is_alumni = targetAlumni;
         member.is_admin = targetAdmin;
+        if(targetAdmin) member.is_manager=false;
 
         member.token_version = (member.token_version || 1) + 1;
         updatedMember = member;
@@ -821,6 +859,7 @@ export async function handleRequest(
         }
         const cur = curRes.rows[0];
         if (cur.collaborator_deleted_at) throw new BadRequestError('Tài khoản cộng tác viên đã được xóa.','COLLABORATOR_DELETED');
+        if (cur.is_alumni) throw new BadRequestError('Tài khoản cũ đã khóa; không thể khôi phục qua thay đổi trạng thái.','RETIRED_ACCOUNT_LOCKED');
         if (cur.is_collaborator && (body.isAdmin === true || body.isAlumni === true)) throw new BadRequestError('Cần hoàn tất đánh giá cộng tác viên trước khi đổi trạng thái.','COLLABORATOR_STAGE_REQUIRED');
 
         let targetAlumni: boolean;
@@ -849,10 +888,11 @@ export async function handleRequest(
            SET is_active = COALESCE($1, is_active),
                is_alumni = $2,
                is_admin = $3,
+               is_manager = CASE WHEN $3 THEN FALSE ELSE is_manager END,
                token_version = token_version + 1
            WHERE id = $4
            RETURNING id, full_name, username, team, role_title, school_year, phone,
-                     is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_active, is_collaborator,
+                     is_eligible_main_duty, has_paid_fee, is_alumni, is_admin, is_manager, is_active, is_collaborator,
                      probation_started_on, probation_ends_on, collaborator_deleted_at, token_version, created_at`,
           [
             typeof body.isActive === 'boolean' ? body.isActive : null,
@@ -3199,7 +3239,7 @@ export async function handleRequest(
       if(Object.keys(body).some(key=>!['bookId','authorName','authorEmail','rating','content'].includes(key)) || typeof body.content!=='string' || /<\s*(img|picture|svg|video|iframe|object)\b|!\[[^\]]*\]\(|data:image\//i.test(body.content)) throw new BadRequestError('Nhận xét chỉ hỗ trợ chữ, không hỗ trợ ảnh hay tệp đính kèm.','TEXT_REVIEW_ONLY');
       const internal = await resolveActorFromRequest(request, env, injected);
       const review = await withTransaction(db,async tx=>{
-        if(internal&&!internal.isAlumni&&['ADMIN','MEMBER'].includes(internal.role)) return submitBookReview(tx,internal,{...body,authorName:internal.username||'CLB Yêu Sách Bách Khoa Hà Nội',authorEmail:internal.email} as any);
+        if(internal&&!internal.isAlumni&&['ADMIN','MANAGER','MEMBER','COLLABORATOR'].includes(internal.role)) return submitBookReview(tx,internal,{...body,authorName:internal.username||'CLB Yêu Sách Bách Khoa Hà Nội',authorEmail:internal.email} as any);
         const reader=(await resolveReader(request,()=>tx,true,true))!;
         const actor:AuthenticatedActor={userId:reader.id,email:reader.email,role:'GUEST',isActive:true,isAlumni:false,tokenVersion:1};
         return submitBookReview(tx,actor,{...body,authorName:reader.fullName,authorEmail:reader.email} as any);
@@ -3279,7 +3319,7 @@ export async function handleRequest(
     // 96. Content: Create Public Post (Member nội bộ)
     if (method === 'POST' && path === '/api/v1/moderation/posts') {
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireAdmin(actor);
+      const member = requireContentManager(actor);
       const db = getDb(injected, env);
       const body = await parseJsonObject(request, requestId);
       const post = await createPublicPost(db, member, body as any);
@@ -3294,7 +3334,7 @@ export async function handleRequest(
     if (method === 'POST' && postPublishMatch) {
       const postId = postPublishMatch[1];
       const actor = await resolveActorFromRequest(request, env, injected);
-      const member = requireAdmin(actor);
+      const member = requireContentManager(actor);
       const db = getDb(injected, env);
       const post = await publishPublicPost(db, member, postId);
       return new Response(JSON.stringify({ data: post }), {
@@ -3563,10 +3603,11 @@ export async function handleRequest(
       // 2. Tạo đơn giữ chỗ trong transaction (PRF-04)
       const result = await withTransaction(db, async (tx) => {
         const current=(await resolveReader(request,()=>tx,true,true))!;
-        return await createReservation(
+        return await createReservationBatch(
           tx,
           {
             titleId: body?.titleId,
+            quantity: body?.quantity,
             scheduleId: body?.scheduleId,
             fullName: current.fullName,
             phone: current.phone!,

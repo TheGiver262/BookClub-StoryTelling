@@ -11,6 +11,9 @@ export async function getReservationIntent(payload: object): Promise<string> {
   return key;
 }
 
-export function clearReservationIntent(): void {
-  try { sessionStorage.removeItem(storageKey); } catch {}
+export function clearReservationIntent(completedKey?: string): void {
+  try {
+    if (completedKey && JSON.parse(sessionStorage.getItem(storageKey) || 'null')?.key !== completedKey) return;
+    sessionStorage.removeItem(storageKey);
+  } catch {}
 }

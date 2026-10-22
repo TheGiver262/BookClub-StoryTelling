@@ -81,8 +81,8 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       created_at: new Date().toISOString(),
     });
   });
-  it('Chỉ ADMIN được kiểm duyệt review, MEMBER không được vượt qua quyền này',async()=>{
-    await assert.rejects(()=>moderateBookReview(db,mockMemberActor,'review',{decision:'APPROVED'}),(error:any)=>error.errorCode==='ADMIN_REQUIRED');
+  it('Quản lý/ADMIN kiểm duyệt review, MEMBER không được vượt quyền',async()=>{
+    await assert.rejects(()=>moderateBookReview(db,mockMemberActor,'review',{decision:'APPROVED'}),(error:any)=>error.errorCode==='CONTENT_MANAGER_REQUIRED');
   });
 
   it('Gate 1 (G-guest-session-barrier): Người dùng ẩn danh (Anon) gửi review bị chặn 401 Unauthorized', async () => {
@@ -252,7 +252,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
       },
       (err: any) => {
         assert.equal(err.name, 'ForbiddenError');
-        assert.equal(err.errorCode, 'ADMIN_REQUIRED');
+        assert.equal(err.errorCode, 'GUEST_ACCESS_DENIED');
         assert.equal(err.statusCode, 403);
         return true;
       }
@@ -295,7 +295,7 @@ describe('Stage 20: Content, Book Reviews, Moderation & SEO Security (FR-08)', (
     assert.equal(initialList.length, 0);
 
     // Xuất bản bài viết
-    const published = await publishPublicPost(db, mockAdminActor, post.id);
+    const published = await publishPublicPost(db, {...mockAdminActor,role:'MANAGER'}, post.id);
     assert.equal(published.status, 'PUBLISHED');
 
     // Lấy bài viết công khai theo slug

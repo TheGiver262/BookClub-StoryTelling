@@ -43,5 +43,5 @@ test('cộng tác viên có quyền thành viên; chỉ quản lý quyết đị
   await assert.rejects(()=>changeMembership(mock({}),collaborator,'ctv',{action:'DELETE_COLLABORATOR'}));
   await assert.rejects(()=>changeMembership(mock({is_collaborator:true,is_active:true,probation_complete:false}),admin,'ctv',{action:'PROMOTE',passed:true,evaluation:'Đánh giá đạt'}),/đủ một tháng/);
   await assert.rejects(()=>changeMembership(mock({is_collaborator:true,is_active:true,probation_complete:true}),admin,'ctv',{action:'PROMOTE',passed:false,evaluation:'Đánh giá đạt'}),/xác nhận/);
-  await assert.rejects(()=>changeMembership(mock({is_collaborator:false}),admin,'member',{action:'DELETE_COLLABORATOR'}),/cựu thành viên/);
+  await assert.rejects(()=>changeMembership(mock({is_collaborator:false}),admin,'member',{action:'DELETE_COLLABORATOR'}),/khóa truy cập/);
 });

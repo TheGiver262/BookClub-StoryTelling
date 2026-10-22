@@ -16,6 +16,8 @@ dist/
 .dev.vars.*
 *.pem
 *.key
+client_secret*.json
+google-oauth-client*.json
 
 # Review & test artifacts
 .review-artifacts/

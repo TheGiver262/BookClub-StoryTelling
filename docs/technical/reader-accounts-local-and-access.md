@@ -1,5 +1,9 @@
 # Tài khoản bạn đọc: vận hành local và cổng nội bộ
 
+## Cập nhật 22/10: đặt nhiều bản và không dùng mã bí mật trong UI
+
+Có +/- cho 1–3 bản theo tồn và hạn mức; mỗi bản sinh một đơn/mã riêng trong cùng transaction. API tạo trả `reservation` tương thích và danh sách `reservations`, không trả lookup token. Thành công xóa intent hiện hành, lỗi mạng giữ key để retry. UI quản lý/hủy qua tài khoản ở Sách của tôi; mã/token legacy còn trong backend chỉ để tương thích lịch sử, không mở quyền truy cập vượt chủ tài khoản. [Luồng sách/duyệt và bằng chứng](catalog-import-and-moderation.md).
+
 ## Quyết định và hành vi
 
 Ngày 21/10/2026, chủ sản phẩm yêu cầu tài khoản bạn đọc trước khi đặt, chọn **chỉ Google** cho bản đầu và **subdomain riêng + Cloudflare Access** cho nội bộ. [Thiết kế](reader-accounts-design-2026-10-21.md) thay chính sách đặt không đăng nhập của tài liệu cũ; hạn mức IP/SĐT, cọc, nhận/giao/trả giữ nguyên.
@@ -28,7 +32,9 @@ Ngày 21/10/2026, chủ sản phẩm yêu cầu tài khoản bạn đọc trư�
 
 ## Cấu hình Google thật còn thiếu
 
-Hiện local dùng GoTrue Docker và **chưa bật Google**. App trả `READER_GOOGLE_UNCONFIGURED`, UI báo đang cấu hình; không có nút giả thành công, không seed reader vào database thao tác để vượt gate.
+**Cập nhật 22/10/2026:** local dùng GoTrue Docker đã bật Google với OAuth client do chủ sản phẩm cung cấp. HTTP đã xác nhận status enabled và chuyển hướng app → Auth → Google với callback `http://127.0.0.1:55321/auth/v1/callback`. Chưa có đăng nhập Google thật hoặc bằng chứng hai trình duyệt; không seed reader để vượt gate. Các mô tả chưa bật Google bên dưới là lịch sử trước cập nhật này.
+
+File gốc đã chuyển vào `.local/ysbk/google-oauth-client.json`. Tuyệt đối không commit/push credential hoặc các bản sao. `.gitignore` bỏ qua `.local/`, `client_secret*.json`, `google-oauth-client*.json`; trước commit vẫn phải kiểm tra staging, không dùng `git add -f` cho các file này. `scripts/local-runtime.mjs` tự đọc file local khi sinh cấu hình; không sao chép Client Secret sang Worker/frontend. Khi thiếu file, Google mặc định tắt. Local gateway chặn đăng ký email/password qua `/auth/v1/signup`; OAuth Google vẫn có thể tạo bạn đọc, đăng nhập nội bộ tiếp tục dùng tài khoản CLB đã cấp.
 
 Người dùng đã xác nhận trong chat: **chưa có tên miền, Supabase project cloud hoặc Google OAuth client**. Chưa có dữ liệu cấu hình thật để tiếp tục bật tích hợp; không tự tạo/mua/deploy tài nguyên ngoài.
 

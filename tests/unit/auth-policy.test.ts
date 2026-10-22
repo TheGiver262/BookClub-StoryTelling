@@ -127,12 +127,12 @@ test('G-policy 5: Admin can access both internal member and admin operations', (
 test('G-policy 6: Alumni member is blocked from operational desk & mutations', () => {
   assert.throws(
     () => requireInternalMember(MOCK_ALUMNI),
-    /Cựu thành viên không có quyền thao tác nghiệp vụ quầy sách/
+    /Tài khoản đã bị khóa/
   );
 
   assert.throws(
     () => requireAdmin(MOCK_ALUMNI),
-    /Cựu thành viên không có quyền Quản trị viên/
+    /Tài khoản đã bị khóa/
   );
 });
 
@@ -148,7 +148,7 @@ test('G-policy 6b: Conflicting actor with isAlumni: true and role: ADMIN is stri
 
   assert.throws(
     () => requireAdmin(conflictingActor),
-    /Cựu thành viên không có quyền Quản trị viên/
+    /Tài khoản đã bị khóa/
   );
 });
 

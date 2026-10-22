@@ -280,7 +280,7 @@ test('S03-05: Conflicting { isAlumni: true, isAdmin: true } payload is rejected 
   const res = await handleRequest(patchReq, TEST_ENV, fixtures);
   assert.strictEqual(res.status, 400);
   const data: any = await res.json();
-  assert.strictEqual(data.error.code, 'ALUMNI_CANNOT_BE_ADMIN');
+  assert.strictEqual(data.error.code, 'RETIRED_ROLE_REMOVED');
 });
 
 test('G-policy/HTTP 3: Member cannot modify member status, only Admin can PATCH /status and revokes sessions', async () => {
@@ -306,7 +306,7 @@ test('G-policy/HTTP 3: Member cannot modify member status, only Admin can PATCH 
         Authorization: `Bearer ${memberToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ isAlumni: true }),
+      body: JSON.stringify({ isActive: false }),
     }
   );
   const memberPatchRes = await handleRequest(patchByMember, TEST_ENV, fixtures);
@@ -333,7 +333,7 @@ test('G-policy/HTTP 3: Member cannot modify member status, only Admin can PATCH 
         Authorization: `Bearer ${adminToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ isAlumni: true }),
+      body: JSON.stringify({ isActive: false }),
     }
   );
   const adminPatchRes = await handleRequest(patchByAdmin, TEST_ENV, fixtures);
@@ -384,96 +384,24 @@ test('S03-04: Logout invalidates token and subsequent /auth/me returns 401', asy
   assert.strictEqual(afterRes.status, 401, 'Token must be revoked after logout');
 });
 
-test('G-policy/HTTP 4: Alumni endpoint returns only safe allowlisted fields without financial or attendee data', async () => {
-  const fixtures = createFixtures();
-  const alumniActor: AuthenticatedActor = {
-    userId: 'usr_alumni',
-    memberId: '00000000-0000-0000-0000-000000000005',
-    username: 'thang.cuu',
-    role: 'ALUMNI',
-    team: 'HAU_CAN',
-    isActive: true,
-    isAlumni: true,
-    tokenVersion: 1,
-  };
-  const alumniToken = await signSessionToken(alumniActor, TEST_SECRET);
-
-  const req = new Request('http://localhost:8787/api/v1/alumni/activities', {
-    headers: { Authorization: `Bearer ${alumniToken}` },
-  });
-  const res = await handleRequest(req, TEST_ENV, fixtures);
-  assert.strictEqual(res.status, 200);
-
-  const body: any = await res.json();
-  assert.ok(Array.isArray(body.data));
-  assert.ok(body.data.length >= 1);
-
-  const item = body.data[0];
-  assert.ok(item.id);
-  assert.ok(item.title);
-  assert.ok(item.description);
-  assert.ok(item.activityDate);
-  assert.ok(item.location);
-
-  // Strict check: No budget, fund_id, or internal notes
-  assert.strictEqual(item.internal_budget, undefined);
-  assert.strictEqual(item.fund_id, undefined);
-  assert.strictEqual(item.organizer_notes, undefined);
+test('G-policy/HTTP 4: retired accounts have no internal activity access', async () => {
+ const fixtures=createFixtures();
+ const actor:AuthenticatedActor={userId:'usr_alumni',memberId:'00000000-0000-0000-0000-000000000005',username:'thang.cuu',role:'ALUMNI',team:'HAU_CAN',isActive:true,isAlumni:true,tokenVersion:1};
+ const token=await signSessionToken(actor,TEST_SECRET);
+ for(const path of ['/api/v1/alumni/activities','/api/v1/members']){
+  const response=await handleRequest(new Request('http://localhost:8787'+path,{headers:{Authorization:'Bearer '+token}}),TEST_ENV,fixtures);
+  assert.equal(response.status,403);assert.equal((await response.json() as any).error.code,'ACCOUNT_DISABLED');
+ }
 });
 
-test('G-policy/HTTP 5: S04-05 & S04-07 regressions - Alumni activities excludes drafts and Alumni cannot be patched to Admin', async () => {
-  const fixtures = createFixtures();
-  const adminActor: AuthenticatedActor = {
-    userId: 'usr_admin',
-    memberId: '00000000-0000-0000-0000-000000000001',
-    username: 'dung.bcn',
-    role: 'ADMIN',
-    team: 'BAN_CHU_NHIEM',
-    isActive: true,
-    isAlumni: false,
-    tokenVersion: 1,
-  };
-  const adminToken = await signSessionToken(adminActor, TEST_SECRET);
-
-  // S04-07: Thử thăng cấp cựu thành viên thành Admin -> 400 ALUMNI_CANNOT_BE_ADMIN
-  const patchAlumniToAdminReq = new Request(
-    'http://localhost:8787/api/v1/members/00000000-0000-0000-0000-000000000005/status',
-    {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ isAdmin: true }),
-    }
-  );
-  const patchRes = await handleRequest(patchAlumniToAdminReq, TEST_ENV, fixtures);
-  assert.strictEqual(patchRes.status, 400);
-  const patchBody: any = await patchRes.json();
-  assert.strictEqual(patchBody.error.code, 'ALUMNI_CANNOT_BE_ADMIN');
-
-  // S04-05: Alumni chỉ đọc activities đã approved, loại bỏ hoàn toàn PLANNED/draft
-  const alumniActor: AuthenticatedActor = {
-    userId: 'usr_alumni',
-    memberId: '00000000-0000-0000-0000-000000000005',
-    username: 'thang.cuu',
-    role: 'ALUMNI',
-    team: 'HAU_CAN',
-    isActive: true,
-    isAlumni: true,
-    tokenVersion: 1,
-  };
-  const alumniToken = await signSessionToken(alumniActor, TEST_SECRET);
-  const alumniReq = new Request('http://localhost:8787/api/v1/alumni/activities', {
-    headers: { Authorization: `Bearer ${alumniToken}` },
-  });
-  const alumniRes = await handleRequest(alumniReq, TEST_ENV, fixtures);
-  assert.strictEqual(alumniRes.status, 200);
-  const alumniBody: any = await alumniRes.json();
-  assert.strictEqual(alumniBody.data.length, 1);
-  assert.strictEqual(alumniBody.data[0].id, 'act_001');
-  // Không có act_draft!
-  assert.ok(!alumniBody.data.some((a: any) => a.id === 'act_draft'));
+test('G-policy/HTTP 5: retired accounts have no internal activity access', async () => {
+ const fixtures=createFixtures();
+ const actor:AuthenticatedActor={userId:'usr_alumni',memberId:'00000000-0000-0000-0000-000000000005',username:'thang.cuu',role:'ALUMNI',team:'HAU_CAN',isActive:true,isAlumni:true,tokenVersion:1};
+ const token=await signSessionToken(actor,TEST_SECRET);
+ for(const path of ['/api/v1/alumni/activities','/api/v1/members']){
+  const response=await handleRequest(new Request('http://localhost:8787'+path,{headers:{Authorization:'Bearer '+token}}),TEST_ENV,fixtures);
+  assert.equal(response.status,403);assert.equal((await response.json() as any).error.code,'ACCOUNT_DISABLED');
+ }
 });
 
 test('G-policy/HTTP 6: Finance Cash Session RBAC - Guests and Alumni are forbidden from cash desk endpoints', async () => {

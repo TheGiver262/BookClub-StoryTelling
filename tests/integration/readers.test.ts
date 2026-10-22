@@ -2,6 +2,7 @@ import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {DbHarness} from './db-harness.ts';
 import {handleRequest} from '../../src/server/router.ts';
+import {deriveReservationLookupToken} from '../../src/server/reservations/rules.ts';
 
 const h=new DbHarness();
 const env={NODE_ENV:'test',SUPABASE_URL:'https://auth.example.invalid',SUPABASE_ANON_KEY:'test',READER_GOOGLE_ENABLED:'true'};
@@ -67,6 +68,8 @@ test('đơn mới thuộc tài khoản server; người khác không đọc/hủ
   const reserve=(cookie:string)=>handleRequest(new Request(origin+'/api/v1/public/reservations',{method:'POST',headers:{Cookie:cookie,Origin:origin,'Content-Type':'application/json','Idempotency-Key':'reader-owned-intent'},body:JSON.stringify(body)}),{...env,RESERVATION_IP_SECRET:'reader_test_ip_secret_32_characters',TURNSTILE_SECRET_KEY:'test'},{...fixtures(),now:new Date('2029-12-31T00:00:00Z'),clientIp:'192.0.2.201',turnstileFetch:async()=>Response.json({success:true,action:'reservation'})} as any);
   const created=await reserve(session);assert.equal(created.status,201,await created.clone().text());
   const result=await created.json() as any;
+  assert.equal(result.lookupToken,undefined);
+  const legacyToken=deriveReservationLookupToken('reader-owned-intent','0912345678','reader_test_ip_secret_32_characters').token;
   const row=(await db.query('SELECT full_name,phone,reader_account_id FROM reservations WHERE id=$1',[result.reservation.id])).rows[0];assert.equal(row.full_name,'Chủ đơn hợp lệ');assert.equal(row.phone,'0912345678');assert(row.reader_account_id);
   const list=(cookie:string)=>handleRequest(new Request(origin+'/api/v1/readers/reservations',{headers:{Cookie:cookie}}),env,fixtures() as any);
   assert.equal((await (await list(session)).json() as any).data.length,1);
@@ -74,7 +77,7 @@ test('đơn mới thuộc tài khoản server; người khác không đọc/hủ
   assert.equal((await (await list(other)).json() as any).data.length,0);
   const denied=await handleRequest(new Request(origin+'/api/v1/readers/reservations/'+result.reservation.id+'/cancel',{method:'POST',headers:{Cookie:other,Origin:origin,'Content-Type':'application/json'},body:'{}'}),env,fixtures() as any);assert.equal(denied.status,404);
   for(const method of ['GET','POST']) {
-    const response=await handleRequest(new Request(origin+'/api/v1/public/reservation'+(method==='POST'?'/cancel':''),{method,headers:{Cookie:other,Origin:origin,Authorization:'Bearer '+result.lookupToken,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})}),env,fixtures() as any);assert.equal(response.status,404);
+    const response=await handleRequest(new Request(origin+'/api/v1/public/reservation'+(method==='POST'?'/cancel':''),{method,headers:{Cookie:other,Origin:origin,Authorization:'Bearer '+legacyToken,'Content-Type':'application/json'},...(method==='POST'?{body:'{}'}:{})}),env,fixtures() as any);assert.equal(response.status,404);
   }
   const replay=await reserve(session);assert.equal(replay.status,200);
   await db.query("UPDATE reader_accounts SET full_name='Chủ khác',phone='0912345678' WHERE provider_subject='google-reader-2'");

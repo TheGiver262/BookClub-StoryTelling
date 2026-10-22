@@ -56,7 +56,7 @@ test('PG: tuyển thành viên nháp không lộ công khai; mở/đóng cập n
   assert.equal(response.status,200);assert.equal((await(await publicRequest()).json() as any).data.status,'CLOSED');
 });
 
-test('PG: CTV đủ tháng và đánh giá đạt mới thành thành viên; thành viên rời CLB phải thành cựu',async()=>{
+test('PG: CTV đủ tháng và đánh giá đạt mới thành thành viên; rời CLB khóa truy cập và giữ lịch sử',async()=>{
   const pool=h.getPool();
   const ctv=(await pool.query("INSERT INTO members (full_name,username,gen,team,role_title,school_year,phone,is_collaborator,probation_started_on,probation_ends_on) VALUES ('CTV kiểm thử','ctv-trial','TEST','HAU_CAN','Cộng tác viên','TEST','0900000099',true,CURRENT_DATE,(CURRENT_DATE+INTERVAL '1 month')::date) RETURNING *")).rows[0];
   await assert.rejects(()=>withTransaction(pool,db=>changeMembership(db,actor,ctv.id,{action:'PROMOTE',passed:true,evaluation:'Đạt thử thách'})),/đủ một tháng/);
@@ -69,8 +69,8 @@ test('PG: CTV đủ tháng và đánh giá đạt mới thành thành viên; th�
   const env={JWT_SECRET:secret,DATABASE_URL:process.env.TEST_DATABASE_URL,NODE_ENV:'test'};
   try {const response=await handleRequest(new Request('http://local/api/v1/auth/me',{headers:{Authorization:'Bearer '+token}}),env);assert.equal(response.status,401);}
   finally{await closeDatabasePool(env);}
-  await assert.rejects(()=>withTransaction(pool,db=>changeMembership(db,actor,ctv.id,{action:'DELETE_COLLABORATOR',confirmUsername:ctv.username})),/cựu thành viên/);
-  const alumni=await withTransaction(pool,db=>changeMembership(db,actor,ctv.id,{action:'RETIRE'}));assert.equal(alumni.isAlumni,true);assert.equal(alumni.isAdmin,false);
+  await assert.rejects(()=>withTransaction(pool,db=>changeMembership(db,actor,ctv.id,{action:'DELETE_COLLABORATOR',confirmUsername:ctv.username})),/khóa truy cập/);
+  const locked=await withTransaction(pool,db=>changeMembership(db,actor,ctv.id,{action:'DEACTIVATE'}));assert.equal(locked.isActive,false);assert.equal(locked.isAdmin,false);assert.equal(locked.isAlumni,false);
 });
 
 test('PG: chỉ quản lý xóa CTV, thu hồi phiên và giữ hồ sơ/audit; không khôi phục qua PATCH trạng thái',async()=>{

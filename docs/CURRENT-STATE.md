@@ -1,10 +1,26 @@
 # Trạng thái và quyết định hiện hành YSBK
 
-Cập nhật bàn giao: 21/10/2026. Đây là trang điều phối tài liệu, không thay hợp đồng API hoặc tự phê duyệt tính năng. [Session handoff](SESSION-HANDOFF.md) chứa tóm tắt hội thoại và lời mở đầu chat tiếp theo.
+Cập nhật bàn giao: 22/10/2026. Đây là trang điều phối tài liệu, không thay hợp đồng API hoặc tự phê duyệt tính năng. [Session handoff](SESSION-HANDOFF.md) chứa tóm tắt hội thoại và lời mở đầu chat tiếp theo.
+
+## Cập nhật hiện hành — nhập Excel, duyệt sách và vai trò (22/10/2026)
+
+Đã có luồng **Nhập sách & gửi duyệt**: file Excel → preview → bản nháp chung → chỉnh nội dung/ảnh/giá/thể loại → gửi duyệt → Quản lý/ADMIN công khai hoặc trả lại có lý do. Bản sửa sách đã công khai tiếp tục chờ duyệt; kiểm tra phiên bản và transaction bảo vệ dữ liệu. [Hướng dẫn, dữ liệu và bằng chứng](technical/catalog-import-and-moderation.md).
+
+Đã nhập 794 bản từ file người dùng vào 743 nhóm; 10 nhóm/17 bản đã công khai cùng 10 review CLB, 733 nhóm/777 bản vẫn ở nháp. Tổng catalog public local có 14 đầu (gồm 4 đầu local cũ). Các bản đang mượn/chưa rõ không tự chuyển thành khả dụng. Chưa upload ảnh bìa riêng cho 10 sách.
+
+Nội bộ chỉ còn **Thành viên, Quản lý, ADMIN, CTV**. Quản lý và ADMIN duyệt/công khai sách và review; ADMIN giữ quyền quản trị tài khoản. Migration 23 khóa cựu/thu hồi phiên, giữ lịch sử. Không còn UI/lối đăng nhập cựu.
+
+Đặt số lượng 1–3 bản tùy tồn/quota bằng +/- khi có nhiều bản. Mỗi bản một đơn và mã riêng; thiếu tồn/quota hoàn tác cả lần đặt. Đặt thành công giải phóng idempotency key, lỗi mạng giữ key để thử lại; không còn phát/nhập token bí mật trong UI tạo/tra đơn. Bạn đọc dùng tài khoản và Sách của tôi.
+
+Browser đã kết nối lại: kiểm tra được upload Excel/chặn nhập trùng, lưu/gửi/duyệt bản sửa và 10 review công khai. Google provider thật và thao tác đặt nhiều bản chưa được agent nghiệm thu lại qua browser ở lượt này; cloud/Access chưa triển khai. Không commit/push/deploy.
+
+## Google local — cập nhật 22/10/2026
+
+Đã cấu hình OAuth client do chủ sản phẩm cung cấp vào Auth Docker local. HTTP xác nhận Google enabled, app → Auth → accounts.google.com trả 302 với callback local đúng; readiness 200. Chưa hoàn tất đăng nhập Google thật, tạo reader hoặc kiểm tra thu hồi phiên giữa hai trình duyệt. Cloud/Access vẫn chưa cấu hình. File credential ở `.local/ysbk/google-oauth-client.json`, không được commit/push; `.local/` và các tên `client_secret*.json`, `google-oauth-client*.json` bị Git bỏ qua. Không ghi secret vào tài liệu hoặc frontend. Chi tiết tại [hướng dẫn local](technical/reader-accounts-local-and-access.md).
 
 ## Quyết định UI mới nhất trong chat tiếp nối 21–22/10
 
-Giữ nguyên landing cuốn sách; áp dụng bố cục Stitch/góc bo mềm cho phần ứng dụng. `/sach/` đổi Tra cứu sách thành **Tủ sách**, bỏ tab Đặt giữ chỗ; đặt qua modal theo sách. Đánh dấu theo tài khoản, ghim trước phân trang của Tất cả. **Không thông báo/email/push** theo câu trả lời mới nhất: bookmark xanh rêu khi còn bản, đỏ đất nung khi hết. Chi tiết có tóm tắt và nút mở thẻ review của riêng cuốn; review CLB ghim trước, bạn đọc chỉ gửi chữ chờ ADMIN duyệt. Xem/tìm sách và bài đã duyệt vẫn công khai; đặt/hủy/đánh dấu/gửi cảm nhận yêu cầu tài khoản. Hủy đơn khách cũ cũng yêu cầu đăng nhập, đồng thời vẫn cần token bí mật.
+Giữ nguyên landing cuốn sách; áp dụng bố cục Stitch/góc bo mềm cho phần ứng dụng. `/sach/` đổi Tra cứu sách thành **Tủ sách**, bỏ tab Đặt giữ chỗ; đặt qua modal theo sách. Đánh dấu theo tài khoản, ghim trước phân trang của Tất cả. **Không thông báo/email/push** theo câu trả lời mới nhất: bookmark xanh rêu khi còn bản, đỏ đất nung khi hết. Chi tiết có tóm tắt và nút mở thẻ review của riêng cuốn; review CLB ghim trước, bạn đọc chỉ gửi chữ chờ Quản lý/ADMIN duyệt. Xem/tìm sách và bài đã duyệt vẫn công khai; đặt/hủy/đánh dấu/gửi cảm nhận yêu cầu tài khoản. Hủy đơn khách cũ cũng yêu cầu đăng nhập, đồng thời vẫn cần token bí mật.
 
 Đã thêm migration 22, service/API bookmark, cá nhân hóa thứ tự catalog và dấu CLB do server quyết định. Đã backup rồi áp dụng cộng thêm vào local. Các mục sáu-tab cũ bên dưới là lịch sử đã được thay ở phần điều hướng. [Thiết kế và giới hạn](technical/reader-library-design-2026-10-21.md). Browser tool hiện trả lỗi `Local browser use is disabled in Work settings`; người dùng xác nhận không chủ động tắt. Không coi đây là quyết định tắt của người dùng, và chưa có kiểm chứng trực quan UI mới.
 
@@ -39,7 +55,7 @@ Trong chat tiếp nối 21/10, chủ sản phẩm thay chính sách đặt khác
 - Ba đơn tạo thành công/IP/24 giờ trượt; hủy/hết hạn/trả không hoàn lượt IP. Ba suất giữ/mượn chưa trả/SĐT; trả một mở một suất.
 - Đơn mới thuộc tài khoản đã xác thực; cả token đơn mới cũng không vượt quyền chủ đơn. Đơn khách cũ giữ quyền bằng token bí mật, không tự nhập lịch sử vào tài khoản theo SĐT/email. Chỉ hủy khi chờ nhận.
 - Cổng `/sach/` đủ sáu mục, 50 sách/trang; `/cong-dong` giữ liên kết cũ qua redirect; session nội bộ không tự đẩy người đang xem tủ sách đi.
-- Chỉ ADMIN xuất bản sách/ảnh/lịch/nghỉ/sự kiện/tuyển. CTV một tháng lịch, quyền MEMBER, quản lý đánh giá và công nhận; xóa CTV mềm/giữ lịch sử; thành viên rời chuyển cựu.
+- Quản lý/ADMIN duyệt sách và review; các quyền lịch/nghỉ/sự kiện/tuyển và quản trị tài khoản giữ kiểm soát ADMIN hiện có. CTV một tháng lịch, phải đánh giá đạt mới công nhận; người rời CLB bị khóa truy cập, giữ lịch sử.
 - Tên đầy đủ và slogan có dấu phẩy; màu đã chốt; phong cách UI mềm/vintage, landing sách giữ thiết kế đã duyệt.
 - Tài khoản bạn đọc không được ánh xạ thành MEMBER/ADMIN; Google chỉ tạo hồ sơ reader. Quyền nội bộ vẫn lấy từ tài khoản CLB được cấp và DB.
 

@@ -1,12 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import { verifyTurnstileToken } from '../../src/server/reservations/captcha.ts';
-import { validateLocalSettings } from '../../scripts/local-runtime.mjs';
+import { validateLocalSettings, readLocalGoogleClient } from '../../scripts/local-runtime.mjs';
 import { handleRequest } from '../../src/server/router.ts';
 import {readerHeaders,withReaderSession} from '../helpers/reader-session.ts';
 
 const testSecret = '1x0000000000000000000000000000000AA';
 const testProvider = async () => Response.json({ success: true, hostname: 'example.com', metadata: { result_with_testing_key: true } });
+
+test('Local Google setup is optional and accepts only a web client with the local Auth callback', () => {
+  const directory=mkdtempSync(join(tmpdir(),'ysbk-google-'));
+  const file=join(directory,'client.json');
+  const web={client_id:'123-localtest.apps.googleusercontent.com',client_secret:'local-test-secret-000000',redirect_uris:['http://127.0.0.1:55321/auth/v1/callback']};
+  try {
+    assert.equal(readLocalGoogleClient(file),null);
+    writeFileSync(file,JSON.stringify({web}));
+    assert.deepEqual(readLocalGoogleClient(file),{clientId:web.client_id,clientSecret:web.client_secret});
+    for(const invalid of [{installed:web},{web:{...web,redirect_uris:['https://other.example/callback']}},{web:{...web,client_secret:'secret\nINJECTED=true'}}]) {
+      writeFileSync(file,JSON.stringify(invalid));
+      assert.throws(()=>readLocalGoogleClient(file),error=>error instanceof Error && error.message==='Invalid local Google OAuth client configuration.');
+    }
+    writeFileSync(file,'{"client_secret":"do-not-echo-this"');
+    assert.throws(()=>readLocalGoogleClient(file),error=>error instanceof Error && error.message==='Invalid local Google OAuth client configuration.');
+  } finally {rmSync(directory,{recursive:true,force:true});}
+});
 
 test('Official Turnstile test responses need explicit local permission and the test key', async () => {
   const options = { expectedHostname: 'localhost', expectedAction: 'reservation' };

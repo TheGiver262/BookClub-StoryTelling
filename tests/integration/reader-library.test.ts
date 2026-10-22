@@ -70,8 +70,8 @@ test('review CLB do actor server quyết định; MEMBER không duyệt, ADMIN d
   const admin={memberId:member.id,userId:member.id,role:'ADMIN' as const,isAlumni:false,isActive:true,tokenVersion:member.token_version};
   const review=await submitBookReview(db,admin,{bookId,authorName:'Ban nội dung CLB',rating:5,content:'Bài viết của câu lạc bộ, vẫn cần duyệt trước khi công bố.'});
   assert.equal(review.status,'PENDING');assert.equal((await db.query('SELECT is_club_review FROM book_reviews WHERE id=$1',[review.id])).rows[0].is_club_review,true);
-  await assert.rejects(()=>moderateBookReview(db,{...admin,role:'MEMBER'},review.id,{decision:'APPROVED'}),(error:any)=>error.errorCode==='ADMIN_REQUIRED');
+  await assert.rejects(()=>moderateBookReview(db,{...admin,role:'MEMBER'},review.id,{decision:'APPROVED'}),(error:any)=>error.errorCode==='CONTENT_MANAGER_REQUIRED');
   assert(!(await getPublicReviews(db,bookId)).some(row=>row.id===review.id));
-  await moderateBookReview(db,admin,review.id,{decision:'APPROVED'});
+  await moderateBookReview(db,{...admin,role:'MANAGER'},review.id,{decision:'APPROVED'});
   const visible=await getPublicReviews(db,bookId);assert.equal(visible[0].id,review.id);assert.equal(visible[0].isClubReview,true);
 });

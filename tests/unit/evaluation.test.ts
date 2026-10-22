@@ -423,5 +423,5 @@ test('Gate 6: RBAC: Guest/Alumni không đọc điểm (403), Public results ch�
 
   assert.strictEqual(alumniResponse.status, 403, 'Alumni phải bị chặn 403 không được đọc điểm');
   const alumniBody = await alumniResponse.json();
-  assert.strictEqual(alumniBody.error.code, 'ALUMNI_MUTATION_FORBIDDEN');
+  assert.strictEqual(alumniBody.error.code, 'ACCOUNT_DISABLED');
 });

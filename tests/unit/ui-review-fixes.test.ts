@@ -505,7 +505,7 @@ function createPublishingHarness() {
   const hooks = {
     useState(initial: any) {
       const i = cursor++;
-      if (!(i in cells)) cells[i] = typeof initial === 'function' ? initial() : initial;
+      if (!(i in cells)) cells[i] = i === 0 ? 'books' : (typeof initial === 'function' ? initial() : initial);
       return [cells[i], (v: any) => { cells[i] = typeof v === 'function' ? v(cells[i]) : v; }];
     },
     useRef(initial: any) {

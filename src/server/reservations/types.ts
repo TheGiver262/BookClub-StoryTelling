@@ -7,6 +7,7 @@ export type ReservationStatus = 'HELD' | 'BORROWED' | 'RETURNED' | 'CANCELLED' |
 
 export interface CreateReservationInput {
   titleId: string;
+  quantity?: number;
   scheduleId: string;
   fullName: string;
   phone: string;
@@ -45,6 +46,12 @@ export interface CreateReservationResult {
   reservation: PublicReservationDto;
   lookupToken: string;
   isReplay?: boolean;
+}
+
+export interface CreateReservationBatchResult {
+  reservation: PublicReservationDto;
+  reservations: PublicReservationDto[];
+  isReplay: boolean;
 }
 
 export interface StaffReservationDto extends PublicReservationDto {

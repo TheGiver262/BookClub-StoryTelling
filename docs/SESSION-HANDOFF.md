@@ -1,5 +1,14 @@
 # YSBK — Session handoff ngày 22/10/2026
 
+**Cập nhật ưu tiên — 22/10/2026, nhập sách/duyệt/vai trò:** đọc [CURRENT-STATE](CURRENT-STATE.md) và [hướng dẫn mới](technical/catalog-import-and-moderation.md) trước các mục lịch sử bên dưới. Đã thêm CatalogManager, parser XLSX, migration 23/24, hàng chờ duyệt có version/transaction; Quản lý và ADMIN duyệt/công khai. Cựu bị khóa/thu hồi phiên, giữ lịch sử; không còn role/UI hoạt động. Đặt 1–3 bản tùy tồn/quota, mỗi bản một mã; bỏ UI token bí mật và sửa idempotency để đặt cùng đầu sách lần sau tạo đơn mới.
+
+Đã backup rồi nhập file Excel người dùng: 794 bản → 743 nhóm; batch gốc còn 733 nhóm/777 bản nháp, 10 nhóm/17 bản công khai. Có 10 review CLB APPROVED, catalog public 14 đầu gồm 4 đầu local cũ. Browser đã xác nhận review, upload/chặn nhập trùng, tạo bản sửa Nhà giả kim → lưu → gửi duyệt → công khai; API giữ nội dung cũ trước duyệt, trả nội dung mới sau duyệt. Bản sửa này thêm một hồ sơ PUBLISHED ngoài batch, không nhân bản sách/copy.
+
+Kiểm chứng: 399 unit; 40 PostgreSQL liên quan đã đạt (gồm hồi quy sửa metadata khi có đơn giữ chỗ, vẫn chặn thay giá); check 193 files không lỗi/cảnh báo, có 1 hint isLink không dùng trong book.mjs do thay đổi landing đồng thời; beta build 6 trang. Chưa browser kéo thả ảnh/đặt số lượng bằng Google thật; không reset DB chính, không commit/push/deploy. Giữ toàn bộ thay đổi landing/âm thanh đồng thời của người dùng/Antigravity; không đưa chúng vào phạm vi thay đổi nhập sách.
+
+
+**Google local — cập nhật mới nhất:** đã chuyển OAuth credential vào `.local/ysbk/google-oauth-client.json` và bật Google trong Auth Docker local. Quyết định trực tiếp: không bao giờ commit/push credential hoặc bản sao; Git bỏ qua `.local/`, `client_secret*.json`, `google-oauth-client*.json`. Không ghi secret vào source, frontend hoặc handoff. HTTP đã xác nhận enabled, chuyển hướng đến Google và callback local đúng; chưa đăng nhập Google thật/hai trình duyệt, chưa cấu hình cloud. Xem [hướng dẫn](technical/reader-accounts-local-and-access.md).
+
 **Scrollbar — cập nhật sau phản hồi vẫn còn dải trắng:** landing hiện ẩn hẳn scrollbar native bằng scrollbar-width:none và WebKit display:none/width:0, chỉ trên html.book-landing-page; vẫn dùng window scrolling, không đặt overflow:hidden hay đổi scroll container. Giữ wheel/touch/phím và nút lật sách. Đã bỏ cách tô ảnh vào root gutter cùng các biến/observer phụ vì không giải quyết được phản hồi thực tế. Nền ngoài vẫn giữ offset 18px. 17 test landing đạt, beta build 6 trang và CSS runtime xác nhận rule ẩn; Browser Use vẫn disabled, chưa có screenshot. Cập nhật này thay thế cách tô gutter được mô tả ở đoạn ngay dưới.
 
 **Cập nhật mới nhất — landing F5 / scrollbar / chân trời (22/10/2026):**

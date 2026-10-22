@@ -193,7 +193,7 @@ function LibraryPortal(){
   </div>;
   return <div className="reader-portal">
     <header className="reader-header"><a className="reader-brand" href="/"><img src="/book/assets/club-logo-v8.svg" alt="" width="52" height="52"/><span>Câu lạc bộ Yêu Sách<br/>Bách Khoa Hà Nội<small>Mở sách, đọc tương lai</small></span></a>
-      <button className="ui-btn ui-btn-primary reader-account-button" disabled={sessionLoading} onClick={()=>reader?switchTab('tra-don'):requestSignIn()}>{reader?'Tài khoản bạn đọc':'Đăng ký / Đăng nhập'}</button>
+      <button className="ui-btn ui-btn-primary reader-account-button" disabled={sessionLoading} onClick={()=>reader?switchTab('tra-don'):requestSignIn()}>{reader?'Tài khoản bạn đọc':'Đăng nhập'}</button>
     </header>
     <nav className="reader-tabs" aria-label="Cổng bạn đọc">{tabs.map(tab=><button key={tab.id} disabled={tab.id==='tra-don'&&sessionLoading} aria-current={activeTab===tab.id?'page':undefined} onClick={()=>switchTab(tab.id)}>{tab.label}</button>)}</nav>
     <main className="reader-main">

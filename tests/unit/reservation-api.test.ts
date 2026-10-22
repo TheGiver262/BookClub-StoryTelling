@@ -148,7 +148,7 @@ test('SEC-01: POST /api/v1/public/reservations với CAPTCHA không hợp lệ -
   assert.equal(data.error.code, 'CAPTCHA_INVALID');
 });
 
-test('PUB-04 & SEC-03: POST /api/v1/public/reservations thành công tạo đơn (201) và cấp token riêng', async () => {
+test('POST /api/v1/public/reservations lưu đơn vào tài khoản, không cấp token tra cứu', async () => {
   const db = createMockRouterDb();
   const req = new Request('http://localhost:8787/api/v1/public/reservations', {
     method: 'POST',
@@ -180,7 +180,8 @@ test('PUB-04 & SEC-03: POST /api/v1/public/reservations thành công tạo đơn
   const data = await res.json();
   assert.ok(data.reservation);
   assert.equal(data.reservation.status, 'HELD');
-  assert.ok(data.lookupToken.startsWith('rsv_tok_'));
+  assert.equal(data.lookupToken,undefined);
+  assert.equal(data.reservations.length,1);
 });
 
 test('SEC-03 & SEC-04: GET /api/v1/public/reservation tra cứu bằng Bearer token trả đúng đơn (200)', async () => {

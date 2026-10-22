@@ -915,9 +915,10 @@ test('S1 UI Regression: getStatusBadge in ReservationSection has exactly one cas
   // Ensure non-canonical PENDING is not present
   assert.equal(badgeFnBody.includes("'PENDING'"), false, 'Trạng thái PENDING không thuộc ReservationStatus và không được có trong switch');
 
-  // Verify consistent badge usage in confirmation card and lookup card
+  // Confirmation still renders a badge; account workspace owns lookup/cancel now.
   const getStatusBadgeCalls = fileContent.match(/getStatusBadge\(/g);
-  assert.ok(getStatusBadgeCalls && getStatusBadgeCalls.length >= 2, 'getStatusBadge phải được gọi ở cả thẻ xác nhận đặt đơn và thẻ tra cứu đơn');
+  assert.ok(getStatusBadgeCalls && getStatusBadgeCalls.length >= 1, 'Thẻ xác nhận phải hiển thị trạng thái đơn');
+  assert.equal(fileContent.includes('Đường Dẫn & Token Tra Cứu'),false);
 });
 
 test('F2 UI Regression: Mobile ticket cards in InternalWorkspace retain all loan statuses, item flags, and parent loan indicator', () => {

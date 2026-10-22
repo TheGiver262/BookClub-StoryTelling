@@ -20,7 +20,7 @@ const isLink = source => /^https:\/\//.test(source);
 let paperSerial = 0;
 function imageMarkup(photo, extraClass = '') {
   const image = `<img src="${assetRoot}${photo.file}" alt="${photo.caption}" style="object-position:${photo.position};transform:scale(${photo.zoom ?? 1})" draggable="false">`;
-  return `<figure class="story-photo ${extraClass}">${isLink(photo.source) ? `<a href="${photo.source}" target="_blank" rel="noreferrer">${image}</a>` : `<div class="story-image">${image}</div>`}<figcaption>${photo.caption}</figcaption></figure>`;
+  return `<figure class="story-photo ${extraClass}"><div class="story-image">${image}</div><figcaption>${photo.caption}</figcaption></figure>`;
 }
 function pageMarkup(chapter, index, side, full = false) {
   const number = String(index * 2 + (side === 'left' ? 1 : 2)).padStart(2, '0');
@@ -34,7 +34,7 @@ function pageMarkup(chapter, index, side, full = false) {
   }
   if (chapter.kind === 'gallery') {
     const items = chapter.items.slice(side === 'left' ? 0 : 3, side === 'left' ? 3 : 6);
-    return `<section class="page ${side} gallery-page" aria-label="Các hoạt động của CLB">${header}<div class="activity-photos">${items.map(item => `<figure>${isLink(item.photo.source) ? `<a href="${item.photo.source}" target="_blank" rel="noreferrer">` : '<div class="activity-image">'}<img src="${assetRoot}${item.photo.file}" alt="${item.photo.caption}" draggable="false">${isLink(item.photo.source) ? '</a>' : '</div>'}<figcaption>${item.title}</figcaption></figure>`).join('')}</div>${footer}</section>`;
+    return `<section class="page ${side} gallery-page" aria-label="Các hoạt động của CLB">${header}<div class="activity-photos">${items.map(item => `<figure><div class="activity-image"><img src="${assetRoot}${item.photo.file}" alt="${item.photo.caption}" draggable="false"></div><figcaption>${item.title}</figcaption></figure>`).join('')}</div>${footer}</section>`;
   }
   if (chapter.kind === 'slogan') {
     const illustration = chapter.illustrations[side === 'left' ? 0 : 1];
@@ -187,15 +187,17 @@ function onScroll() {
 }
 function jump(position) {
   cancelNavigation();
-  if (reduced) { scrollTo({ top: position * pixelsPerUnit, behavior: 'instant' }); return; }
+  if (reduced) { scrollTo({ top: position * pixelsPerUnit, behavior: 'instant' }); schedule(); return; }
   const segments = navigationSegments(scrollY / pixelsPerUnit, position, count);
   const duration = segments.reduce((sum, segment) => sum + segment.duration, 0);
   const start = performance.now();
   navigationTop = Math.round(scrollY);
   function tick(now) {
-    navigationTop = Math.round(navigationAt(segments, now - start) * pixelsPerUnit);
+    const elapsed = Math.max(0, now - start);
+    navigationTop = Math.round(navigationAt(segments, elapsed) * pixelsPerUnit);
     scrollTo({ top: navigationTop, behavior: 'instant' });
-    if (now - start < duration) navigationFrame = requestAnimationFrame(tick);
+    schedule();
+    if (elapsed < duration) navigationFrame = requestAnimationFrame(tick);
     else navigationFrame = 0;
   }
   navigationFrame = requestAnimationFrame(tick);

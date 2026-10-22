@@ -27,12 +27,17 @@ services:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
       API_EXTERNAL_URL: http://127.0.0.1:55321/auth/v1
-      GOTRUE_SITE_URL: http://localhost:4321
+      GOTRUE_SITE_URL: http://127.0.0.1:4321
+      GOTRUE_URI_ALLOW_LIST: "http://127.0.0.1:4321/api/v1/readers/auth/callback?state=*,http://localhost:4321/api/v1/readers/auth/callback?state=*"
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://ysbk_auth_admin:${AUTH_DB_PASSWORD}@db:5432/ysbk_auth?sslmode=disable
       GOTRUE_DB_NAMESPACE: auth
       GOTRUE_DB_MAX_POOL_SIZE: 5
-      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_DISABLE_SIGNUP: ${AUTH_DISABLE_SIGNUP:-true}
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: http://127.0.0.1:55321/auth/v1/callback
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
       GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
       GOTRUE_MAILER_AUTOCONFIRM: "true"

@@ -10,7 +10,7 @@ import {
   NotFoundError,
   ForbiddenError,
 } from '../../server/errors.ts';
-import { requireAuthenticated, requireInternalMember, requireAdmin } from '../../server/auth/policy.ts';
+import { requireAuthenticated, requireInternalMember, requireContentManager } from '../../server/auth/policy.ts';
 import type {
   BookReview,
   PublicPost,
@@ -85,7 +85,7 @@ export async function submitBookReview(
       dto.authorEmail || null,
       rating,
       sanitizedContent,
-      !current.isAlumni && ['ADMIN','MEMBER'].includes(current.role),
+      !current.isAlumni && ['ADMIN','MANAGER','MEMBER','COLLABORATOR'].includes(current.role),
     ]
   );
 
@@ -131,7 +131,7 @@ export async function editBookReview(
   // Chỉ author hoặc Thành viên nội bộ mới được sửa
   const currentActorId = current.memberId || current.userId;
   const isAuthor = rev.author_id && rev.author_id === currentActorId;
-  const isInternal = current.role === 'MEMBER' || current.role === 'ADMIN';
+  const isInternal = ['MEMBER','COLLABORATOR','MANAGER','ADMIN'].includes(current.role);
   if (!isAuthor && !isInternal) {
     throw new ForbiddenError('Bạn không có quyền chỉnh sửa đánh giá này.', 'PERMISSION_DENIED');
   }
@@ -215,7 +215,7 @@ export async function moderateBookReview(
   reviewId: string,
   dto: ModerateReviewDto
 ): Promise<BookReview> {
-  const member = requireAdmin(actor);
+  const member = requireContentManager(actor);
 
   if (!dto.decision || (dto.decision !== 'APPROVED' && dto.decision !== 'REJECTED')) {
     throw new BadRequestError("Quyết định kiểm duyệt phải là 'APPROVED' hoặc 'REJECTED'.", 'INVALID_DECISION');
@@ -466,7 +466,7 @@ export async function publishPublicPost(
   actor: AuthenticatedActor,
   postId: string
 ): Promise<PublicPost> {
-  const member = requireInternalMember(actor);
+  const member = requireContentManager(actor);
 
   const check = await db.query(`SELECT * FROM public_posts WHERE id = $1`, [postId]);
   if (check.rows.length === 0) {

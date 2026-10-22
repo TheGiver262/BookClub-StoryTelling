@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { startAvailabilityRefresh } from '../lib/availability-refresh';
 import PublishingManager from './PublishingManager';
+import CatalogManager from './CatalogManager';
 import MembershipManager from './MembershipManager';
 import ClubReviewComposer from './ClubReviewComposer';
 import { 
@@ -20,7 +21,7 @@ import {
   apiClient, actionKeyRegistry, type AuthenticatedActor, type CashSessionDto,
   type CashSessionSummaryDto,
   type LoanReceiptDto, type BorrowerDto,
-  type BookCopyDto, type AlumniActivityDto,
+  type BookCopyDto,
   type MemberDto, type MemberAffiliationDto,
   type MemberHeadcountSummaryDto,
   type AvailabilityPreviewResultDto,
@@ -52,7 +53,7 @@ import {
   type CirculationSummaryReportDto
 } from '../lib/api-client';
 
-type Role = 'ADMIN' | 'ACTIVE_MEMBER' | 'ALUMNI' | 'GUEST';
+type Role = 'ADMIN' | 'MANAGER' | 'MEMBER' | 'COLLABORATOR';
 type WorkspaceMode = 'LIVE' | 'DEMO';
 
 export default function InternalWorkspace() {
@@ -64,7 +65,7 @@ export default function InternalWorkspace() {
     }
     return 'LIVE';
   });
-  const [currentRole, setCurrentRole] = useState<Role>('ACTIVE_MEMBER');
+  const [currentRole, setCurrentRole] = useState<Role>('MEMBER');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const sidebarRef=useRef<HTMLElement>(null),sidebarTriggerRef=useRef<HTMLButtonElement>(null);
   useEffect(()=>{if(window.matchMedia('(max-width: 767px)').matches) setIsSidebarCollapsed(true);},[]);
@@ -91,7 +92,7 @@ export default function InternalWorkspace() {
   const [activeModule, setActiveModule] = useState<
     'dashboard' | 'quay-sach' | 'ban-sach' | 'kho-sach' | 'thanh-vien' | 
     'truc-sach' | 'tuyen' | 'tai-chinh' | 'su-kien' | 
-    'kiem-duyet' | 'bao-cao' | 'admin' | 'cuu'
+    'kiem-duyet' | 'bao-cao' | 'admin' | 'catalog'
   >('quay-sach');
 
   // Live Data State
@@ -99,7 +100,6 @@ export default function InternalWorkspace() {
   const [liveSession, setLiveSession] = useState<CashSessionDto | null>(null);
   const [liveBorrowers, setLiveBorrowers] = useState<BorrowerDto[]>([]);
   const [liveCopies, setLiveCopies] = useState<BookCopyDto[]>([]);
-  const [liveActivities, setLiveActivities] = useState<AlumniActivityDto[]>([]);
 
   // Demo Fallback State (Explicit Fixture Mode)
   const [demoLoans, setDemoLoans] = useState<LoanReceipt[]>(INITIAL_LOANS);
@@ -437,7 +437,7 @@ export default function InternalWorkspace() {
   const [newEventLocation, setNewEventLocation] = useState('Phòng CLB Sách YSBK');
   const [newEventBudget, setNewEventBudget] = useState(0);
   const [newEventApprovedPublic, setNewEventApprovedPublic] = useState(false);
-  const [newEventApprovedAlumni, setNewEventApprovedAlumni] = useState(false);
+  const [newEventApprovedAlumni] = useState(false);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
@@ -552,18 +552,8 @@ export default function InternalWorkspace() {
       setActor(me);
       setAuthError(null);
 
-      const resolvedRole: Role = me.role === 'ADMIN' ? 'ADMIN' : (me.isAlumni ? 'ALUMNI' : 'ACTIVE_MEMBER');
+      const resolvedRole: Role = me.role === 'ADMIN' ? 'ADMIN' : me.role === 'MANAGER' ? 'MANAGER' : me.isCollaborator||me.role==='COLLABORATOR' ? 'COLLABORATOR' : 'MEMBER';
       setCurrentRole(resolvedRole);
-
-      // If Alumni, restrict to safe activities view only
-      if (me.isAlumni) {
-        const acts = await apiClient.getAlumniActivities();
-        if (requestVersion !== activeRequestVersionRef.current) return;
-        setLiveActivities(acts);
-        setActiveModule('cuu');
-        setAuthLoading(false);
-        return;
-      }
 
       // 2. Fetch Cash Session Today
       try {
@@ -814,8 +804,8 @@ export default function InternalWorkspace() {
   const totalNewDeposit = dep1 + dep2;
 
   // Active role controls
-  const isAlumni = currentRole === 'ALUMNI';
   const isAdmin = currentRole === 'ADMIN';
+  const canPublish = isAdmin || currentRole === 'MANAGER';
 
   // ═════════════════════════════════════════════════════════════════════════
   // HANDLERS FOR CIRCULATION & DESK OPERATIONS
@@ -2848,7 +2838,7 @@ export default function InternalWorkspace() {
             <span>
               Người dùng: <strong>{actor?.fullName || actor?.username || 'Thành viên'}</strong> · Quyền: <strong className="text-ysbk-primary">{actor?.role}</strong>
               {actor?.isCollaborator && <span className="text-[#64705C] ml-1">(Cộng tác viên)</span>}
-              {actor?.isAlumni && <span className="text-[#813C2A] ml-1">(Cựu TV - Giới hạn xem)</span>}
+
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -2928,21 +2918,7 @@ export default function InternalWorkspace() {
           </div>
 
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs" onClick={event=>{if((event.target as HTMLElement).closest('button')&&window.matchMedia('(max-width: 767px)').matches) setIsSidebarCollapsed(true);}}>
-            {isAlumni ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-[#F7E7DB]/60 rounded-[14px] border border-[#9B4D36]/20 text-[#813C2A] text-[11px] leading-relaxed">
-                  <span className="font-bold">Chế độ Cựu Thành Viên:</span>
-                  <p className="mt-1">Bạn có quyền xem thông tin hoạt động công khai. Toàn bộ thông tin tài chính, bạn đọc và nghiệp vụ quầy bị khóa theo ma trận quyền.</p>
-                </div>
-                <button
-                  onClick={() => setActiveModule('cuu')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] bg-ysbk-terracotta text-white font-semibold shadow-soft-btn transition"
-                >
-                  <Award className="w-4 h-4 shrink-0" />
-                  {!isSidebarCollapsed && <span>Bản Tin Cựu TV</span>}
-                </button>
-              </div>
-            ) : (
+            {(
               <>
                 <button
                   onClick={() => setActiveModule('dashboard')}
@@ -3042,6 +3018,7 @@ export default function InternalWorkspace() {
                   {!isSidebarCollapsed && <span>Kiểm Duyệt Review & Bài Viết</span>}
                 </button>
 
+                <button className="ui-btn ui-btn-secondary w-full" onClick={()=>setActiveModule('catalog')}>Nhập sách & gửi duyệt</button>
                 {!isSidebarCollapsed && <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-[#64705C]">Tài Chính & Báo Cáo</div>}
 
                 <button
@@ -3134,7 +3111,7 @@ export default function InternalWorkspace() {
             </div>
 
             <div className="flex items-center gap-2">
-              {!isAlumni && (
+              {(
                 <>
                   {workspaceMode === 'LIVE' ? (
                     liveSession && !liveSession.isClosed ? (
@@ -5051,7 +5028,7 @@ export default function InternalWorkspace() {
                             )}
                             {evt.isApprovedForAlumni && (
                               <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">
-                                Cựu (Alumni Allowlist)
+                                Thông tin lưu trữ
                               </span>
                             )}
                           </div>
@@ -5391,38 +5368,7 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════ */}
             {/* MODULE 11: CỰU THÀNH VIÊN                                 */}
             {/* ═════════════════════════════════════════════════════════ */}
-            {activeModule === 'cuu' && (
-              <div className="space-y-6">
-                <div className="bg-[#FFFDF5] p-6 rounded-[22px] border border-[#DCDED0] shadow-soft-card">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#DCDED0]">
-                    <Award className="w-6 h-6 text-[#9B4D36]" />
-                    <div>
-                      <h3 className="font-serif font-bold text-lg text-[#35483C]">Bản Tin Hoạt Động Cựu Thành Viên</h3>
-                      <p className="text-xs text-[#64705C]">Nơi kết nối và cập nhật những bước tiến mới của CLB Sách Bách Khoa</p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                    {liveActivities.length > 0 ? (
-                      liveActivities.map((act) => (
-                        <div key={act.id} className="p-4 bg-[#F8F5EC] rounded-[18px] border border-[#DCDED0] text-xs">
-                          <span className="font-bold text-[#9B4D36] uppercase text-[10px] bg-[#F7E7DB] px-2 py-0.5 rounded-full inline-block mb-1">{act.status}</span>
-                          <h4 className="font-serif font-bold text-sm text-[#35483C] mt-1">{act.title}</h4>
-                          <p className="text-[#64705C] mt-1">{act.description}</p>
-                          <div className="text-[11px] text-[#8C9685] mt-2">
-                            Thời gian: {act.activityDate} · Địa điểm: {act.location}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 bg-[#F8F5EC] rounded-[18px] text-xs text-[#8C9685]">
-                        Chưa có sự kiện nào được công bố cho Cựu Thành Viên.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* DASHBOARD MODULE */}
             {activeModule === 'dashboard' && (
@@ -5456,6 +5402,7 @@ export default function InternalWorkspace() {
             {/* ═════════════════════════════════════════════════════════════ */}
             {/* MODULE 8: KIỂM DUYỆT BÀI VIẾT & REVIEW (FR-08)             */}
             {/* ═════════════════════════════════════════════════════════════ */}
+            {activeModule === 'catalog' && workspaceMode !== 'DEMO' && <CatalogManager canPublish={canPublish} userId={actor?.memberId||actor?.userId}/> }
             {activeModule === 'kiem-duyet' && (
               <div className="space-y-6">
                 {/* Module Header */}
@@ -5480,7 +5427,7 @@ export default function InternalWorkspace() {
                       <RefreshCw className="w-3.5 h-3.5" />
                       <span>Tải lại</span>
                     </button>
-                    {moderationTab === 'POSTS' && (
+                    {moderationTab === 'POSTS' && canPublish && (
                       <button
                         onClick={() => setShowCreatePostModal(true)}
                         className="px-4 py-2 text-xs font-bold rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white shadow-soft-btn transition flex items-center gap-1.5"
@@ -5526,7 +5473,7 @@ export default function InternalWorkspace() {
                 {moderationTab === 'REVIEWS' && (
                   <div className="space-y-4">
                     <ClubReviewComposer onSubmitted={()=>void loadModerationReviews()}/>
-                    {!isAdmin&&<p className="ui-card p-4 text-sm">Chỉ quản trị viên được duyệt hoặc từ chối review.</p>}
+                    {!canPublish&&<p className="ui-card p-4 text-sm">Quản lý và ADMIN được duyệt hoặc từ chối review.</p>}
                     {/* Filter bar */}
                     <div className="flex items-center gap-2 text-xs flex-wrap">
                       <span className="text-[#64705C] font-medium">Lọc theo trạng thái:</span>
@@ -5616,7 +5563,7 @@ export default function InternalWorkspace() {
                               </span>
                               <div className="flex items-center gap-2">
                                 <button
-                                  disabled={!isAdmin}
+                                  disabled={!canPublish}
                                   onClick={() => {
                                     setSelectedReviewForModerate(rev);
                                     setModerationDecision('APPROVED');
@@ -5627,7 +5574,7 @@ export default function InternalWorkspace() {
                                   Phê Duyệt
                                 </button>
                                 <button
-                                  disabled={!isAdmin}
+                                  disabled={!canPublish}
                                   onClick={() => {
                                     setSelectedReviewForModerate(rev);
                                     setModerationDecision('REJECTED');
@@ -5676,6 +5623,7 @@ export default function InternalWorkspace() {
                               <span className="text-[11px] text-[#8C9685]">Tác giả: {post.authorDisplayName}</span>
                               {post.status !== 'PUBLISHED' && (
                                 <button
+                                  disabled={!canPublish}
                                   onClick={() => handleExecutePublishPost(post.id)}
                                   className="px-3.5 py-1.5 rounded-[14px] bg-[#365E4B] hover:bg-[#294C3A] text-white font-bold text-xs transition shadow-soft-btn"
                                 >
@@ -7880,7 +7828,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-1 text-blue-900">
               <div className="font-bold">Quy tắc xếp ca tự động (R11):</div>
               <p className="text-[11px] leading-relaxed text-blue-800">
-                • Trực chính (2 người): Phải qua đào tạo, active, không phải cựu, rảnh toàn bộ 13:45 – 17:15.<br/>
+                • Trực chính (2 người): Phải qua đào tạo, active, rảnh toàn bộ 13:45 – 17:15.<br/>
                 • Trực hỗ trợ (3-5 người): Chỉ cần rảnh lúc mở ca (13:45-14:15) hoặc đóng ca (16:45-17:15).<br/>
                 • Tự động bỏ qua các ngày nghỉ lễ trong lịch CLB. Không tự ý ghi đè ca đã sửa tay.
               </p>
@@ -9635,15 +9583,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
                   />
                   <span className="font-semibold text-slate-800">Phê duyệt hiển thị công chúng (Public DTO)</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newEventApprovedAlumni}
-                    onChange={(e) => setNewEventApprovedAlumni(e.target.checked)}
-                    className="rounded text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="font-semibold text-slate-800">Phê duyệt hiển thị Cựu thành viên (Alumni Allowlist)</span>
-                </label>
+
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t">
@@ -10579,7 +10519,7 @@ Chào cả nhà, lịch trực bàn sách tuần này đã được chốt như 
       )}
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      {!isAlumni && (
+      {(
         <nav aria-label="Điều hướng nhanh di động" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF5]/95 backdrop-blur-md border-t border-[#DCDED0] flex items-center justify-around py-2 px-1 shadow-soft-modal text-[10px]">
           <button 
             type="button" 

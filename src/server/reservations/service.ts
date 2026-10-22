@@ -19,6 +19,7 @@ import {
   calculateIpRollingQuota,
   calculatePhoneQuota,
   ROLLING_WINDOW_MS,
+  MAX_RESERVATIONS_PER_PHONE,
 } from './rules.ts';
 import type {
   ReservationStatus,
@@ -27,6 +28,7 @@ import type {
   PublicReservationDto,
   StaffReservationDto,
   CreateReservationResult,
+  CreateReservationBatchResult,
   FulfillReservationInput,
   FulfillReservationResult,
   ExpireReservationsResult,
@@ -120,11 +122,11 @@ export function resolveShiftEndTime(scheduleDate: any, shiftTime: string, explic
 }
 /**
  * 1. Đặt giữ chỗ sách công khai (Create Public Reservation)
- * - 1 quyển / đơn; không cần login/OTP.
+ * - 1 bản / đơn; API yêu cầu tài khoản bạn đọc.
  * - Khóa 2 namespace hạn mức nguyên tử theo thứ tự cố định (IP -> Phone).
  * - Kiểm tra 2 hạn mức độc lập: 3 suất/SĐT và 3 đơn/IP/24h trượt.
  * - Chọn và khóa bản sách khả dụng (loại trừ các bản đang HELD).
- * - Sinh mã tra cứu và token bí mật bảo vệ quyền riêng tư.
+ * - Sinh mã đơn; token cũ chỉ giữ để tương thích dữ liệu trước tài khoản.
  */
 export async function createReservation(
   db: Queryable,
@@ -157,6 +159,7 @@ export async function createReservation(
   const canonicalPayload = {
     titleId: input.titleId, scheduleId: input.scheduleId, fullName: input.fullName.trim(), phone: normalizedPhone,
     studentId: input.studentId?.trim() || null, university: input.university?.trim() || null, email: input.email?.trim() || null,
+    ...(input.quantity && input.quantity > 1 ? {quantity: input.quantity} : {}),
   };
   const payloadHash = computePayloadHash(canonicalPayload);
   if (context.idempotencyKey) {
@@ -422,6 +425,21 @@ export async function createReservation(
     lookupToken: token,
     isReplay: false,
   };
+}
+
+/** Caller owns the transaction: all selected copies commit together or none do. */
+export async function createReservationBatch(db: Queryable, input: CreateReservationInput, context: ReservationRequestContext): Promise<CreateReservationBatchResult> {
+  const quantity = input.quantity === undefined ? 1 : input.quantity;
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > MAX_RESERVATIONS_PER_PHONE) {
+    throw new BadRequestError('Số lượng đặt phải là số nguyên từ 1 đến 3.', 'INVALID_RESERVATION_QUANTITY');
+  }
+  const results: CreateReservationResult[] = [];
+  for (let index = 0; index < quantity; index++) {
+    const idempotencyKey = index === 0 || !context.idempotencyKey ? context.idempotencyKey
+      : 'res-copy-' + computePayloadHash({key: context.idempotencyKey, index});
+    results.push(await createReservation(db, {...input, quantity}, {...context, idempotencyKey}));
+  }
+  return {reservation: results[0].reservation, reservations: results.map(result => result.reservation), isReplay: results.every(result => result.isReplay)};
 }
 
 /**

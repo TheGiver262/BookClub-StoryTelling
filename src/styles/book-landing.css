@@ -42,8 +42,9 @@
 .stage .chapter-dot{color:var(--ui-text-muted)!important;text-shadow:0 1px 2px var(--ui-shadow)}
 .stage .chapter-dot[aria-current=true]{color:var(--ui-text)!important}
 .stage .chapter-dot[aria-current=true]:after{background:var(--ui-text)!important}
-.stage .page-arrow{background:#fdfbf5!important;color:#283e20!important;border-color:var(--ui-border)!important;box-shadow:0 3px 10px rgba(0,0,0,0.2)!important}
-.stage .page-arrow:hover{background:#ffffff!important;color:#182813!important}
+.stage .page-arrow{touch-action:manipulation;cursor:pointer;background:#fdfbf5!important;color:#283e20!important;border-color:var(--ui-border)!important;box-shadow:0 3px 10px rgba(0,0,0,0.2)!important;transition:transform .08s ease,background .1s ease,box-shadow .08s ease!important}
+.stage .page-arrow:hover{background:#ffffff!important;color:#182813!important;transform:translateY(-50%) scale(1.05)!important}
+.stage .page-arrow:active,.book-side-controls .page-arrow:active{background:#e3dbc3!important;color:#0e1c0a!important;transform:translateY(-50%) scale(0.91)!important;box-shadow:0 1px 3px rgba(0,0,0,0.3)!important}
 .stage .progress-track{background:rgba(255,255,255,0.25)!important}
 .stage .progress-fill{background:#f5d485!important}
 .stage[data-bg="wood"]{background:radial-gradient(ellipse at 50% 45%,#f0e0ca 0%,#cba880 38%,#9c7752 72%,#644830 100%)!important}
@@ -259,5 +260,9 @@
 .book-side-controls .page-arrow:hover{background:#e8e6ce;border-color:#6e7956}
 
 /* Small partner marks overlay the artwork without changing its horizon/crop. */
+.bottom-right{display:flex;align-items:center;justify-content:flex-end;gap:14px}
+.music-credit{margin-top:28px;padding-top:16px;border-top:1px dashed #dcded0;font-size:11px;line-height:1.6;color:#64705c;text-align:left}
+.music-credit a{color:#365e4b;text-decoration:underline;text-underline-offset:2px}
+.music-credit a:hover{color:#1e382b}
 .cover-front .cover-footer{position:absolute;display:flex;align-items:center;justify-content:center;left:50%;bottom:clamp(16px,3cqw,20px);transform:translateX(-50%);padding:0;background:transparent;border:0;border-radius:0;z-index:2}
 .cover-front .partner-logos{width:clamp(60px,18cqw,88px);height:auto;aspect-ratio:2/1}

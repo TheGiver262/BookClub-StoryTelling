@@ -62,7 +62,6 @@ ok('Danh mục/lịch thật, no-store và từ chối đặt thiếu CAPTCHA');
 
 const key = randomUUID();
 const fullName = `LOCAL SMOKE ${key}`;
-let token;
 let reservationId;
 let cancelled = false;
 try {
@@ -71,21 +70,20 @@ try {
   assert.equal(created.status, 201, `Create reservation failed: ${created.status} ${await created.clone().text()}`);
   const result = await created.json();
   reservationId=result.reservation.id;
-  token = result.lookupToken;
-  assert.ok(token);
-  const lookup = await request('/api/v1/public/reservation', { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal(result.lookupToken, undefined);
+  const lookup = await request('/api/v1/readers/reservations');
   assert.equal(lookup.status, 200);
-  const reservation = (await lookup.json()).data;
+  const reservation = (await lookup.json()).data.find(order => order.id === reservationId);
   assert.equal(reservation.status, 'HELD');
   assert.ok(!('phone' in reservation));
-  const cancel = await request('/api/v1/public/reservation/cancel', post({ reason: 'Hoàn tất smoke test local' }, { Authorization: `Bearer ${token}` }));
+  const cancel = await request(`/api/v1/readers/reservations/${reservationId}/cancel`, post({ reason: 'Hoàn tất smoke test local' }));
   assert.equal(cancel.status, 200);
   assert.equal((await cancel.json()).data.status, 'CANCELLED');
   cancelled = true;
   ok('Turnstile test qua provider thật; tạo, tra cứu và hủy giữ chỗ; DTO công khai không lộ SĐT');
 } finally {
-  if (token && !cancelled) {
-    const cancel = await request('/api/v1/public/reservation/cancel', post({ reason: 'Dọn smoke test local' }, { Authorization: `Bearer ${token}` }));
+  if (reservationId && !cancelled) {
+    const cancel = await request(`/api/v1/readers/reservations/${reservationId}/cancel`, post({ reason: 'Dọn smoke test local' }));
     cancelled = cancel.ok;
   }
   const client = new pg.Client({ host: '127.0.0.1', port: 55433, database: 'ysbk_local', user: 'postgres', password: settings.postgresPassword });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  BookOpen, Clock, CheckCircle2, AlertCircle, 
-  Copy, ShieldCheck, XCircle, Search, RefreshCw, AlertTriangle
+  Clock, CheckCircle2, AlertCircle,
+  XCircle, RefreshCw, AlertTriangle, Minus, Plus, ShieldCheck
 } from 'lucide-react';
 import { apiClient,type ReaderProfile } from '../lib/api-client';
 import { startAvailabilityRefresh } from '../lib/availability-refresh';
@@ -13,13 +13,9 @@ interface ReservationSectionProps {
   compact?:boolean;
   reader?: ReaderProfile;
   initialBookId?: string;
-  initialMode?: 'create' | 'lookup';
-  onNavigateToTab?: (tab: string) => void;
 }
 
-export default function ReservationSection({ initialBookId, initialMode = 'create',reader,compact=false }: ReservationSectionProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'create' | 'lookup'>(initialMode);
-  useEffect(() => { setActiveSubTab(initialMode); }, [initialMode]);
+export default function ReservationSection({ initialBookId,reader,compact=false }: ReservationSectionProps) {
 
   // Form State
   const [books, setBooks] = useState<PublicReservationBookDto[]>([]);
@@ -36,6 +32,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
   const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState(reader?.email||'');
   const [depositConfirmed, setDepositConfirmed] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   // Turnstile CAPTCHA State (PRF-01, PRF-07)
   const [captchaToken, setCaptchaToken] = useState<string>('');
@@ -46,22 +43,13 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
   // Idempotency Action Key (PRF-09)
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitInFlightRef = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdReservation, setCreatedReservation] = useState<{
     code: string;
-    token: string;
     reservation: PublicReservationDto;
+    reservations: PublicReservationDto[];
   } | null>(null);
-
-  // Lookup State
-  const [lookupToken, setLookupToken] = useState('');
-  const [isLookingUp, setIsLookingUp] = useState(false);
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [lookupResult, setLookupResult] = useState<PublicReservationDto | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
 
   // Sinh actionKey mới khi thay đổi thông tin đặt sách cốt lõi (PRF-09)
   const renewActionKey = () => {
@@ -70,12 +58,12 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
   // Load books & schedules on mount (PRF-07: không giả dữ liệu)
   useEffect(() => {
-    if (activeSubTab !== 'create' || createdReservation) return;
+    if (createdReservation) return;
     setIsLoadingMetadata(true);
     const task = window.setTimeout(() => void loadMetadata(), 250);
     const stop = startAvailabilityRefresh(() => loadMetadata(true));
     return () => { window.clearTimeout(task); stop(); metadataRequestRef.current++; };
-  }, [initialBookId, bookSearch, activeSubTab, createdReservation]);
+  }, [initialBookId, bookSearch, createdReservation]);
 
   // Update selected book if prop changes
   useEffect(() => {
@@ -84,30 +72,9 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
     }
   }, [initialBookId]);
 
-  // Read token from URL hash on mount / hashchange (SEC-05)
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (typeof window !== 'undefined') {
-        const hash = window.location.hash;
-        if (hash.startsWith('#token=')) {
-          const token = decodeURIComponent(hash.replace('#token=', '').trim());
-          if (token) {
-            setLookupToken(token);
-            setActiveSubTab('lookup');
-            performLookup(token);
-          }
-        }
-      }
-    };
-
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
   // Load and initialize Cloudflare Turnstile widget (PRF-01, PRF-07)
   useEffect(() => {
-    if (activeSubTab !== 'create' || createdReservation) return;
+    if (createdReservation) return;
 
     let isMounted = true;
     let renderedWidgetId: string | null = null;
@@ -200,7 +167,7 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       const win = window as any;
       if (win.turnstile && renderedWidgetId) win.turnstile.remove(renderedWidgetId);
     };
-  }, [activeSubTab, createdReservation]);
+  }, [createdReservation]);
 
   const resetCaptchaWidget = () => {
     setCaptchaToken('');
@@ -247,10 +214,13 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
   };
 
   const selectedBook = books.find(b => b.titleId === selectedBookId);
-  const estimatedDeposit = selectedBook ? selectedBook.standardDeposit : 50000;
+  const maxQuantity = Math.min(3, selectedBook?.availableCopiesCount || 0);
+  useEffect(() => { setQuantity(current => Math.max(1, Math.min(current, maxQuantity))); }, [selectedBookId, maxQuantity]);
+  const estimatedDeposit = (selectedBook ? selectedBook.standardDeposit : 50000) * quantity;
 
   const handleSubmitReservation = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitInFlightRef.current) return;
     setSubmitError(null);
 
     if (!selectedBookId || !selectedBook) {
@@ -278,10 +248,12 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       return;
     }
 
+    submitInFlightRef.current = true;
     setIsSubmitting(true);
     try {
       const payload = {
           titleId: selectedBookId,
+          quantity,
           scheduleId: selectedScheduleId,
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -291,70 +263,27 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
       const key = await getReservationIntent({...payload,readerAccountId:reader?.id});
       await apiClient.updateReaderProfile({fullName:payload.fullName,phone:payload.phone});
       const res = await apiClient.createPublicReservation({ ...payload, captchaToken }, key);
+      clearReservationIntent(key);
       window.dispatchEvent(new Event('ysbk:availability-changed'));
 
       setCreatedReservation({
         code: res.reservation.code,
-        token: res.lookupToken,
         reservation: res.reservation,
+        reservations: res.reservations,
       });
     } catch (err: any) {
       if(err.status===401) window.dispatchEvent(new Event('ysbk:reader-session-ended'));
       const msg = ['IP_QUOTA_EXCEEDED','PHONE_QUOTA_EXCEEDED'].includes(err.code)
-        ? 'Bạn chưa thể đặt thêm sách lúc này. Vui lòng thử lại sau hoặc liên hệ CLB để được hỗ trợ.'
+        ? 'Số lượng chọn vượt hạn mức còn lại. Mỗi SĐT có tối đa 3 suất giữ/mượn chưa trả; mỗi IP tạo tối đa 3 đơn trong 24 giờ. Chưa tạo đơn nào trong lần này.'
+        : err.code === 'BOOK_NOT_AVAILABLE' ? 'Không còn đủ số lượng sách bạn chọn. Chưa tạo đơn nào trong lần này; hãy giảm số lượng hoặc chọn sách khác.'
         : err.message || 'Đã có lỗi xảy ra khi tạo đơn đặt giữ chỗ. Vui lòng thử lại.';
       setSubmitError(msg);
       // Reset CAPTCHA để khách có thể thử lại an toàn
       resetCaptchaWidget();
       void loadMetadata(true);
     } finally {
+      submitInFlightRef.current = false;
       setIsSubmitting(false);
-    }
-  };
-
-  const performLookup = async (tokenToUse: string) => {
-    if (!tokenToUse.trim()) {
-      setLookupError('Vui lòng nhập token bí mật của đơn đặt.');
-      return;
-    }
-    setIsLookingUp(true);
-    setLookupError(null);
-    setLookupResult(null);
-
-    try {
-      const res = await apiClient.getPublicReservation(tokenToUse.trim());
-      setLookupResult(res);
-    } catch (err: any) {
-      setLookupError(err.message || 'Không tìm thấy đơn đặt hoặc token không hợp lệ.');
-    } finally {
-      setIsLookingUp(false);
-    }
-  };
-
-  const handleExecuteCancel = async () => {
-    if (!lookupToken.trim()) return;
-    setIsCancelling(true);
-    try {
-      const res = await apiClient.cancelPublicReservation(
-        lookupToken.trim(),
-        cancelReason.trim() || 'Người dùng tự hủy qua cổng công khai'
-      );
-      setLookupResult(res);
-      setShowCancelModal(false);
-      window.dispatchEvent(new Event('ysbk:availability-changed'));
-      setCancelReason('');
-    } catch (err: any) {
-      alert(err.message || 'Không thể hủy đơn đặt. Vui lòng kiểm tra lại trạng thái đơn.');
-    } finally {
-      setIsCancelling(false);
-    }
-  };
-
-  const copyToClipboard = (text: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
     }
   };
 
@@ -407,34 +336,8 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
 
   return (
     <div className={compact?'reader-reservation':'max-w-4xl mx-auto px-4 sm:px-6 py-8'}>
-      {/* Sub-tab navigation */}
-      {!compact&&<div className="flex border-b border-[#DCDED0] mb-8">
-        {reader&&<button
-          onClick={() => setActiveSubTab('create')}
-          className={`pb-3.5 pt-2.5 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 rounded-t-[15px] ${
-            activeSubTab === 'create'
-              ? 'border-ysbk-primary bg-[#E8EDDF]/40 text-ysbk-primary font-bold'
-              : 'border-transparent text-[#64705C] hover:text-[#35483C]'
-          }`}
-        >
-          <BookOpen className="w-5 h-5" />
-          Đặt Mượn Giữ Chỗ Sách
-        </button>}
-        <button
-          onClick={() => setActiveSubTab('lookup')}
-          className={`pb-3.5 pt-2.5 px-6 font-semibold text-sm sm:text-base border-b-2 transition flex items-center gap-2 rounded-t-[15px] ${
-            activeSubTab === 'lookup'
-              ? 'border-ysbk-primary bg-[#E8EDDF]/40 text-ysbk-primary font-bold'
-              : 'border-transparent text-[#64705C] hover:text-[#35483C]'
-          }`}
-        >
-          <Search className="w-5 h-5" />
-          Tra Cứu & Hủy Đơn
-        </button>
-      </div>}
-
       {/* SUBTAB 1: CREATE RESERVATION */}
-      {activeSubTab === 'create' && reader && (
+      {reader && (
         <div>
           {createdReservation ? (
             /* SUCCESS CONFIRMATION CARD */
@@ -447,16 +350,14 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
               </div>
 
               <p className="text-[#64705C] mb-6 text-sm sm:text-base leading-relaxed">
-                  Yêu cầu giữ chỗ của bạn đã được xác nhận. Vui lòng đến bàn trực đúng ca đã chọn và chuẩn bị tiền đặt cọc để nhận sách.
+                  Đã giữ {createdReservation.reservations.length} bản sách cho bạn. Vui lòng đến bàn trực đúng ca đã chọn và chuẩn bị tiền đặt cọc để nhận sách.
               </p>
 
               <div className="bg-white border border-[#DCDED0] rounded-[18px] p-5 mb-6 space-y-3 shadow-xs">
                 <div className="flex justify-between items-center pb-3 border-b border-[#DCDED0]">
-                  <span className="text-xs sm:text-sm text-[#64705C]">Mã đơn nhận sách:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-base sm:text-lg text-ysbk-primary">
-                      {createdReservation.code}
-                    </span>
+                  <span className="text-xs sm:text-sm text-[#64705C]">Mã đơn nhận sách ({createdReservation.reservations.length} bản):</span>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {createdReservation.reservations.map(order=><span key={order.id} className="font-mono font-bold text-base sm:text-lg text-ysbk-primary">{order.code}</span>)}
                     {getStatusBadge(createdReservation.reservation.status)}
                   </div>
                 </div>
@@ -488,64 +389,27 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm text-[#64705C]">Tiền cọc cần chuẩn bị:</span>
                   <span className="font-bold text-emerald-700 text-base">
-                    {formatVND(createdReservation.reservation.estimatedDeposit)}
+                    {formatVND(createdReservation.reservations.reduce((total,order)=>total+order.estimatedDeposit,0))}
                   </span>
                 </div>
               </div>
 
-              {/* CRITICAL SECURITY WARNING & TOKEN LINK */}
-              <div className="bg-[#F7E7DB]/60 border border-[#9B4D36]/30 rounded-[16px] p-5 mb-6">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-ysbk-terracotta flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-[#813C2A] text-sm sm:text-base">
-                      Đường Dẫn & Token Tra Cứu Bảo Mật
-                    </h4>
-                    <p className="text-xs sm:text-sm text-[#813C2A]/90 mt-1">
-                      Bạn có thể xem và hủy đơn trong Sách của tôi. Nếu lưu đường dẫn riêng này, hãy giữ bí mật và đăng nhập đúng tài khoản để sử dụng.
-                    </p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        readOnly 
-                        value={createdReservation.token} 
-                        className="font-mono text-xs bg-white border border-[#DCDED0] rounded-[10px] px-3 py-2 text-[#35483C] flex-1 select-all"
-                      />
-                      <button
-                        onClick={() => copyToClipboard(createdReservation.token)}
-                        className="px-3.5 py-2 bg-ysbk-terracotta hover:bg-[#813C2A] text-white text-xs font-semibold rounded-[10px] flex items-center gap-1.5 transition"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        {copySuccess ? 'Đã chép' : 'Sao chép'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm text-[#365E4B] mb-5">Đơn đã được lưu vào tài khoản. Bạn có thể xem và hủy giữ chỗ trong Sách của tôi.</p>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => {
-                    const token = createdReservation.token;
-                    setLookupToken(token);
-                    setActiveSubTab('lookup');
-                    performLookup(token);
-                  }}
-                  className="w-full sm:flex-1 py-3 px-4 bg-ysbk-primary hover:bg-[#294C3A] text-white font-semibold rounded-[14px] text-sm transition text-center shadow-soft-btn"
-                >
-                  Xem Chi Tiết Đơn Đặt
-                </button>
+                <a href="/sach/?tab=tra-don" className="ui-btn ui-btn-primary justify-center">Xem Sách của tôi</a>
                 <button
                   onClick={() => {
                     if(compact){window.location.assign('/sach/');return;}
                     setCreatedReservation(null);
                     renewActionKey();
                     setDepositConfirmed(false);
-                                  resetCaptchaWidget();
+                    setQuantity(1);
+                    resetCaptchaWidget();
                   }}
                   className="w-full sm:w-auto py-3 px-6 bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] font-semibold rounded-[14px] text-sm transition text-center"
                 >
-                  {compact?'Về Tủ sách':'Đặt Thêm Cuốn Khác'}
+                  {compact?'Về Tủ sách':'Đặt thêm sách'}
                 </button>
               </div>
             </div>
@@ -631,6 +495,17 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
                       </span>
                     </div>
                   )}
+                  {selectedBook && selectedBook.availableCopiesCount > 1 && <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span id="reservation-quantity-label" className="text-sm font-semibold text-[#35483C]">Số lượng đặt trước</span>
+                      <div role="group" aria-labelledby="reservation-quantity-label" className="flex items-center gap-3">
+                        <button type="button" aria-label="Giảm số lượng" className="ui-btn ui-btn-secondary" disabled={isSubmitting||quantity<=1} onClick={()=>{setQuantity(value=>Math.max(1,value-1));setDepositConfirmed(false);}}><Minus size={16}/></button>
+                        <output aria-live="polite" className="min-w-6 text-center font-bold">{quantity}</output>
+                        <button type="button" aria-label="Tăng số lượng" className="ui-btn ui-btn-secondary" disabled={isSubmitting||quantity>=maxQuantity} onClick={()=>{setQuantity(value=>Math.min(maxQuantity,value+1));setDepositConfirmed(false);}}><Plus size={16}/></button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#64705C]">Còn {selectedBook.availableCopiesCount} bản. Tối đa 3 suất giữ/mượn chưa trả theo SĐT và 3 đơn/IP trong 24 giờ. Mỗi bản có một mã đơn riêng.</p>
+                  </div>}
                 </div>
 
                 {/* 2. CHỌN CA TRỰC */}
@@ -799,158 +674,6 @@ export default function ReservationSection({ initialBookId, initialMode = 'creat
         </div>
       )}
 
-      {/* SUBTAB 2: LOOKUP RESERVATION */}
-      {activeSubTab === 'lookup' && (
-        <div className="space-y-6">
-          <div className="bg-[#FFFDF5] border border-[#DCDED0] rounded-[22px] p-6 sm:p-8 shadow-soft-card">
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#35483C] mb-2">
-              Tra Cứu & Quản Lý Đơn Đặt Sách
-            </h2>
-            <p className="text-xs sm:text-sm text-[#64705C] mb-6">
-              Nhập mã token bí mật bạn đã nhận được khi đặt sách (hoặc truy cập qua liên kết tra cứu an toàn).
-            </p>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                performLookup(lookupToken);
-              }}
-              className="flex flex-col sm:flex-row gap-3 mb-6"
-            >
-              <input
-                type="text"
-                value={lookupToken}
-                onChange={(e) => setLookupToken(e.target.value)}
-                placeholder="Nhập chuỗi token bí mật (ví dụ: rsv_tok_...)"
-                className="flex-1 px-4 py-3 bg-white border border-[#DCDED0] rounded-[14px] text-sm font-mono text-[#35483C] focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
-                required
-              />
-              <button
-                type="submit"
-                disabled={isLookingUp}
-                className="px-6 py-3 bg-ysbk-primary hover:bg-[#294C3A] text-white font-semibold rounded-[14px] text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-soft-btn min-h-[44px]"
-              >
-                {isLookingUp ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Đang tìm...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    Tra Cứu Đơn
-                  </>
-                )}
-              </button>
-            </form>
-
-            {lookupError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-[14px] flex items-start gap-3 text-rose-800 text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
-                <div>{lookupError}</div>
-              </div>
-            )}
-
-            {lookupResult && (
-              <div className="border border-[#DCDED0] rounded-[18px] p-5 sm:p-6 bg-white space-y-4 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#DCDED0]">
-                  <div>
-                    <span className="text-xs text-[#64705C] block">Mã đơn nhận sách</span>
-                    <span className="font-mono font-bold text-lg text-ysbk-primary">{lookupResult.code}</span>
-                  </div>
-                  <div>
-                    {getStatusBadge(lookupResult.status)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-[#64705C] text-xs block">Tựa sách</span>
-                    <span className="font-semibold text-[#35483C]">{lookupResult.bookTitle}</span>
-                  </div>
-                  {lookupResult.authorName && (
-                    <div>
-                      <span className="text-[#64705C] text-xs block">Tác giả</span>
-                      <span className="text-[#35483C]">{lookupResult.authorName}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-[#64705C] text-xs block">Ca trực hẹn nhận</span>
-                    <span className="text-[#35483C]">{lookupResult.shiftDate} ({lookupResult.shiftTime})</span>
-                  </div>
-                  <div>
-                    <span className="text-[#64705C] text-xs block">Địa điểm bàn trực</span>
-                    <span className="text-[#35483C]">{lookupResult.pickupLocation}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#64705C] text-xs block">Hạn nhận sách</span>
-                    <span className="font-medium text-rose-600">
-                      {new Date(lookupResult.expiresAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}
-                      {new Date(lookupResult.expiresAt).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[#64705C] text-xs block">Tiền cọc quy định</span>
-                    <span className="font-bold text-emerald-700">{formatVND(lookupResult.estimatedDeposit)}</span>
-                  </div>
-                </div>
-
-                {lookupResult.status === 'HELD' && (
-                  <div className="pt-4 border-t border-[#DCDED0] flex justify-end">
-                    <button
-                      onClick={() => setShowCancelModal(true)}
-                      className="px-4 py-2 border border-rose-300 hover:bg-rose-50 text-rose-700 text-sm font-semibold rounded-[12px] transition"
-                    >
-                      Hủy Đơn Giữ Chỗ Này
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* CANCEL MODAL */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#35483C]/40 backdrop-blur-xs p-4">
-          <div className="bg-[#FFFDF5] border border-[#DCDED0] rounded-[24px] max-w-md w-full p-6 shadow-soft-modal">
-            <h3 className="font-serif text-lg font-bold text-[#35483C] mb-2">Xác Nhận Hủy Đơn Đặt Sách</h3>
-            <p className="text-sm text-[#64705C] mb-4 leading-relaxed">
-              Bạn có chắc chắn muốn hủy đơn đặt giữ chỗ này? Sau khi hủy, cuốn sách sẽ được mở lại cho các bạn đọc khác đăng ký.
-            </p>
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-[#35483C] mb-1">
-                Lý do hủy (không bắt buộc)
-              </label>
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Ví dụ: Có việc bận đột xuất..."
-                className="w-full px-3 py-2 bg-white border border-[#DCDED0] rounded-[12px] text-sm text-[#35483C] resize-none focus:outline-none focus:ring-2 focus:ring-ysbk-primary"
-                rows={2}
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowCancelModal(false)}
-                disabled={isCancelling}
-                className="px-4 py-2 bg-[#E8EDDF] hover:bg-[#DCDED0] text-[#35483C] text-sm font-semibold rounded-[12px] transition"
-              >
-                Giữ Lại Đơn
-              </button>
-              <button
-                onClick={handleExecuteCancel}
-                disabled={isCancelling}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-[12px] transition disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
-              >
-                {isCancelling ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                Xác Nhận Hủy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
