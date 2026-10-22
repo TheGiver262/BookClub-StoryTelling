@@ -39,7 +39,7 @@ export const chapters = [
   ] },
   { id: 'activities', kind: 'gallery', name: 'Sách đưa chúng mình đi đâu?', sources: [FACEBOOK], items: galleryActivities },
   { id: 'free-loans', kind: 'story', name: 'Cho mượn sách miễn phí', title: 'Một cuốn sách.<br>Nhiều lượt <em>chuyền tay.</em>', kicker: 'Từ tình yêu sách đến tủ sách chung', sources: [FACEBOOK], photos: [
-    photo('loans-table-outdoor.jpg', 'Khoảnh khắc chọn sách tại bàn mượn của CLB', UPLOAD),
+    photo('loans-desk-crowd.jpg', 'Nhộn nhịp bạn đọc tại bàn trực sách của CLB', UPLOAD),
     photo('loan-user.jpg', 'Những cuốn sách chờ đến tay người đọc', UPLOAD),
   ], lines: [
     'Để việc đọc dễ bắt đầu hơn, CLB xây dựng tủ sách chung và cho sinh viên mượn miễn phí.',
@@ -85,7 +85,7 @@ export const chapters = [
   ] },
   { id: 'recruitment', kind: 'story', name: 'Tuyển thành viên', title: 'Một chỗ trong CLB.<br>Một hành trình <em>của bạn.</em>', kicker: 'Những trang tiếp theo được viết bằng người mới', sources: [FACEBOOK], photos: [
     photo('recruitment-artemis.jpg', 'Artemis · hình ảnh một đợt tuyển thành viên', UPLOAD),
-    photo('recruitment-board.png', 'Bảng chào đón tại vòng phỏng vấn tuyển thành viên', UPLOAD),
+    photo('recruitment-hall-interviews.jpg', 'Toàn cảnh vòng phỏng vấn tuyển thành viên trên giảng đường', UPLOAD),
   ], lines: [
     'Mỗi đợt tuyển thành viên mở ra cơ hội gặp những người cùng sở thích và thử sức trong một tập thể.',
     'Bạn có thể bắt đầu từ tình yêu đọc sách, rồi khám phá việc làm nội dung, truyền thông hay tổ chức hoạt động.',
