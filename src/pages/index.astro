@@ -1,14 +1,17 @@
 ---
 import BookLanding from '../components/BookLanding.astro';
+import LandingLink from '../components/LandingLink.astro';
+const landingOnly=import.meta.env.PUBLIC_LANDING_ONLY==='true';
 import '../styles/global.css';
 import '../styles/book-backdrop.css';
+import '../styles/book-mobile.css';
 ---
 
 <!doctype html>
 <html lang="vi" class="book-landing-page">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <script is:inline>
       history.scrollRestoration = 'manual';
       window.scrollTo({top: 0, left: 0, behavior: 'instant'});
@@ -21,6 +24,7 @@ import '../styles/book-backdrop.css';
     <meta name="description" content="Trang thông tin tra cứu sách, lịch trực bàn và kết nối bạn đọc của Câu lạc bộ Yêu Sách Bách Khoa Hà Nội." />
   </head>
   <body>
+    <div class="landing-viewport"><div class="landing-scroll" id="landing-scroll">
     <audio id="bg-music" src="/book/assets/warm-memories.mp3" preload="metadata" loop></audio>
     <BookLanding />
     <script is:inline type="module" src="/book/book-backdrop.mjs"></script>
@@ -34,18 +38,17 @@ import '../styles/book-backdrop.css';
         <article><span>02</span><h3>Đặt trước sách và hẹn lịch</h3><p>Chọn cuốn sách bạn thích, hẹn một buổi chiều thứ Ba hoặc thứ Năm tiện ghé qua bàn trực, rồi gửi thông tin để chúng mình giữ sách sẵn chờ bạn nhé.</p></article>
         <article><span>03</span><h3>Gặp nhau ở bàn sách</h3><p>Đến đúng buổi trực đã chọn, đọc tên và số điện thoại để thành viên đối chiếu, làm thủ tục nhận sách. Đơn online mới là giữ chỗ; sách được giữ đến hết buổi trực.</p></article>
       </div>
-      <div class="guide-actions"><a class="guide-button" href="/sach/" target="ysbk-public" rel="noopener">Khám phá tủ sách <span aria-hidden="true">↗</span></a><a class="guide-secondary" href="/sach/?tab=tra-don" target="ysbk-public" rel="noopener">Tra cứu đơn đã đặt <span aria-hidden="true">↗</span></a></div>
-      <footer class="site-end"><p>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội<br />Mở sách, đọc tương lai</p><nav aria-label="Kết nối CLB"><a href="/sach/?tab=dat-sach" target="ysbk-public" rel="noopener">Đặt trước sách</a><a href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</a><a href="/sach/?tab=review" target="ysbk-public" rel="noopener">Góc review</a><a href="/sach/?tab=tuyen" target="ysbk-public" rel="noopener">Tuyển thành viên</a><div class="site-socials" aria-label="Mạng xã hội CLB"><a class="social-link" href="https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/" target="_blank" rel="noreferrer" aria-label="Facebook CLB Yêu Sách Bách Khoa" title="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a><a class="social-link" href="https://www.instagram.com/clb.yeusachbachkhoahanoi/" target="_blank" rel="noreferrer" aria-label="Instagram CLB Yêu Sách Bách Khoa" title="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a><a class="social-link" href="https://www.tiktok.com/@yeusachbachkhoahanoi" target="_blank" rel="noreferrer" aria-label="TikTok CLB Yêu Sách Bách Khoa" title="TikTok"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg></a></div></nav></footer>
+      <div class="guide-actions"><LandingLink class="guide-button" href="/sach/" target="ysbk-public" rel="noopener">Khám phá tủ sách <span aria-hidden="true">↗</span></LandingLink><LandingLink class="guide-secondary" href="/sach/?tab=tra-don" target="ysbk-public" rel="noopener">Tra cứu đơn đã đặt <span aria-hidden="true">↗</span></LandingLink></div>
+      <footer class="site-end"><p>Câu lạc bộ Yêu Sách Bách Khoa Hà Nội<br />Mở sách, đọc tương lai</p><nav aria-label="Kết nối CLB"><LandingLink href="/sach/?tab=dat-sach" target="ysbk-public" rel="noopener">Đặt trước sách</LandingLink><LandingLink href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</LandingLink><LandingLink href="/sach/?tab=review" target="ysbk-public" rel="noopener">Góc review</LandingLink><LandingLink href="/sach/?tab=tuyen" target="ysbk-public" rel="noopener">Tuyển thành viên</LandingLink><div class="site-socials" aria-label="Mạng xã hội CLB"><a class="social-link" href="https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/" target="_blank" rel="noreferrer" aria-label="Facebook CLB Yêu Sách Bách Khoa" title="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a><a class="social-link" href="https://www.instagram.com/clb.yeusachbachkhoahanoi/" target="_blank" rel="noreferrer" aria-label="Instagram CLB Yêu Sách Bách Khoa" title="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a><a class="social-link" href="https://www.tiktok.com/@yeusachbachkhoahanoi" target="_blank" rel="noreferrer" aria-label="TikTok CLB Yêu Sách Bách Khoa" title="TikTok"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg></a></div></nav></footer>
       <div class="music-credit"><p>Warm Memories - Emotional Inspiring Piano by Keys of Moon | <a href="https://soundcloud.com/keysofmoon" target="_blank" rel="noreferrer">soundcloud.com/keysofmoon</a><br />Music promoted by <a href="https://www.chosic.com/free-music/all/" target="_blank" rel="noreferrer">chosic.com</a> · Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a></p></div>
     </section>
-    <script>
+    </div></div>
+    {!landingOnly&&<script is:inline>
       const current = new URL(window.location.href);
       const tab = current.searchParams.get('tab');
-      // Giữ liên kết đặt/tra đơn cũ, đặc biệt token trong hash không gửi lên máy chủ.
       if (tab || current.searchParams.has('sach') || current.hash.startsWith('#token=')) {
-        const path = '/sach/';
-        window.location.replace(path + current.search + current.hash);
+        window.location.replace('/sach/' + current.search + current.hash);
       }
-    </script>
+    </script>}
   </body>
 </html>

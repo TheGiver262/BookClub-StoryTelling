@@ -1,11 +1,12 @@
 ---
 import '../styles/book-landing.css';
+import LandingLink from './LandingLink.astro';
 ---
 
 <a class="skip" href="#cach-muon">Đi đến hướng dẫn mượn sách</a>
 <div class="scroll-track" id="scroll-track"><main class="stage" aria-label="Cuốn sách giới thiệu CLB Yêu Sách Bách Khoa"><h1 class="sr-only">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</h1>
 <div class="desk-ring" aria-hidden="true"></div>
-<header class="topbar"><div class="top-left"><a class="wordmark" href="#" id="home-link">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</a></div><nav class="top-actions" aria-label="Lối vào nhanh"><a href="/sach/" target="ysbk-public" rel="noopener" class="catalog-link">Tủ sách CLB ↗</a><a href="/sach/?tab=tra-don" class="subtle">Đăng nhập</a></nav></header>
+<header class="topbar"><div class="top-left"><a class="wordmark" href="#" id="home-link">Câu lạc bộ Yêu Sách Bách Khoa Hà Nội</a></div><nav class="top-actions" aria-label="Lối vào nhanh"><LandingLink href="/sach/" target="ysbk-public" rel="noopener" class="catalog-link">Tủ sách CLB ↗</LandingLink><LandingLink href="/sach/?tab=tra-don" class="subtle">Đăng nhập</LandingLink></nav></header>
 <aside class="hint"><p><strong id="hint-title">Cuộn xuống để mở sách</strong><br><span id="hint-copy">Mỗi vòng cuộn, một trang mới.</span></p><span class="hint-line" aria-hidden="true"></span></aside>
 <div class="book-area"><div class="book-shell" id="book-shell">
 <div class="book-bed" id="book-bed"></div><div class="page-edges" id="page-edges"></div><div class="spread" id="base-spread" role="region" aria-label="Trang đang đọc"></div>

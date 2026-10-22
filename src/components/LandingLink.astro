@@ -1,0 +1,7 @@
+---
+import type {HTMLAttributes} from 'astro/types';
+type Props = HTMLAttributes<'a'>;
+const {href,target,...attributes}=Astro.props;
+const disabled=import.meta.env.PUBLIC_LANDING_ONLY==='true';
+---
+<a {...attributes} href={disabled?undefined:href} target={disabled?undefined:target} role={disabled?'link':undefined} aria-disabled={disabled?'true':undefined} tabindex={disabled?-1:undefined}><slot /></a>

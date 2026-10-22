@@ -1,64 +1,32 @@
 {
-  "name": "YSBK",
+  "name": "ysbk-landing-preview",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "description": "Standalone static YSBK book landing preview; no library web application.",
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build-landing.mjs",
+    "build:landing": "node scripts/build-landing.mjs",
     "preview": "astro preview",
     "check": "astro check && tsc --noEmit",
-    "test:unit": "node --experimental-strip-types --test tests/unit/db-harness.test.ts tests/unit/auth-policy.test.ts tests/unit/api-routes.test.ts tests/unit/secrets-guard.test.ts tests/unit/finance-ledger.test.ts tests/unit/cash-sessions.test.ts tests/unit/catalog.test.ts tests/unit/borrowers.test.ts tests/unit/circulation-issue.test.ts tests/unit/circulation-return.test.ts tests/unit/circulation-partial.test.ts tests/unit/circulation-renew.test.ts tests/unit/circulation-lost.test.ts tests/unit/stage12-desk.test.ts tests/unit/members-dues.test.ts tests/unit/availability-import.test.ts tests/unit/scheduler.test.ts tests/unit/form-sync.test.ts tests/unit/evaluation.test.ts tests/unit/sales-consignment.test.ts tests/unit/events-activities.test.ts tests/unit/content-policy.test.ts tests/unit/reports-audit.test.ts tests/unit/backup-restore.test.ts tests/unit/api-client-contract.test.ts tests/unit/canonical-schema-services.test.ts tests/unit/circulation-quote-pending.test.ts tests/unit/settlement-identity-confirmation.test.ts tests/unit/action-pagination-demo-boundary.test.ts tests/unit/public-export-restore-reports.test.ts tests/unit/reservations.test.ts tests/unit/reservation-rules.test.ts tests/unit/reservation-captcha.test.ts tests/unit/reservation-api.test.ts tests/unit/reservation-expiry.test.ts tests/unit/reservation-repair.test.ts tests/unit/beta-deployment.test.ts tests/unit/beta-config.test.ts tests/unit/local-runtime.test.ts tests/unit/book-navigation.test.mjs tests/unit/book-backdrop.test.mjs tests/unit/book-landing.test.mjs tests/unit/page-curl.test.mjs tests/unit/publishing.test.ts tests/unit/reader-auth.test.ts tests/unit/internal-access.test.ts tests/unit/reader-library-navigation.test.ts tests/unit/ui-review-fixes.test.ts tests/unit/reader-navigation-race.test.ts tests/unit/reservation-submit.test.ts tests/unit/catalog-import.test.ts tests/unit/internal-roles.test.ts",
-    "test:db": "node --experimental-strip-types --test --test-concurrency=1 tests/integration/schema.test.ts tests/integration/loan-item-constraints.test.ts tests/integration/finance-ledger.test.ts tests/integration/cash-sessions.test.ts tests/integration/catalog-borrowers.test.ts tests/integration/issue-loan.test.ts tests/integration/return-loan.test.ts tests/integration/partial-return.test.ts tests/integration/renew-loan.test.ts tests/integration/lost-book.test.ts tests/integration/roster.test.ts tests/integration/recruitment-schema.test.ts tests/integration/recruitment-evaluation.test.ts tests/integration/sales-settlement.test.ts tests/integration/events.test.ts tests/integration/content-policy.test.ts tests/integration/reports.test.ts tests/integration/reservations.test.ts tests/integration/reservation-flow.test.ts tests/integration/beta-bootstrap.test.ts tests/integration/publishing.test.ts tests/integration/readers.test.ts tests/integration/reader-library.test.ts tests/integration/reservation-quantity.test.ts tests/integration/catalog-submissions.test.ts",
-    "server:dev": "wrangler dev",
-    "build:beta": "astro build --mode beta",
-    "beta:prepare-db": "node scripts/prepare-beta-db.mjs",
-    "beta:check-config": "node scripts/check-beta-config.mjs",
-    "beta:dry-run": "pnpm run build:beta && wrangler deploy --config wrangler.beta.json --dry-run --outdir .review-artifacts/beta-bundle",
-    "beta:deploy": "pnpm run beta:check-config && pnpm run build:beta && wrangler deploy --config wrangler.beta.json",
-    "local:up": "node scripts/local-runtime.mjs up",
-    "local:stop": "node scripts/local-runtime.mjs stop",
-    "local:status": "node scripts/local-runtime.mjs status",
-    "local:test:db": "node scripts/local-runtime.mjs test-db",
-    "local:smoke": "node scripts/local-smoke.mjs",
-    "local:expire": "node scripts/local-runtime.mjs expire"
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:landing": "node --test tests/integration/landing-preview.test.mjs",
+    "test": "pnpm run test:unit && pnpm run build && pnpm run test:landing"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "onlyBuiltDependencies": [
-    "esbuild",
-    "workerd"
-  ],
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.21.0",
-      "onFail": "download"
-    }
-  },
-  "type": "module",
   "dependencies": {
-    "@astrojs/react": "^7.1.0",
     "@astrojs/tailwind": "^6.0.2",
-    "astro": "^7.4.0",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.59.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "tailwind-merge": "^3.7.0"
+    "astro": "^7.4.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@types/pg": "^8.23.1",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.6.1",
-    "pg": "^8.23.1",
     "postcss": "^8.5.30",
-    "puppeteer-core": "^25.14.0",
     "tailwindcss": "3.4.17",
-    "typescript": "~5.8.3",
-    "wrangler": "^4.151.1"
-  }
+    "typescript": "~5.8.3"
+  },
+  "onlyBuiltDependencies": [
+    "esbuild"
+  ]
 }

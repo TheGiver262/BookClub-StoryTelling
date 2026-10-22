@@ -1,23 +1,9 @@
-import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
+import {defineConfig} from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 
-// https://astro.build/config
+process.env.PUBLIC_LANDING_ONLY = 'true';
 export default defineConfig({
-  integrations: [
-    react(),
-    tailwind({
-      applyBaseStyles: true,
-    }),
-  ],
-  vite: {
-    server: {
-      proxy: {
-        '/api': {
-          target: process.env.BACKEND_URL || 'http://127.0.0.1:8787',
-          changeOrigin: true,
-        },
-      },
-    },
-  },
+  output: 'static', srcDir: './landing', publicDir: './public', outDir: './dist-landing',
+  integrations: [tailwind({applyBaseStyles: true})],
+  vite: {build: {sourcemap: false}},
 });

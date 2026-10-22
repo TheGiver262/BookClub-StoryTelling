@@ -61,3 +61,16 @@ test('resize measures the closed cover without changing any book node or followi
   resize();
   assert.ok(Number.isFinite(Number(properties.get('--backdrop-shift'))));
 });
+
+test('rotated phone backdrop measures logical landscape offsets instead of rotated screen bounds',async()=>{
+  const source=await readFile(new URL('../../public/book/book-backdrop.mjs',import.meta.url),'utf8');
+  const properties=new Map();
+  const stage={clientWidth:844,clientHeight:390,getBoundingClientRect:()=>({left:0,top:0,width:390,height:844}),style:{setProperty:(key,value)=>properties.set(key,value)}};
+  const area={offsetLeft:52,offsetTop:44,clientWidth:740,clientHeight:294,getBoundingClientRect:()=>({left:0,top:0,width:294,height:740})};
+  const cover={clientWidth:255,clientHeight:304};
+  const nodes={'.stage':stage,'.book-area':area,'book-shell':{clientWidth:500,clientHeight:294},'cover-leaf':{offsetLeft:250,offsetTop:-5,querySelector:()=>cover},'landing-scroll':{clientHeight:390}};
+  runInNewContext(source.replace('export function alignBackdrop','function alignBackdrop'),{document:{querySelector:key=>nodes[key],getElementById:key=>nodes[key]},getComputedStyle:()=>({borderLeftWidth:'1px',borderTopWidth:'0px',backgroundSize:'cover'}),ResizeObserver:class{observe(){}}});
+  const expected=alignBackdrop({stageWidth:844,stageHeight:390,left:298,top:39,width:255,height:304});
+  assert.equal(Number(properties.get('--backdrop-shift')),expected.shift);
+  assert.equal(Number(properties.get('--backdrop-slope')),expected.slope);
+});

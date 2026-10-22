@@ -78,6 +78,15 @@ test('ảnh trang kết ẩn khi vào, hiện sau chữ; bản in hiện đủ v
   }
 });
 
+test('mọi trang sách bỏ liên kết nguồn tư liệu ở chân trang', async () => {
+  const render=await renderer();
+  for(const [index,chapter] of chapters.entries())for(const side of ['left','right']){
+    const html=render(chapter,index,side,true);
+    assert(!/Nguồn tư liệu|class="(?:chapter-source|photo-source)"/.test(html));
+    assert(html.includes('class="page-num"'),'giữ nguyên số trang');
+  }
+});
+
 test('trang chính nối hướng dẫn sau sách và tủ sách mở tab riêng', async () => {
   const home = await readFile(new URL('../../src/pages/index.astro', import.meta.url), 'utf8');
   const book = await readFile(new URL('../../src/components/BookLanding.astro', import.meta.url), 'utf8');
@@ -88,7 +97,7 @@ test('trang chính nối hướng dẫn sau sách và tủ sách mở tab riêng
 
   // Kiểm tra yêu cầu giao diện chân trang & các nút hướng dẫn
   assert(home.includes('<h3>Đặt trước sách và hẹn lịch</h3>'));
-  assert(home.includes('href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</a>'));
+  assert(home.includes('href="/sach/?tab=hoat-dong" target="ysbk-public" rel="noopener">Hoạt động</LandingLink>'));
   assert(!home.includes('Lịch trực & hoạt động'));
   assert(!/<footer class="site-end"[\s\S]*?Đăng nhập bạn đọc[\s\S]*?<\/footer>/.test(home));
   assert.match(home, /href="https:\/\/www\.facebook\.com\/CLBYeuSachBachKhoaHaNoi\/"/);
@@ -111,7 +120,7 @@ test('cuộn ngoài animation ngắt điều hướng, sai số subpixel của c
   for (const [actual, expected, active, shouldCancel] of [[101, 100, 1, false], [140, 100, 1, true], [140, null, 0, false]]) {
     let cancelled = false, scheduled = false;
     const run = runInNewContext(handler + '; onScroll', {
-      navigationFrame: active, navigationTop: expected, scrollY: actual,
+      navigationFrame: active, navigationTop: expected, scrolling:{top:actual},
       cancelNavigation: () => { cancelled = true; }, schedule: () => { scheduled = true; },
     });
     run();

@@ -35,13 +35,14 @@ if (typeof document !== 'undefined') {
     const align = () => {
       const bounds = stage.getBoundingClientRect();
       const region = area.getBoundingClientRect();
+      const phone=document.getElementById('landing-scroll')?.clientHeight>0;
       if (!bounds.width || !bounds.height || !cover.clientWidth || !cover.clientHeight) return;
       const style = getComputedStyle(cover);
       // Use the closed-book position, independent of page-turn transforms.
       const result = alignBackdrop({
-        stageWidth: bounds.width, stageHeight: bounds.height,
-        left: region.left - bounds.left + (region.width - shell.clientWidth) / 2 - shell.clientWidth / 4 + leaf.offsetLeft + parseFloat(style.borderLeftWidth),
-        top: region.top - bounds.top + (region.height - shell.clientHeight) / 2 + leaf.offsetTop + parseFloat(style.borderTopWidth),
+        stageWidth: phone?stage.clientWidth:bounds.width, stageHeight: phone?stage.clientHeight:bounds.height,
+        left: (phone?area.offsetLeft:region.left-bounds.left) + ((phone?area.clientWidth:region.width) - shell.clientWidth) / 2 - shell.clientWidth / 4 + leaf.offsetLeft + parseFloat(style.borderLeftWidth),
+        top: (phone?area.offsetTop:region.top-bounds.top) + ((phone?area.clientHeight:region.height) - shell.clientHeight) / 2 + leaf.offsetTop + parseFloat(style.borderTopWidth),
         width: cover.clientWidth, height: cover.clientHeight,
         fitHeight: style.backgroundSize.startsWith('auto'),
       });

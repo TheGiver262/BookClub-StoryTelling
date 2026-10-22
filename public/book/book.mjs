@@ -1,8 +1,10 @@
 import { clamp, timelineAt, arrowTarget, readingEnd, totalUnits, lineProgress, navigationSegments, navigationAt, sloganProgress, snapBookPosition } from './book-timeline.mjs';
 import { curlAt, polygon } from './page-curl.mjs';
 import { chapters } from './book-content.mjs';
+import { createBookScroll, phoneCanvas } from './book-scroll.mjs';
 
 const $ = id => document.getElementById(id);
+const scrolling=createBookScroll($('landing-scroll'),window);
 const count = chapters.length + 1;
 const roman = index => ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'][index];
 const spreadLabel = index => index === 0 ? 'Bìa phụ' : `Chương ${roman(index - 1)}: ${chapters[index - 1].name}`;
@@ -45,7 +47,7 @@ function pageMarkup(chapter, index, side, full = false) {
   if (side === photoSide) {
     return `<section class="page ${side} photo-page">${header}<p class="kicker">${chapter.kicker}</p><div class="photo-story count-${chapter.photos.length}">${chapter.photos.map(photo => imageMarkup(photo)).join('')}</div>${footer}</section>`;
   }
-  return `<section class="page ${side} text-page${index === 0 ? ' origin-page' : ''}">${header}<h2>${chapter.title}</h2><div class="text-window"><div class="text-lines">${chapter.lines.map((line, i) => `<p class="reveal-line${index === 0 && i === 0 ? ' meta' : ''}"${full ? ' style="opacity:1;transform:none"' : ''}>${chapter.compactLines && i > 0 ? `<span class="intro-expanded">${line}</span><span class="intro-brief">${chapter.compactLines[i - 1]}</span>` : line}</p>`).join('')}<div class="small-rule" aria-hidden="true"></div></div></div><a class="chapter-source" href="${chapter.sources[0]}" target="_blank" rel="noreferrer">Nguồn tư liệu ↗</a>${footer}</section>`;
+  return `<section class="page ${side} text-page${index === 0 ? ' origin-page' : ''}">${header}<h2>${chapter.title}</h2><div class="text-window"><div class="text-lines">${chapter.lines.map((line, i) => `<p class="reveal-line${index === 0 && i === 0 ? ' meta' : ''}"${full ? ' style="opacity:1;transform:none"' : ''}>${chapter.compactLines && i > 0 ? `<span class="intro-expanded">${line}</span><span class="intro-brief">${chapter.compactLines[i - 1]}</span>` : line}</p>`).join('')}<div class="small-rule" aria-hidden="true"></div></div></div>${footer}</section>`;
 }
 function spreadMarkup(index, side, full = false) {
   if (index > 0) return pageMarkup(chapters[index - 1], index - 1, side, full);
@@ -107,7 +109,7 @@ function drawCurl(progress) {
 }
 function render() {
   queued = false;
-  const position = snapBookPosition(scrollY / pixelsPerUnit, pixelsPerUnit, count);
+  const position = snapBookPosition(scrolling.top / pixelsPerUnit, pixelsPerUnit, count);
   const state = timelineAt(position, count);
   prepare(state);
   const cover = state.mode === 'cover';
@@ -182,35 +184,43 @@ function schedule() { if (!queued) { queued = true; requestAnimationFrame(render
 function cancelNavigation() { cancelAnimationFrame(navigationFrame); navigationFrame = 0; navigationTop = null; }
 function onScroll() {
   // Bao gồm kéo thanh cuộn và công cụ hỗ trợ không phát wheel/pointer event.
-  if (navigationFrame && navigationTop !== null && Math.abs(scrollY - navigationTop) > 2) cancelNavigation();
+  if (navigationFrame && navigationTop !== null && Math.abs(scrolling.top - navigationTop) > 2) cancelNavigation();
   schedule();
 }
 function jump(position) {
   cancelNavigation();
-  if (reduced) { scrollTo({ top: position * pixelsPerUnit, behavior: 'instant' }); schedule(); return; }
-  const segments = navigationSegments(scrollY / pixelsPerUnit, position, count);
+  if (reduced) { scrolling.move(position * pixelsPerUnit); schedule(); return; }
+  const segments = navigationSegments(scrolling.top / pixelsPerUnit, position, count);
   const duration = segments.reduce((sum, segment) => sum + segment.duration, 0);
   const start = performance.now();
-  navigationTop = Math.round(scrollY);
+  navigationTop = Math.round(scrolling.top);
   function tick(now) {
     const elapsed = Math.max(0, now - start);
     navigationTop = Math.round(navigationAt(segments, elapsed) * pixelsPerUnit);
-    scrollTo({ top: navigationTop, behavior: 'instant' });
+    scrolling.move(navigationTop);
     schedule();
     if (elapsed < duration) navigationFrame = requestAnimationFrame(tick);
     else navigationFrame = 0;
   }
   navigationFrame = requestAnimationFrame(tick);
 }
-function navigate(direction) { jump(arrowTarget(snapBookPosition(scrollY / pixelsPerUnit, pixelsPerUnit, count), direction, count)); }
+function navigate(direction) { jump(arrowTarget(snapBookPosition(scrolling.top / pixelsPerUnit, pixelsPerUnit, count), direction, count)); }
 function measure(keepPosition = true) {
   cancelNavigation();
-  const position = scrollY / pixelsPerUnit;
-  pixelsPerUnit = Math.max(620, Math.min(1100, innerHeight * .95));
-  $('scroll-track').style.height = `${totalUnits(count) * pixelsPerUnit + innerHeight}px`;
+  const position = scrolling.top / pixelsPerUnit;
+  const frame=$('landing-scroll');
+  if(frame.clientHeight){
+    const viewport=window.visualViewport;
+    const canvas=phoneCanvas(viewport?.scale===1?viewport.width:innerWidth,viewport?.scale===1?viewport.height:innerHeight);
+    frame.parentElement.style.setProperty('--phone-canvas-width',`${canvas.width}px`);
+    frame.parentElement.style.setProperty('--phone-canvas-height',`${canvas.height}px`);
+    frame.parentElement.style.setProperty('--phone-scale',String(canvas.scale));
+  }
+  pixelsPerUnit = Math.max(620, Math.min(1100, scrolling.height * .95));
+  $('scroll-track').style.height = `${totalUnits(count) * pixelsPerUnit + scrolling.height}px`;
   width = $('book-shell').clientWidth / 2; height = $('book-shell').clientHeight;
   $('curl-art').setAttribute('viewBox', `0 0 ${width * 2} ${height}`);
-  if (keepPosition) scrollTo({ top: position * pixelsPerUnit, behavior: 'instant' });
+  if (keepPosition) scrolling.move(position * pixelsPerUnit);
   key = ''; schedule();
 }
 function setReduced(value) {
@@ -229,18 +239,19 @@ $('motion-toggle').addEventListener('click', () => setReduced(!reduced));
 reduceQuery.addEventListener('change', event => setReduced(event.matches));
 addEventListener('keydown', event => {
   if (event.ctrlKey || event.altKey || event.metaKey || event.target.closest('input,select,textarea,[contenteditable=true]')) return;
-  if (scrollY > totalUnits(count) * pixelsPerUnit + 1) return;
+  if (scrolling.top > totalUnits(count) * pixelsPerUnit + 1) return;
   if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); navigate(event.key === 'ArrowRight' ? 1 : -1); }
   else cancelNavigation();
 });
 addEventListener('wheel', cancelNavigation, { passive: true });
 addEventListener('touchstart', cancelNavigation, { passive: true });
 addEventListener('pointerdown', cancelNavigation, { passive: true });
-addEventListener('scroll', onScroll, { passive: true });
+scrolling.listen(onScroll);
 addEventListener('resize', () => measure());
+window.visualViewport?.addEventListener('resize',()=>{if(window.visualViewport.scale===1)measure();});
 document.fonts.ready.then(() => { key = ''; schedule(); });
 history.scrollRestoration = 'manual';
-scrollTo({ top: 0, behavior: 'instant' });
+scrolling.move(0);
 measure(false); setReduced(reduced); render();
 addEventListener('beforeprint', () => { $('print-chapters').innerHTML = Array.from({ length: count }, (_, index) => `<section class="spread">${spreadMarkup(index, 'left', true)}${spreadMarkup(index, 'right', true)}</section>`).join(''); });
 addEventListener('afterprint', () => { $('print-chapters').innerHTML = ''; });
