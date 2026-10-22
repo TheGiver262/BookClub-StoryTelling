@@ -29,3 +29,7 @@ Diff whitespace kiểm tra phần mã/tài liệu; hai bản OFL của Lora/News
 Không chạy điện thoại vật lý/Safari, không kiểm tra FPS/tải, không vận hành database, không push hoặc deploy. Site Netlify vẫn là deploy cũ cho đến khi có yêu cầu triển khai riêng.
 
 Bằng chứng thô được giữ local tại workspace gốc `.review-artifacts/landing-branch-split/`; không đưa ảnh/log cá nhân vào Git.
+
+## Main sau khi gỡ khóa nút
+
+Kiểm chứng sau tách: 404/404 unit đạt, build đủ 12 trang, check không lỗi/cảnh báo (2 hint có sẵn); browser tại local 4321 bấm Tủ sách mở đúng `/sach/`, desktop 1366×768 và phone 390×844 giữ đủ 10 chương/8 link hoạt động. 578 file ngoài phạm vi gỡ khóa nút và ghi chú tài liệu giống SHA256 trước thao tác. Main vẫn HEAD `6bba6ebb30946b172fccba08984f038478af2a21`, không có commit mới.
