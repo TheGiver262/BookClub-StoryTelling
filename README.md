@@ -1,8 +1,8 @@
-# YSBK — Landing Page Sách Lật Nghệ Thuật (Artistic Flipbook)
+# BookClub-StoryTelling — Landing Page Sách Lật Nghệ Thuật (Artistic Flipbook)
 
 Trang giới thiệu trực tuyến được thiết kế theo phong cách cuốn sách lật nghệ thuật 3D tương tác của **CLB Yêu Sách Bách Khoa (YSBK)** — Đại học Bách khoa Hà Nội.
 
-🌐 **Trải nghiệm trực tiếp:** [https://thegiver262.github.io/ysbk-landing/](https://thegiver262.github.io/ysbk-landing/)
+🌐 **Trải nghiệm trực tiếp:** [https://thegiver262.github.io/BookClub-StoryTelling/](https://thegiver262.github.io/BookClub-StoryTelling/)
 
 ---
 
@@ -56,8 +56,8 @@ Trang giới thiệu trực tuyến được thiết kế theo phong cách cuố
 
 1. **Clone repository về máy**:
    ```bash
-   git clone https://github.com/TheGiver262/ysbk-landing.git
-   cd ysbk-landing
+   git clone https://github.com/TheGiver262/BookClub-StoryTelling.git
+   cd BookClub-StoryTelling
    ```
 
 2. **Cài đặt các gói phụ thuộc**:
@@ -91,7 +91,7 @@ Trang giới thiệu trực tuyến được thiết kế theo phong cách cuố
 ## 📁 Cấu trúc dự án (Project Structure)
 
 ```text
-ysbk-landing/
+BookClub-StoryTelling/
 ├── .github/workflows/         # Kịch bản CI/CD GitHub Actions deploy tự động lên Pages
 ├── landing/                   # Thư mục gốc Astro pages
 ├── public/

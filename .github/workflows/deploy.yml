@@ -41,7 +41,7 @@ jobs:
       - name: Build landing page for GitHub Pages
         run: pnpm run build
         env:
-          BASE_PATH: '/ysbk-landing/'
+          BASE_PATH: '/BookClub-StoryTelling/'
 
       - name: Run verification tests
         run: pnpm run test:landing
