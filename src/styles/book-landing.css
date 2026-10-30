@@ -53,7 +53,7 @@
 .book-bed{background:#61735a;box-shadow:0 2px 0 #b9ad8b,0 5px 0 #53634b,0 16px 35px #333b2c30}
 .closed-spine{background:linear-gradient(90deg,#5d7058,#8d9d7d 48%,#62765b)}.closed-edge{box-shadow:2px 5px 0 #62765b}
 .cover-leaf,.turn-leaf{display:none!important}
-.cover-front{display:block;background:#f8f4e4 url('/book/assets/cover-minimal-v4.png') center/cover;color:var(--ink);text-shadow:none;box-shadow:inset 3px 0 8px #52624030;border-color:#81907955;padding:30px 24px;text-align:center}
+.cover-front{display:block;background:#f8f4e4 url('/book/assets/cover-minimal-v4.webp') center/cover;color:var(--ink);text-shadow:none;box-shadow:inset 3px 0 8px #52624030;border-color:#81907955;padding:30px 24px;text-align:center}
 .cover-front:before{inset:12px;border-color:#81907950}.cover-front:after{inset:0;border:0;background:linear-gradient(#faf7e8cc,#faf7e800 36%);pointer-events:none;z-index:0}
 .cover-front .cover-heading{position:relative;z-index:1}.cover-front h1{font-size:clamp(27px,3.3vw,54px);line-height:1.14;text-shadow:none;font-weight:500;letter-spacing:-.04em}.cover-front h1 small{font-family:var(--sans);font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin:10px 0 13px}.cover-logo{display:block;width:78px;height:47px;margin:auto;object-fit:contain}
 .cover-front .cover-tagline{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:1;background:#faf8e7e8;border:1px solid #d8ddc3;color:#42563b;padding:9px 15px;white-space:nowrap;font-size:12px}.cover-issue{position:absolute;bottom:12px;left:0;right:0;text-align:center;z-index:1;font-size:7px;letter-spacing:.18em;color:#f7f2d9;text-shadow:0 1px 4px #233c24}
@@ -222,7 +222,7 @@
 .paper-cover .cover-footer{background:#f5efdd}
 /* Fade the artwork separately so the title and slogan keep their cover colors. */
 .paper-cover{isolation:isolate;background-image:none;filter:none;opacity:1}
-.paper-cover:before{inset:0;border:0;background-color:inherit;background-image:linear-gradient(#fff8e3a8,transparent 49%),url('/book/assets/cover-minimal-v4.png');background-size:inherit;background-position:inherit;background-repeat:no-repeat;filter:saturate(.3);opacity:.48}
+.paper-cover:before{inset:0;border:0;background-color:inherit;background-image:linear-gradient(#fff8e3a8,transparent 49%),url('/book/assets/cover-minimal-v4.webp');background-size:inherit;background-position:inherit;background-repeat:no-repeat;filter:saturate(.3);opacity:.48}
 .paper-cover:after{inset:12px 12px 12px 17px;border:1px solid #81907950;background:none;opacity:.48}
 .paper-cover .cover-logo,.paper-cover .cover-footer{filter:saturate(.3);opacity:.48}
 .partner-pair{display:flex;align-items:center;justify-content:center;gap:18px;width:100%;height:100%}

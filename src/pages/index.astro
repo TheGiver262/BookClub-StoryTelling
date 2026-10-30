@@ -19,13 +19,13 @@ import '../styles/book-mobile.css';
     <noscript><style is:inline>.scroll-track { display: none; }</style></noscript>
     <link rel="icon" type="image/svg+xml" href="/book/assets/club-logo-v8.svg" />
     <link rel="preload" as="font" href="/book/assets/dancing-script.ttf" type="font/ttf" crossorigin />
-    <link rel="preload" as="image" href="/book/assets/cover-minimal-v4.png" />
+    <link rel="preload" as="image" href="/book/assets/cover-minimal-v4.webp" />
     <title>CLB Yêu Sách Bách Khoa Hà Nội (YSBK) — Mở sách, đọc tương lai</title>
     <meta name="description" content="Trang thông tin tra cứu sách, lịch trực bàn và kết nối bạn đọc của Câu lạc bộ Yêu Sách Bách Khoa Hà Nội." />
   </head>
   <body>
     <div class="landing-viewport"><div class="landing-scroll" id="landing-scroll">
-    <audio id="bg-music" src="/book/assets/warm-memories.mp3" preload="metadata" loop></audio>
+    <audio id="bg-music" src="/book/assets/warm-memories.mp3" preload="none" loop></audio>
     <BookLanding />
     <script is:inline type="module" src="/book/book-backdrop.mjs"></script>
     <script is:inline type="module" src="/book/book-music.mjs"></script>

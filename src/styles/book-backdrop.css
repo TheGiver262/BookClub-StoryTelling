@@ -28,7 +28,7 @@
     inset: -25% 0;
     opacity: 1;
     mix-blend-mode: normal;
-    background: url('/book/assets/meadow-cover-matched.png') center / cover no-repeat;
+    background: url('/book/assets/meadow-cover-matched.webp') center / cover no-repeat;
     filter: brightness(1.012) saturate(.96);
     transform: translateY(var(--backdrop-trim)) matrix(1, var(--backdrop-slope, 0), 0, 1, 0, var(--backdrop-shift, 0));
   }

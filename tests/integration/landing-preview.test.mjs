@@ -31,8 +31,22 @@ test('landing fonts are self-hosted, including Vietnamese glyphs',()=>{
   const css=walk(output).filter(file=>file.endsWith('.css')).map(file=>fs.readFileSync(file,'utf8')).join('\n');
   assert(!/fonts\.(?:googleapis|gstatic)\.com/.test(css),'font loading must not require Google or a CSP exception');
   for(const family of ['Be Vietnam Pro','Lora','Newsreader'])assert(css.includes(family));
-  const fonts=[...css.matchAll(/url\(["']?(\/book\/assets\/[^)"']+\.woff2)/g)].map(match=>match[1]);
+  const fonts=[...css.matchAll(/url\(["']?(?:[a-zA-Z0-9_/-]*\/)?(book\/assets\/[^)"']+\.woff2)/g)].map(match=>match[1]);
   assert(fonts.length>=3,'local WOFF2 faces must be present');
-  for(const font of fonts)assert(fs.statSync(path.join(output,font.slice(1))).size>1000);
+  for(const font of fonts)assert(fs.statSync(path.join(output,font)).size>1000);
   assert.match(css,/U\+1EA0-1EF9/i,'Vietnamese precomposed characters must have a font face');
+});
+
+test('media and fonts have content-addressed cache URLs; documents revalidate',()=>{
+  const assetDir=path.join(output,'book/assets');
+  for(const name of fs.readdirSync(assetDir))assert.match(name,/\.[a-f0-9]{16}\.[a-z0-9]+$/);
+  const headers=fs.readFileSync(path.join(output,'_headers'),'utf8');
+  assert.match(headers,/Cache-Control: public, max-age=0, must-revalidate/);
+  assert.match(headers,/\/book\/assets\/\*\n  Cache-Control: public, max-age=31536000, immutable/);
+  const html=fs.readFileSync(path.join(output,'index.html'),'utf8');
+  assert.match(html,/<audio[^>]+preload="none"/);
+  const content=fs.readFileSync(path.join(output,'book/book-content.mjs'),'utf8');
+  for(const text of [html,content,...walk(output).filter(file=>file.endsWith('.css')).map(file=>fs.readFileSync(file,'utf8'))]){
+    for(const [,name]of text.matchAll(/([a-zA-Z0-9._-]+\.[a-f0-9]{16}\.(?:webp|jpe?g|svg|mp3|ttf|woff2))/g))assert(fs.existsSync(path.join(assetDir,name)),'Missing '+name);
+  }
 });

@@ -4,6 +4,11 @@ const toggle = document.getElementById('music-toggle');
 if (audio && toggle) {
   let isPlaying = false;
   let userPaused = false;
+  let pending = false;
+  const interactions = ['click', 'scroll', 'wheel', 'keydown', 'touchstart'];
+  function stopAutomaticPlay() {
+    for (const event of interactions) window.removeEventListener(event, onFirstInteraction, true);
+  }
   let fadeInterval = null;
 
   function fadeAudio(targetVolume, duration = 800) {
@@ -28,21 +33,26 @@ if (audio && toggle) {
   }
 
   function playMusic() {
+    if (pending) return;
+    pending = true;
     audio.volume = 0;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
+        pending = false;
+        stopAutomaticPlay();
         isPlaying = true;
         userPaused = false;
         toggle.setAttribute('aria-pressed', 'true');
         toggle.textContent = 'Tắt nhạc ♫';
         fadeAudio(0.35, 1200);
       }).catch(() => {
+        pending = false;
         isPlaying = false;
         toggle.setAttribute('aria-pressed', 'false');
         toggle.textContent = 'Bật nhạc ♫';
       });
-    }
+    } else { pending = false; }
   }
 
   function pauseMusic() {
@@ -66,16 +76,9 @@ if (audio && toggle) {
     if (!isPlaying && !userPaused) {
       playMusic();
     }
-    window.removeEventListener('click', onFirstInteraction);
-    window.removeEventListener('scroll', onFirstInteraction);
-    window.removeEventListener('keydown', onFirstInteraction);
-    window.removeEventListener('touchstart', onFirstInteraction);
   }
 
-  window.addEventListener('click', onFirstInteraction, { passive: true });
-  window.addEventListener('scroll', onFirstInteraction, { passive: true });
-  window.addEventListener('keydown', onFirstInteraction, { passive: true });
-  window.addEventListener('touchstart', onFirstInteraction, { passive: true });
+  for (const event of interactions) window.addEventListener(event, onFirstInteraction, { passive: true, capture: true });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {

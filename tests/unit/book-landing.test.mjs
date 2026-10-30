@@ -44,7 +44,7 @@ test('mở bìa tới bìa phụ: trái trắng, phải cùng thiết kế bìa 
   assert(!right.includes('leaf-face'));
   assert(!right.includes('class="page-num"'));
   assert.notEqual(right.match(/id="(paper-tagline-[^"]+)"/)[1], render(0, 'right').match(/id="(paper-tagline-[^"]+)"/)[1]);
-  assert(render(1, 'left').includes('historical-team.png'));
+  assert(render(1, 'left').includes('historical-team.webp'));
   assert(render(1, 'right').includes('16.09.2013'));
   assert(render(1, 'left').includes('class="page-num">01'));
   assert(render(10, 'right').includes('class="page-num">20'));
