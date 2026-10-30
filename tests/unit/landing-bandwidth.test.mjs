@@ -8,6 +8,7 @@ const {versionLandingAssets}=await import('../../scripts/build-landing.mjs');
 
 test('asset content hashes update every reference and change only with asset bytes',()=>{
   assert.equal(typeof versionLandingAssets,'function','build must version assets for safe long-term caching');
+  fs.mkdirSync('.review-artifacts',{recursive:true});
   const dir=fs.mkdtempSync('.review-artifacts/cache-test-');
   try{
     fs.mkdirSync(path.join(dir,'book/assets'),{recursive:true});
