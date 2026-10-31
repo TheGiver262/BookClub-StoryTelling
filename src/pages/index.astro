@@ -1,7 +1,10 @@
 ---
 import BookLanding from '../components/BookLanding.astro';
 import LandingLink from '../components/LandingLink.astro';
-const landingOnly=import.meta.env.PUBLIC_LANDING_ONLY==='true';
+import { loadStory } from '../content/ysbk-story.mjs';
+
+const site = loadStory();
+const landingOnly = import.meta.env.PUBLIC_LANDING_ONLY === 'true';
 import '../styles/global.css';
 import '../styles/book-backdrop.css';
 import '../styles/book-mobile.css';
@@ -26,7 +29,7 @@ import '../styles/book-mobile.css';
   <body>
     <div class="landing-viewport"><div class="landing-scroll" id="landing-scroll">
     <audio id="bg-music" src="/book/assets/warm-memories.mp3" preload="none" loop></audio>
-    <BookLanding />
+    <BookLanding site={site} />
     <script is:inline type="module" src="/book/book-backdrop.mjs"></script>
     <script is:inline type="module" src="/book/book-music.mjs"></script>
     <section class="loan-guide" id="cach-muon" aria-labelledby="guide-title">

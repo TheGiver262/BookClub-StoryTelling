@@ -1,4 +1,4 @@
-/* Only the outside landscape changes; the book keeps its original artwork. */
+/* Landscape framing and lighting for the book scene. */
 @media screen {
   .book-landing-page,
   .book-landing-page * {
@@ -7,7 +7,6 @@
   }
 
   html.book-landing-page {
-    --backdrop-trim: 18px;
     background: #fef7d4;
     scrollbar-width: none;
   }
@@ -28,9 +27,9 @@
     inset: -25% 0;
     opacity: 1;
     mix-blend-mode: normal;
-    background: url('/book/assets/meadow-cover-matched.webp') center / cover no-repeat;
+    background: var(--template-backdrop, url('/book/assets/meadow-cover-matched.webp')) center / cover no-repeat;
     filter: brightness(1.012) saturate(.96);
-    transform: translateY(var(--backdrop-trim)) matrix(1, var(--backdrop-slope, 0), 0, 1, 0, var(--backdrop-shift, 0));
+    transform: matrix(1, var(--backdrop-slope, 0), 0, 1, 0, var(--backdrop-shift, 0));
   }
 
   .stage .desk-ring { display: none; }
@@ -49,5 +48,11 @@
   .stage .bottom-bar .reading-status :is(.eyebrow, .status-title, .status-caption) {
     text-shadow: 0 1px 3px #183524, 0 0 8px #183524cc;
   }
+}
 
+/* Keep the bundled animated landscape visible through the cover lighting. */
+@media screen {
+  .stage[data-backdrop] .cover-front:not(.paper-cover)::after {
+    background: linear-gradient(#fff8e326, transparent 49%);
+  }
 }

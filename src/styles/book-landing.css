@@ -278,3 +278,12 @@ a[aria-disabled="true"]{cursor:default}
 .music-credit a:hover{color:#1e382b}
 .cover-front .cover-footer{position:absolute;display:flex;align-items:center;justify-content:center;left:50%;bottom:clamp(16px,3cqw,20px);transform:translateX(-50%);padding:0;background:transparent;border:0;border-radius:0;z-index:2}
 .cover-front .partner-logos{width:clamp(60px,18cqw,88px);height:auto;aspect-ratio:2/1}
+
+/* Balanced headings and readable brand labels */
+.text-page h2{text-wrap:balance}.page-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.page-top span:first-child{white-space:normal;overflow-wrap:anywhere}
+@media(min-width:701px){.text-page .reveal-line{color:var(--ink);line-height:1.7}}
+.text-page .reveal-line{overflow-wrap:anywhere}
+
+/* Reveal a photo and its caption as one reading unit */
+[data-reveal]{opacity:0}
+@media print{[data-reveal]{opacity:1!important}}

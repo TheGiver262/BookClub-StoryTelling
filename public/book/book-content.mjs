@@ -1,99 +1,562 @@
-const HUST = 'https://hust.edu.vn/vi/news/hoat-dong-chung/yeu-sach-nhu-sinh-vien-bach-khoa-655055.html';
-const FACEBOOK = 'https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/';
-const UPLOAD = 'Ảnh CLB do người dùng cung cấp';
-const PENDING = 'Chờ ảnh mới từ bạn';
-const photo = (file, caption, source = PENDING, position = '50% 50%') => ({ file, caption, source, position });
-
-export const activities = [
-  { title: 'Cho mượn sách miễn phí', photo: photo('loans-book-table.webp', 'Bàn sách của CLB Yêu Sách Bách Khoa', UPLOAD) },
-  { title: 'Đêm Sách', photo: photo('book-night-group.webp', 'Cùng nhau trong một buổi Đêm Sách', UPLOAD, '50% 65%') },
-  { title: 'Sinh hoạt & chia sẻ sách', photo: photo('weekly-circle-gathering.webp', 'Vòng tròn sinh hoạt của các thành viên', UPLOAD) },
-  { title: 'Ngày Sách Việt Nam', photo: photo('vietnam-book-day-booth.webp', 'Gian sách tại Ngày Sách và Văn hóa đọc Việt Nam 2026', UPLOAD) },
-  { title: 'Dã ngoại & Big Game', photo: photo('outdoors-big-game.webp', 'Những thử thách cùng nhau trong Big Game Gen 13', UPLOAD) },
-  { title: 'Tuyển thành viên', photo: photo('recruitment-interview.webp', 'Một cuộc trò chuyện trong vòng phỏng vấn', UPLOAD, '65% 50%') },
-];
-
+// Auto-generated from content/ysbk-story.json. Do not edit directly.
+export const site = {
+  "schemaVersion": 1,
+  "locale": "vi",
+  "meta": {
+    "title": "Yêu Sách Bách Khoa — Câu chuyện CLB",
+    "description": "Một cuốn sách mở ra câu chuyện của Câu lạc bộ Yêu Sách Bách Khoa Hà Nội.",
+    "favicon": "/book/assets/club-logo-v8.svg"
+  },
+  "brand": {
+    "name": "Yêu Sách Bách Khoa",
+    "tagline": "Mở sách, đọc tương lai",
+    "established": "16.09.2013"
+  },
+  "cover": {
+    "image": "cover-minimal-v4.webp",
+    "logo": {
+      "file": "club-logo-v8.svg",
+      "alt": "Logo CLB Yêu Sách Bách Khoa",
+      "position": "50% 50%",
+      "zoom": 1
+    },
+    "eyebrow": "CLB YÊU SÁCH BÁCH KHOA",
+    "titleLines": [
+      "YÊU SÁCH",
+      "BÁCH KHOA"
+    ],
+    "footerLogo": {
+      "file": "partner-logos-clean-v8.svg",
+      "alt": "Hội Sinh viên ĐHBK Hà Nội",
+      "position": "50% 50%",
+      "zoom": 1
+    }
+  },
+  "background": {
+    "image": "meadow-cover-matched.webp",
+    "calibration": {
+      "cover": {
+        "width": 1024,
+        "height": 1536,
+        "horizon": [
+          0.5572916666666666,
+          0.5455729166666666,
+          0.5442708333333334,
+          0.5442708333333334,
+          0.5286458333333334,
+          0.5221354166666666,
+          0.5182291666666666,
+          0.5162760416666666,
+          0.5143229166666666,
+          0.5162760416666666,
+          0.5208333333333334,
+          0.5247395833333334,
+          0.5319010416666666,
+          0.5397135416666666,
+          0.5481770833333334,
+          0.5559895833333334,
+          0.5625
+        ]
+      },
+      "background": {
+        "width": 1672,
+        "height": 941,
+        "horizon": [
+          0.5961742826780021,
+          0.5759829968119022,
+          0.565356004250797,
+          0.5462274176408076,
+          0.5334750265674814,
+          0.5196599362380446,
+          0.5069075451647184,
+          0.5005313496280552,
+          0.4952178533475027,
+          0.5005313496280552,
+          0.51009564293305,
+          0.5228480340063762,
+          0.538788522848034,
+          0.5557917109458024,
+          0.5727948990435706,
+          0.5908607863974495,
+          0.6004250797024442
+        ]
+      }
+    }
+  },
+  "cta": {
+    "label": "Tìm sách & Mượn",
+    "href": "#cach-muon"
+  },
+  "secondaryCta": {
+    "label": "Về CLB",
+    "href": "#cau-chuyen"
+  },
+  "labels": {
+    "coverPage": "Bìa sách",
+    "page": "Trang",
+    "singleHint": "Kéo mép hoặc vuốt để lật · Cuộn để đọc",
+    "endpapersPage": "Trang trắng cuối sách",
+    "insideBackCover": "Mặt trong bìa sau",
+    "backCoverPage": "Bìa sau",
+    "closeBook": "Khép sách",
+    "reopenBook": "Mở lại bìa sau",
+    "closingTitle": "Trang giấy khép lại câu chuyện.",
+    "closedTitle": "Cuốn sách đã khép lại.",
+    "closeCaption": "Cuộn hoặc bấm mũi tên phải để khép sách.",
+    "closedCaption": "Lật ngược lại để mở sách đọc tiếp.",
+    "closeHint": "Cuộn để khép sách",
+    "closedHint": "Cuộn ngược để mở lại",
+    "closedAnnouncement": "Bìa sau. Cuốn sách đã khép lại; lật ngược để mở lại.",
+    "completeStory": "Toàn bộ câu chuyện",
+    "chapter": "Chương",
+    "titlePage": "Bìa phụ",
+    "blankPage": "Trang giấy trắng",
+    "coverStatus": "Bìa sách / Mở đầu",
+    "titleStatus": "Bìa phụ / Trên trang giấy",
+    "coverTitle": "Câu chuyện bắt đầu từ một cuốn sách.",
+    "coverCaption": "Cuộn chậm để mở. Cuộn ngược để khép lại.",
+    "titleCaption": "Một trang giấy trước khi câu chuyện bắt đầu. Cuộn tiếp để đọc.",
+    "endCaption": "Cuộn tiếp để xem trang kết sách.",
+    "galleryCaption": "Những điều chúng mình làm cùng nhau. Cuộn tiếp để khám phá từng hoạt động.",
+    "turnCaption": "Dừng ở một nếp giấy. Cuộn ngược để trở về.",
+    "readCaption": "Cuộn để đọc tiếp. Hết nội dung, mình sang trang.",
+    "openHint": "Cuộn xuống để mở sách",
+    "turnHint": "Lật từ góc trang",
+    "readHint": "Cuộn xuống để đọc tiếp",
+    "arrowsHint": "Hoặc kéo mép giấy / dùng mũi tên trái, phải.",
+    "openBook": "Mở sách",
+    "nextPage": "Trang tiếp theo",
+    "previousPage": "Trang trước",
+    "openAnnouncement": "Bìa sách. Cuộn hoặc bấm mũi tên phải để mở.",
+    "enableMotion": "Bật chuyển động lật",
+    "reduceMotion": "Giảm chuyển động",
+    "musicOn": "Bật nhạc ♫",
+    "musicOff": "Tắt nhạc ♫",
+    "skip": "Chuyển tới nội dung chính",
+    "navigation": "Liên kết nhanh",
+    "pageNavigation": "Lật trang",
+    "chapters": "Chọn chương",
+    "controls": "Điều khiển đọc",
+    "music": "Bật hoặc tắt nhạc nền",
+    "endNotice": "Trang cuối cùng. Cuộn ngược để đọc lại.",
+    "fallback": "Cuốn sách hoạt họa cần JavaScript. Bạn có thể đọc nội dung ở bên dưới."
+  },
+  "activities": [
+    {
+      "title": "Cho mượn sách miễn phí",
+      "photo": {
+        "file": "loans-book-table.webp",
+        "caption": "Bàn sách của CLB Yêu Sách Bách Khoa",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "50% 50%"
+      }
+    },
+    {
+      "title": "Đêm Sách",
+      "photo": {
+        "file": "book-night-group.webp",
+        "caption": "Cùng nhau trong một buổi Đêm Sách",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "50% 65%"
+      }
+    },
+    {
+      "title": "Sinh hoạt & chia sẻ sách",
+      "photo": {
+        "file": "weekly-circle-gathering.webp",
+        "caption": "Vòng tròn sinh hoạt của các thành viên",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "50% 50%"
+      }
+    },
+    {
+      "title": "Ngày Sách Việt Nam",
+      "photo": {
+        "file": "vietnam-book-day-booth.webp",
+        "caption": "Gian sách tại Ngày Sách và Văn hóa đọc Việt Nam 2026",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "50% 50%"
+      }
+    },
+    {
+      "title": "Dã ngoại & Big Game",
+      "photo": {
+        "file": "outdoors-big-game.webp",
+        "caption": "Những thử thách cùng nhau trong Big Game Gen 13",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "50% 50%"
+      }
+    },
+    {
+      "title": "Tuyển thành viên",
+      "photo": {
+        "file": "recruitment-interview.webp",
+        "caption": "Một cuộc trò chuyện trong vòng phỏng vấn",
+        "source": "Ảnh CLB do người dùng cung cấp",
+        "position": "65% 50%"
+      }
+    }
+  ],
+  "chapters": [
+    {
+      "id": "origin",
+      "kind": "story",
+      "name": "Một khởi đầu từ tình yêu sách",
+      "title": "Từ một<br><em>tình yêu sách.</em>",
+      "kicker": "Từ những trang sách đầu tiên",
+      "photos": [
+        {
+          "file": "historical-team.webp",
+          "caption": "Những gương mặt thời kỳ đầu của CLB",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Chờ ảnh mới từ bạn"
+        }
+      ],
+      "lines": [
+        "<span>Ngày thành lập</span><strong>16.09.2013</strong>",
+        "Giữa những giờ học và nhịp sống sinh viên, một cuốn sách có thể mở ra một khoảng trời khác. Yêu Sách Bách Khoa ra đời từ mong muốn để những người thích đọc có một nơi gặp gỡ, trao đổi và cùng nhau học hỏi.",
+        "Hoạt động tự nguyện, phi lợi nhuận, CLB kết nối bạn đọc ở Bách Khoa và các trường đại học tại Hà Nội. Không cần đọc thật nhiều mới có thể bắt đầu; chỉ cần bạn tò mò và sẵn lòng chia sẻ điều mình tìm thấy trong trang sách.",
+        "Từ tủ sách cho mượn miễn phí đến những buổi sinh hoạt, Đêm Sách và Ngày Sách Việt Nam, việc đọc dần bước ra khỏi trang giấy. Mỗi hoạt động là một dịp để lắng nghe một góc nhìn khác, thử một điều mới và đưa những điều đã đọc vào cuộc sống.",
+        "Qua nhiều thế hệ, các thành viên cùng chăm sóc tủ sách, chuẩn bị chương trình và viết tiếp câu chuyện của CLB. Chúng mình đến vì sách, rồi ở lại vì những người bạn — cùng đọc, cùng làm và cùng trưởng thành."
+      ],
+      "compactLines": [
+        "Để sinh viên cùng đọc, trao đổi và học hỏi.",
+        "Tự nguyện, phi lợi nhuận; kết nối bạn đọc ở Bách Khoa và Hà Nội.",
+        "Tủ sách miễn phí, Đêm Sách, sinh hoạt: cùng đọc và sẻ chia.",
+        "Đến vì sách, ở lại vì tình bạn."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "people",
+      "kind": "people",
+      "name": "Những người viết tiếp",
+      "kicker": "Con người làm nên Yêu Sách",
+      "photos": [
+        {
+          "file": "members-current-group.webp",
+          "caption": "Những gương mặt đang viết tiếp câu chuyện Yêu Sách",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "members-current-friends.webp",
+          "caption": "Những người bạn cùng chung tình yêu sách",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "members-anniversary-13.webp",
+          "caption": "Một dấu mốc: Yêu Sách Bách Khoa tròn 13 tuổi",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "members-current-campus.jpg",
+          "caption": "Cùng nhau dưới mái nhà Yêu Sách Bách Khoa",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Từ những gương mặt đầu tiên, câu chuyện được viết tiếp qua nhiều thế hệ sinh viên.",
+        "Một dấu mốc để nhớ. Những kỷ niệm để cùng nhau viết tiếp."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/",
+        "https://hust.edu.vn/vi/news/hoat-dong-chung/yeu-sach-nhu-sinh-vien-bach-khoa-655055.html"
+      ]
+    },
+    {
+      "id": "activities",
+      "kind": "gallery",
+      "name": "Sách đưa chúng mình đi đâu?",
+      "items": [
+        {
+          "title": "Cho mượn sách miễn phí",
+          "photo": {
+            "file": "loans-book-table.webp",
+            "caption": "Bàn sách của CLB Yêu Sách Bách Khoa",
+            "position": "50% 50%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        },
+        {
+          "title": "Đêm Sách",
+          "photo": {
+            "file": "book-night-group.webp",
+            "caption": "Cùng nhau trong một buổi Đêm Sách",
+            "position": "50% 65%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        },
+        {
+          "title": "Sinh hoạt & chia sẻ sách",
+          "photo": {
+            "file": "weekly-circle-gathering.webp",
+            "caption": "Vòng tròn sinh hoạt của các thành viên",
+            "position": "50% 50%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        },
+        {
+          "title": "Ngày Sách Việt Nam",
+          "photo": {
+            "file": "vietnam-book-day-booth.webp",
+            "caption": "Gian sách tại Ngày Sách và Văn hóa đọc Việt Nam 2026",
+            "position": "50% 50%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        },
+        {
+          "title": "Dã ngoại & Big Game",
+          "photo": {
+            "file": "outdoors-big-game.webp",
+            "caption": "Những thử thách cùng nhau trong Big Game Gen 13",
+            "position": "50% 50%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        },
+        {
+          "title": "Tuyển thành viên",
+          "photo": {
+            "file": "recruitment-interview.webp",
+            "caption": "Một cuộc trò chuyện trong vòng phỏng vấn",
+            "position": "65% 50%",
+            "zoom": 1,
+            "source": "Ảnh CLB do người dùng cung cấp"
+          }
+        }
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "free-loans",
+      "kind": "story",
+      "name": "Cho mượn sách miễn phí",
+      "title": "Một cuốn sách.<br>Nhiều lượt <em>chuyền tay.</em>",
+      "kicker": "Từ tình yêu sách đến tủ sách chung",
+      "photos": [
+        {
+          "file": "loans-desk-crowd.webp",
+          "caption": "Nhộn nhịp bạn đọc tại bàn trực sách của CLB",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "loan-user.webp",
+          "caption": "Những cuốn sách chờ đến tay người đọc",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Để việc đọc dễ bắt đầu hơn, CLB xây dựng tủ sách chung và cho sinh viên mượn miễn phí.",
+        "Những buổi trực là lúc bạn chọn sách, gặp thành viên CLB và mang một câu chuyện về nhà.",
+        "Bạn có thể giữ chỗ online rồi nhận tại buổi trực thứ 3 hoặc thứ 5 đã chọn. Mỗi đơn giữ một cuốn.",
+        "Khi trả lại, cuốn sách tiếp tục hành trình đến một người đọc khác."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "book-night",
+      "kind": "story",
+      "name": "Đêm Sách",
+      "title": "Khi câu chuyện<br>được <em>cất thành lời.</em>",
+      "kicker": "Từ đọc một mình đến sẻ chia cùng nhau",
+      "photos": [
+        {
+          "file": "book-night-sunny-days.webp",
+          "caption": "Đêm Sách: Trở về ngày có nắng",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "book-night-sharing.webp",
+          "caption": "Một khoảnh khắc trong buổi chia sẻ sách",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Có những cuốn sách khiến người đọc muốn kể lại ngay điều vừa tìm thấy.",
+        "Đêm Sách là một không gian để giới thiệu sách hay, lắng nghe cảm nhận và gặp những người cùng quan tâm.",
+        "Mỗi người mang tới một câu chuyện. Cuộc gặp trở thành nơi những góc nhìn cùng mở ra.",
+        "Và từ một đêm gặp gỡ, việc đọc được tiếp nối trong những buổi sinh hoạt thường kỳ."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "weekly",
+      "kind": "story",
+      "name": "Sinh hoạt hàng tuần",
+      "title": "Gặp nhau đều đặn.<br>Đọc sâu <em>hơn một chút.</em>",
+      "kicker": "Giữ cho việc đọc trở thành một thói quen",
+      "photos": [
+        {
+          "file": "historical-reading.webp",
+          "caption": "Sinh hoạt & chia sẻ sách",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "historical-trip.webp",
+          "caption": "Một buổi sinh hoạt chia sẻ sách của CLB",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Trong những buổi sinh hoạt định kỳ, thành viên chia sẻ nội dung và điều mình tâm đắc từ sách.",
+        "Có lúc cùng đọc, có lúc thảo luận một chủ đề hoặc đặt câu hỏi cho nhau.",
+        "Một ý tưởng được nói ra có thể trở thành góc nhìn mới của người bên cạnh.",
+        "Từ những buổi gặp nhỏ, chúng mình mang câu chuyện đọc sách đến một không gian rộng hơn."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/",
+        "https://hust.edu.vn/vi/news/hoat-dong-chung/yeu-sach-nhu-sinh-vien-bach-khoa-655055.html"
+      ]
+    },
+    {
+      "id": "vietnam-book-day",
+      "kind": "story",
+      "name": "Ngày Sách Việt Nam",
+      "title": "Từ một trang sách.<br>Đến ngày hội <em>của người đọc.</em>",
+      "kicker": "Ngày Sách và Văn hóa đọc Việt Nam",
+      "photos": [
+        {
+          "file": "vietnam-book-day-team.webp",
+          "caption": "Gian trưng bày tại Ngày Sách và Tuần lễ Sách Bách Khoa",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "vietnam-book-day-talk.webp",
+          "caption": "Thảo luận về sách điện tử và sách giấy",
+          "position": "60% 55%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Ngày Sách Việt Nam là dịp để tình yêu đọc được nhìn thấy, được kể lại và lan tỏa.",
+        "Tại gian sách, thành viên CLB cùng giới thiệu những cuốn sách và gặp thêm những người bạn yêu đọc.",
+        "Trên sân khấu, câu hỏi “Sách điện tử có thay thế sách giấy được không?” mở ra những góc nhìn về việc đọc trong thời đại số.",
+        "Cùng chuẩn bị một ngày hội, chúng mình có thêm trải nghiệm làm việc và những kỷ niệm để mang theo."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "outdoors",
+      "kind": "story",
+      "name": "Dã ngoại cùng nhau",
+      "title": "Gấp sách lại.<br>Mở thêm một <em>khoảng trời.</em>",
+      "kicker": "Những trang thanh xuân ở bên ngoài lớp học",
+      "photos": [
+        {
+          "file": "outdoors-jenga-game.webp",
+          "caption": "Thử thách rút gỗ trong hoạt động Big Game",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "outdoors-group.webp",
+          "caption": "Một buổi đi chơi cùng nhau",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Bên cạnh sách còn có những chuyến đi, hoạt động ngoài trời và buổi gặp gỡ để hiểu nhau hơn.",
+        "Một buổi dã ngoại hay những thử thách Big Game là dịp cùng phối hợp, trò chuyện và hiểu thêm về đồng đội.",
+        "Có những câu chuyện chỉ được kể khi cùng bước ra ngoài và dành thời gian cho nhau.",
+        "Và rồi, mỗi mùa mới lại chờ thêm những gương mặt mới."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "recruitment",
+      "kind": "story",
+      "name": "Tuyển thành viên",
+      "title": "Một chỗ trong CLB.<br>Một hành trình <em>của bạn.</em>",
+      "kicker": "Những trang tiếp theo được viết bằng người mới",
+      "photos": [
+        {
+          "file": "recruitment-artemis.webp",
+          "caption": "Artemis · hình ảnh một đợt tuyển thành viên",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        },
+        {
+          "file": "recruitment-hall-interviews.webp",
+          "caption": "Toàn cảnh vòng phỏng vấn tuyển thành viên trên giảng đường",
+          "position": "50% 50%",
+          "zoom": 1,
+          "source": "Ảnh CLB do người dùng cung cấp"
+        }
+      ],
+      "lines": [
+        "Mỗi đợt tuyển thành viên mở ra cơ hội gặp những người cùng sở thích và thử sức trong một tập thể.",
+        "Bạn có thể bắt đầu từ tình yêu đọc sách, rồi khám phá việc làm nội dung, truyền thông hay tổ chức hoạt động.",
+        "Chúng mình không cần bạn đã biết mọi điều. Một tinh thần sẵn sàng học hỏi là một khởi đầu đẹp.",
+        "Từ những người gặp nhau vì sách, câu chuyện Yêu Sách Bách Khoa vẫn tiếp tục."
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    },
+    {
+      "id": "slogan",
+      "kind": "slogan",
+      "name": "Mở sách, đọc tương lai",
+      "illustrations": [
+        {
+          "file": "slogan-open-v7.webp",
+          "alt": "Một bạn sinh viên mở cuốn sách trên tay"
+        },
+        {
+          "file": "slogan-future-v7.webp",
+          "alt": "Từ cuốn sách mở, mầm cây, thế giới và những trang giấy bay lên bầu trời"
+        }
+      ],
+      "sources": [
+        "https://www.facebook.com/CLBYeuSachBachKhoaHaNoi/"
+      ]
+    }
+  ]
+};
+export const chapters = site.chapters;
+export const activities = site.activities;
 export const galleryActivities = activities;
-
-export const chapters = [
-  { id: 'origin', kind: 'story', name: 'Một khởi đầu từ tình yêu sách', title: 'Từ một<br><em>tình yêu sách.</em>', kicker: 'Từ những trang sách đầu tiên', sources: [FACEBOOK], photos: [photo('historical-team.webp', 'Những gương mặt thời kỳ đầu của CLB', PENDING)], lines: [
-    '<span>Ngày thành lập</span><strong>16.09.2013</strong>',
-    'Giữa những giờ học và nhịp sống sinh viên, một cuốn sách có thể mở ra một khoảng trời khác. Yêu Sách Bách Khoa ra đời từ mong muốn để những người thích đọc có một nơi gặp gỡ, trao đổi và cùng nhau học hỏi.',
-    'Hoạt động tự nguyện, phi lợi nhuận, CLB kết nối bạn đọc ở Bách Khoa và các trường đại học tại Hà Nội. Không cần đọc thật nhiều mới có thể bắt đầu; chỉ cần bạn tò mò và sẵn lòng chia sẻ điều mình tìm thấy trong trang sách.',
-    'Từ tủ sách cho mượn miễn phí đến những buổi sinh hoạt, Đêm Sách và Ngày Sách Việt Nam, việc đọc dần bước ra khỏi trang giấy. Mỗi hoạt động là một dịp để lắng nghe một góc nhìn khác, thử một điều mới và đưa những điều đã đọc vào cuộc sống.',
-    'Qua nhiều thế hệ, các thành viên cùng chăm sóc tủ sách, chuẩn bị chương trình và viết tiếp câu chuyện của CLB. Chúng mình đến vì sách, rồi ở lại vì những người bạn — cùng đọc, cùng làm và cùng trưởng thành.',
-  ], compactLines: [
-    'Để sinh viên cùng đọc, trao đổi và học hỏi.',
-    'Tự nguyện, phi lợi nhuận; kết nối bạn đọc ở Bách Khoa và Hà Nội.',
-    'Tủ sách miễn phí, Đêm Sách, sinh hoạt: cùng đọc và sẻ chia.',
-      'Đến vì sách, ở lại vì tình bạn.',
-  ] },
-  { id: 'people', kind: 'people', name: 'Những người viết tiếp', kicker: 'Con người làm nên Yêu Sách', sources: [FACEBOOK, HUST], photos: [
-    photo('members-current-group.webp', 'Những gương mặt đang viết tiếp câu chuyện Yêu Sách', UPLOAD),
-    photo('members-current-friends.webp', 'Những người bạn cùng chung tình yêu sách', UPLOAD),
-    photo('members-anniversary-13.webp', 'Một dấu mốc: Yêu Sách Bách Khoa tròn 13 tuổi', UPLOAD),
-    photo('members-current-campus.jpg', 'Cùng nhau dưới mái nhà Yêu Sách Bách Khoa', UPLOAD),
-  ], lines: [
-    'Từ những gương mặt đầu tiên, câu chuyện được viết tiếp qua nhiều thế hệ sinh viên.',
-    'Một dấu mốc để nhớ. Những kỷ niệm để cùng nhau viết tiếp.',
-  ] },
-  { id: 'activities', kind: 'gallery', name: 'Sách đưa chúng mình đi đâu?', sources: [FACEBOOK], items: galleryActivities },
-  { id: 'free-loans', kind: 'story', name: 'Cho mượn sách miễn phí', title: 'Một cuốn sách.<br>Nhiều lượt <em>chuyền tay.</em>', kicker: 'Từ tình yêu sách đến tủ sách chung', sources: [FACEBOOK], photos: [
-    photo('loans-desk-crowd.webp', 'Nhộn nhịp bạn đọc tại bàn trực sách của CLB', UPLOAD),
-    photo('loan-user.webp', 'Những cuốn sách chờ đến tay người đọc', UPLOAD),
-  ], lines: [
-    'Để việc đọc dễ bắt đầu hơn, CLB xây dựng tủ sách chung và cho sinh viên mượn miễn phí.',
-    'Những buổi trực là lúc bạn chọn sách, gặp thành viên CLB và mang một câu chuyện về nhà.',
-    'Bạn có thể giữ chỗ online rồi nhận tại buổi trực thứ 3 hoặc thứ 5 đã chọn. Mỗi đơn giữ một cuốn.',
-    'Khi trả lại, cuốn sách tiếp tục hành trình đến một người đọc khác.',
-  ] },
-  { id: 'book-night', kind: 'story', name: 'Đêm Sách', title: 'Khi câu chuyện<br>được <em>cất thành lời.</em>', kicker: 'Từ đọc một mình đến sẻ chia cùng nhau', sources: [FACEBOOK], photos: [
-    photo('book-night-sunny-days.webp', 'Đêm Sách: Trở về ngày có nắng', UPLOAD),
-    photo('book-night-sharing.webp', 'Một khoảnh khắc trong buổi chia sẻ sách', UPLOAD),
-  ], lines: [
-    'Có những cuốn sách khiến người đọc muốn kể lại ngay điều vừa tìm thấy.',
-    'Đêm Sách là một không gian để giới thiệu sách hay, lắng nghe cảm nhận và gặp những người cùng quan tâm.',
-    'Mỗi người mang tới một câu chuyện. Cuộc gặp trở thành nơi những góc nhìn cùng mở ra.',
-    'Và từ một đêm gặp gỡ, việc đọc được tiếp nối trong những buổi sinh hoạt thường kỳ.',
-  ] },
-  { id: 'weekly', kind: 'story', name: 'Sinh hoạt hàng tuần', title: 'Gặp nhau đều đặn.<br>Đọc sâu <em>hơn một chút.</em>', kicker: 'Giữ cho việc đọc trở thành một thói quen', sources: [FACEBOOK, HUST], photos: [
-    photo('historical-reading.webp', 'Sinh hoạt & chia sẻ sách', UPLOAD),
-    photo('historical-trip.webp', 'Một buổi sinh hoạt chia sẻ sách của CLB', UPLOAD),
-  ], lines: [
-    'Trong những buổi sinh hoạt định kỳ, thành viên chia sẻ nội dung và điều mình tâm đắc từ sách.',
-    'Có lúc cùng đọc, có lúc thảo luận một chủ đề hoặc đặt câu hỏi cho nhau.',
-    'Một ý tưởng được nói ra có thể trở thành góc nhìn mới của người bên cạnh.',
-    'Từ những buổi gặp nhỏ, chúng mình mang câu chuyện đọc sách đến một không gian rộng hơn.',
-  ] },
-  { id: 'vietnam-book-day', kind: 'story', name: 'Ngày Sách Việt Nam', title: 'Từ một trang sách.<br>Đến ngày hội <em>của người đọc.</em>', kicker: 'Ngày Sách và Văn hóa đọc Việt Nam', sources: [FACEBOOK], photos: [
-    photo('vietnam-book-day-team.webp', 'Gian trưng bày tại Ngày Sách và Tuần lễ Sách Bách Khoa', UPLOAD),
-    photo('vietnam-book-day-talk.webp', 'Thảo luận về sách điện tử và sách giấy', UPLOAD, '60% 55%'),
-  ], lines: [
-    'Ngày Sách Việt Nam là dịp để tình yêu đọc được nhìn thấy, được kể lại và lan tỏa.',
-    'Tại gian sách, thành viên CLB cùng giới thiệu những cuốn sách và gặp thêm những người bạn yêu đọc.',
-    'Trên sân khấu, câu hỏi “Sách điện tử có thay thế sách giấy được không?” mở ra những góc nhìn về việc đọc trong thời đại số.',
-    'Cùng chuẩn bị một ngày hội, chúng mình có thêm trải nghiệm làm việc và những kỷ niệm để mang theo.',
-  ] },
-  { id: 'outdoors', kind: 'story', name: 'Dã ngoại cùng nhau', title: 'Gấp sách lại.<br>Mở thêm một <em>khoảng trời.</em>', kicker: 'Những trang thanh xuân ở bên ngoài lớp học', sources: [FACEBOOK], photos: [
-    photo('outdoors-jenga-game.webp', 'Thử thách rút gỗ trong hoạt động Big Game', UPLOAD),
-    photo('outdoors-group.webp', 'Một buổi đi chơi cùng nhau', UPLOAD),
-  ], lines: [
-    'Bên cạnh sách còn có những chuyến đi, hoạt động ngoài trời và buổi gặp gỡ để hiểu nhau hơn.',
-    'Một buổi dã ngoại hay những thử thách Big Game là dịp cùng phối hợp, trò chuyện và hiểu thêm về đồng đội.',
-    'Có những câu chuyện chỉ được kể khi cùng bước ra ngoài và dành thời gian cho nhau.',
-    'Và rồi, mỗi mùa mới lại chờ thêm những gương mặt mới.',
-  ] },
-  { id: 'recruitment', kind: 'story', name: 'Tuyển thành viên', title: 'Một chỗ trong CLB.<br>Một hành trình <em>của bạn.</em>', kicker: 'Những trang tiếp theo được viết bằng người mới', sources: [FACEBOOK], photos: [
-    photo('recruitment-artemis.webp', 'Artemis · hình ảnh một đợt tuyển thành viên', UPLOAD),
-    photo('recruitment-hall-interviews.webp', 'Toàn cảnh vòng phỏng vấn tuyển thành viên trên giảng đường', UPLOAD),
-  ], lines: [
-    'Mỗi đợt tuyển thành viên mở ra cơ hội gặp những người cùng sở thích và thử sức trong một tập thể.',
-    'Bạn có thể bắt đầu từ tình yêu đọc sách, rồi khám phá việc làm nội dung, truyền thông hay tổ chức hoạt động.',
-    'Chúng mình không cần bạn đã biết mọi điều. Một tinh thần sẵn sàng học hỏi là một khởi đầu đẹp.',
-    'Từ những người gặp nhau vì sách, câu chuyện Yêu Sách Bách Khoa vẫn tiếp tục.',
-  ] },
-  { id: 'slogan', kind: 'slogan', name: 'Mở sách, đọc tương lai', sources: [FACEBOOK], illustrations: [
-    { file: 'slogan-open-v7.webp', alt: 'Một bạn sinh viên mở cuốn sách trên tay' },
-    { file: 'slogan-future-v7.webp', alt: 'Từ cuốn sách mở, mầm cây, thế giới và những trang giấy bay lên bầu trời' },
-  ] },
-];

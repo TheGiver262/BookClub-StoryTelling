@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const modules=new Set(['book.mjs','book-backdrop.mjs','book-content.mjs','book-music.mjs','book-timeline.mjs','book-scroll.mjs','page-curl.mjs']);
+const modules=new Set(['book.mjs','book-backdrop.mjs','book-content.mjs','book-music.mjs','book-timeline.mjs','book-scroll.mjs','page-curl.mjs','book-interaction.mjs','book-single.mjs','book-pagination.mjs']);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function files(directory){
   return fs.readdirSync(directory,{withFileTypes:true}).flatMap(entry=>{
@@ -63,7 +63,7 @@ export function verifyLandingBuild(directory){
   return files(directory).map(file=>{
     const name=path.relative(directory,file).replaceAll('\\','/');
     const allowed=['index.html','_headers','.nojekyll'].includes(name)||/^_astro\/[^/]+\.css$/.test(name)
-      ||name.startsWith('book/')&&modules.has(name.slice(5))
+      ||name.startsWith('book/')&&modules.has(name.slice(5))||name.startsWith('book/vendor/')
       ||/^book\/assets\/[a-zA-Z0-9._-]+\.(?:png|jpe?g|webp|svg|ttf|woff2|mp3|txt)$/.test(name);
     if(!allowed)throw Error('Unexpected file in landing output: '+name);
     const bytes=fs.readFileSync(file),text=bytes.toString('utf8');
@@ -76,6 +76,8 @@ export function verifyLandingBuild(directory){
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
   process.env.PUBLIC_LANDING_ONLY='true';
+  const {syncPublicBookContent}=await import('../src/content/ysbk-story.mjs');
+  syncPublicBookContent();
   const {build}=await import('astro');
   const {default:tailwind}=await import('@astrojs/tailwind');
   const output=path.join(root,'dist-landing');
