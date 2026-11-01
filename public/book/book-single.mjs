@@ -89,7 +89,7 @@ export function createSingleReader({area,pages,startPage=0,startOffset=0,reduced
     if(event.button!==0||event.target.closest('a,button,input,select,textarea,[contenteditable]')||flip.getState()!=='read'||window.visualViewport?.scale>1)return;
     const pos=point(event);
     // Corners reserve touch panning for page turns; the middle remains a native reader.
-    const edge=Math.min(96,book.clientWidth*.28);
+    const edge=Math.min(140,book.clientWidth*.35);
     if(event.pointerType==='mouse'&&pos.x>edge&&pos.x<book.clientWidth-edge)return;
     target=index;drag={id:event.pointerId,pos,x:event.clientX,y:event.clientY,corner:!!event.target.closest('.single-corner')};
     if(drag.corner)root.setPointerCapture(event.pointerId);

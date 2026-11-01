@@ -94,7 +94,7 @@ function pageMarkup(chapter, index, side, full = false) {
       ? `<span class="intro-expanded">${formatText(line)}</span><span class="intro-brief">${formatText(chapter.compactLines[i - 1])}</span>`
       : formatText(line);
     return `<p class="reveal-line${isMeta ? ' meta' : ''}"${full ? ' style="opacity:1;transform:none"' : ''}>${renderedLine}</p>`;
-  }).join('')}<div class="small-rule" aria-hidden="true"></div></div></div>${footer}</section>`;
+  }).join('')}<div class="small-rule reveal-line" aria-hidden="true"${full ? ' style="opacity:1;transform:none"' : ''}></div></div></div>${footer}</section>`;
 }
 
 function spreadMarkup(index, side, full = false) {

@@ -41,7 +41,7 @@ jobs:
       - name: Build landing page for GitHub Pages
         run: pnpm run build
         env:
-          BASE_PATH: '/BookClub-StoryTelling/'
+          BASE_PATH: "/${{ github.event.repository.name || 'BookClub-StoryTelling' }}/"
 
       - name: Run verification tests
         run: pnpm run test:landing
